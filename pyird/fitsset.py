@@ -1,77 +1,65 @@
 import pathlib
+import IRD_bias_sube
+from pyraf import iraf
 
 __all__ = ['FitsSet']
 
 
 class FitsSet(object):
     
-    def __init__(self, tag, obsmode = "MMF-MMF"):
+    def __init__(self, tag, fitsdir, extension=""):
         self.tag = tag
-        self.datadir = None
-        self.anadir = None
+        self.extension = extension
+        self.fitsdir = fitsdir
+        self.fitsid = []
+        
+    def path(self,string=False):
+        fitsarray=[]
+        for num in self.fitsid:
+            d=self.fitsdir/(self.tag+str(num)+self.extension+".fits")
+            if not d.exists():
+                print(d, "does not exist.")
+            else:
+                if string:
+                    fitsarray.append(str(d))
+                else:                
+                    fitsarray.append(d)
+        return fitsarray
 
-        #Ideintifiers
-        self.targets = []
-        self.flat_mmf1 = [] 
-        self.flat_mmf2 = []
-        self.comparison = []
+class FitsStream(FitsSet):    
+    def __init__(self, streamid, rawdir, anadir, rawtag="IRDA0000", extension=""):
+        super(FitsStream,self).__init__(rawtag, rawdir, extension="")
+        self.streamid = streamid
+        self.rawdir = rawdir
+        self.anadir = anadir
+        self.combined = self.anadir/(self.streamid+"_rbcombined.fits")
+        
+    def rawpath(self,string=False):
+        return self.path(string)
 
-    def idall(self):
-        num=self.targets["id"]+self.flat_mmf1["id"]+self.flat_mmf2["id"]+self.comparison["id"]
-        return num
-    
-    def rawfitslist(self,string=False):
-        fitslist=extract_rawfitsset(self.comparison,string)
-        a=extract_rawfitsset(self.targets,string)
-        fitslist=fitslist+a
-        a=extract_rawfitsset(self.flat_mmf1,string)
-        fitslist=fitslist+a
-        a=extract_rawfitsset(self.flat_mmf2,string)
-        fitslist=fitslist+a
-        return fitslist
-    
-    def rbfitslist(self,string=False):
-        fitslist=extract_rbfitsset(self.comparison,self.anadir,string)
-        a=extract_rbfitsset(self.targets,self.anadir,string)
-        fitslist=fitslist+a
-        a=extract_rbfitsset(self.flat_mmf1,self.anadir,string)
-        fitslist=fitslist+a
-        a=extract_rbfitsset(self.flat_mmf2,self.anadir,string)
-        fitslist=fitslist+a
-        return fitslist
-            
-def extract_rbfitsset(obj,odir,string=False):
-    fitsarray=[]
-    for num in obj["id"]:
-        d=odir/(obj["tag"]+str(num)+"_rb.fits")
-        if not d.exists():
-            print(d, "does not exist.")
-        else:
-            if string:
-                fitsarray.append(str(d))
-            else:                
-                fitsarray.append(d)
-    return fitsarray
-    
-def extract_rawfitsset(obj):
-    fitsarray=[]
-    for num in obj["id"]:
-        d=obj["dir"]/(obj["tag"]+str(num)+".fits")
-        if not d.exists():
-            print(d, "does not exist.")
-        else:
-            if string:
-                fitsarray.append(str(d))
-            else:                
-                fitsarray.append(d)
-    return fitsarray
+    def rbpath(self,string=False):
+        self.fitsdir=self.anadir
+        self.extension="_rb"
+        return self.path(string)        
+        
+    def remove_bias(self,method = 'reference',hotpix_img = None):
+        print("Bias Correction")
+        IRD_bias_sube.main(self.anadir,self.rawpath(), method, hotpix_im = hotpix_img)
+        
+        
+    def at_rblist(self):
+        listname=self.streamid+".list"
+        objl=self.rbpath(string=True)
+        atlistname=str(self.anadir/listname)
+        f=open(str(self.anadir/listname),mode="w")
+        for fits in objl:
+            f.write(fits+"\n")
+        f.close()
+        atlistname='@'+atlistname
+        return atlistname
 
-def at_rblist(obj,adir,listname="tmp.list"):
-    objl=extract_rbfitsset(obj,adir,string=True)
-    atlistname=str(adir/listname)
-    f=open(str(adir/listname),mode="w")
-    for fits in objl:
-        f.write(fits+"\n")
-    f.close()
-    atlistname='@'+atlistname
-    return atlistname
+    def rb_combine(self,combine="median"):
+        iraf.imcombine(input=self.at_rblist(),output=self.combined,combine=combine)
+
+
+        

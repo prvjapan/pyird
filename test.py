@@ -1,25 +1,26 @@
 from pyird import fitsset 
-from pyird import IRD_bias_sube
 import pathlib
-from pyraf import iraf
 
-fset=fitsset.FitsSet("IRDSeminar")
 datadir=pathlib.Path("/media/kawahara/kingyo/ird/data/ird/IRDseminar/YJ")
-fset.anadir=pathlib.Path("/media/kawahara/kingyo/ird/ana/IRDSeminar/yband")
+anadir=pathlib.Path("/media/kawahara/kingyo/ird/ana/IRDSeminar/yband")
 
-# set identifiers
-fset.targets={"id":list(range(3126,3186,2))+list(range(3194,3200,2)),"dir":datadir/"star","tag":"IRDA0000"}
-fset.flat_mmf1={"id":list(range(3502,3562,2)),"dir":datadir/"flat"/"mmf1","tag":"IRDA0000"}
-fset.flat_mmf2={"id":list(range(3436,3496,2)),"dir":datadir/"flat"/"mmf2","tag":"IRDA0000"}
-fset.comparison={"id":list(range(3686,3718,2)),"dir":datadir/"comp"/"20180627","tag":"IRDBD0000"}
+# READ FitsStream
+targets=fitsset.FitsStream("targets",datadir/"star",anadir)
+targets.fitsid=list(range(3126,3186,2))+list(range(3194,3200,2))
+targets.remove_bias()
+targets.rb_combine()
 
-# bias
-if False:
-    method = 'reference'
-    hotpix_img = None
-    IRD_bias_sube.main(fset.anadir,fset.rawfitslist(), method, hotpix_im = hotpix_img)
+flat_mmf1=fitsset.FitsStream("flat_mmf1",datadir/"flat"/"mmf1",anadir)
+flat_mmf1.fitsid=list(range(3502,3562,2))
+flat_mmf1.remove_bias()
+flat_mmf1.rb_combine()
 
-# combine mmf1 and mmf2
-iraf.imcombine(input=fitsset.at_rblist(fset.flat_mmf1,fset.anadir),output='mmf1.fits',combine="median")
-iraf.imcombine(input=fitsset.at_rblist(fset.flat_mmf2,fset.anadir),output='mmf2.fits',combine="median")
+flat_mmf2=fitsset.FitsStream("flat_mmf2",datadir/"flat"/"mmf2",anadir)
+flat_mmf2.fitsid=list(range(3436,3496,2))
+flat_mmf2.remove_bias()
+flat_mmf2.rb_combine()
+
+comparison=fitsset.FitsStream("comp",datadir/"comp"/"20180627",anadir,"IRDBD0000")
+comparison.fitsid=list(range(3686,3718,2))
+comparison.remove_bias()
 

@@ -152,7 +152,7 @@ def bias_subtract_whole(im, Nch = 32, hotpixmask = None):
 #####################################################################
 
 def main(outdir, data_list, method, hotpix_im = None, stripe_direction = 'horizon'):
-
+    import tqdm
     ######### open hot-pixel image ############
 
 
@@ -172,9 +172,9 @@ def main(outdir, data_list, method, hotpix_im = None, stripe_direction = 'horizo
        print " "
        print "----------------------------------------------------------"
 
-    for data in data_list:
+    for data in tqdm.tqdm(data_list):
 
-        print "processing for " + str(data)
+#        print "processing for " + str(data)
         im = pyf.open(str(data))[0].data
         hd = pyf.open(str(data))[0].header
 
@@ -199,7 +199,6 @@ def main(outdir, data_list, method, hotpix_im = None, stripe_direction = 'horizo
            im, hd = bias_subtract_reference(im,hd)
  
         #### output ##### 
-
         outdata_name = data.name.replace(".fits","") + '_rb.fits'
      
         ###### transpose image if the stripe directioin is horizontal ######    
@@ -209,9 +208,10 @@ def main(outdir, data_list, method, hotpix_im = None, stripe_direction = 'horizo
            im = im.transpose()  
 
         ####################################################################
-
-        pyf.writeto(outdir/outdata_name, im, hd)
-
+        try:
+            pyf.writeto(outdir/outdata_name, im, hd)
+        except:
+            print("Output file = "+str(outdir/outdata_name)+" already Exists.")
 
 if __name__ == "__main__":
  
