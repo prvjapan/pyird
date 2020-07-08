@@ -33,6 +33,7 @@ Scripts
 ------------------------------
 
 - make_masking.py (by M. Kuzuhara)
+- IRD_bias_sube.py (by M. Kuzuhara, modified by H. Kawahara)
 - process_RNe.cpp (by T. Hirano, wrapped by H. Kawahara)
 
 
