@@ -25,8 +25,8 @@ g++ -fPIC -Wall -O3 -ffast-math -msse2 -shared -o process_RNe.so process_RNe.cpp
 Class
 ------------------
 
-- fitsset -- define the sets of fits files 
-
+- FitsSet -- sets of fits files 
+- FitsStream -- fits stream
 
 
 Scripts
