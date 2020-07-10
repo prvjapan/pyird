@@ -1,5 +1,7 @@
 # PYIRD
 
+Free from messy directory and file management of IRD analysis.
+
 Requirements
 ------------------------------------------
 
@@ -22,11 +24,11 @@ Compile such as (this is for python 27)
 g++ -fPIC -Wall -O3 -ffast-math -msse2 -shared -o process_RNe.so process_RNe.cpp  -I /home/kawahara/anaconda3/pkgs/python-2.7.18-h15b4118_1/include/python2.7 -lboost_python-py27 -lboost_numpy-py27
 ```
 
-Class
+Classes
 ------------------
 
-- FitsSet -- sets of fits files 
-- FitsStream -- fits stream
+- fitsset.FitsSet --  sets of fits files 
+- irdstream.Stream2D -- 2D fits stream from raw images
 
 
 Scripts

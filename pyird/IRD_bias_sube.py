@@ -166,15 +166,25 @@ def main(outdir, data_list, method, hotpix_im = None, stripe_direction = 'horizo
     
     if method == 'block':
  
-       print "----------------------------------------------------------"
-       print " "
-       print "Bias subtraction using science pixels near edge" 
-       print " "
-       print "----------------------------------------------------------"
-
-    for data in tqdm.tqdm(data_list):
-
-#        print "processing for " + str(data)
+       print("----------------------------------------------------------")
+       print(" ")
+       print("Bias subtraction using science pixels near edge" )
+       print(" ")
+       print("----------------------------------------------------------")
+    data_list_noexist=[]
+    skip=0
+    for data in data_list:
+        outdata_name = data.name.replace(".fits","") + '_rb.fits'
+        if not (outdir/outdata_name).exists():
+            data_list_noexist.append(data)
+        else:
+            skip=skip+1
+            
+    if skip>1:
+        print("Bias Correction: Skipped "+str(skip)+" files because they already exist.")
+    
+    for data in tqdm.tqdm(data_list_noexist):
+        #        print "processing for " + str(data)
         im = pyf.open(str(data))[0].data
         hd = pyf.open(str(data))[0].header
 
