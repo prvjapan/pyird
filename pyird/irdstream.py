@@ -12,16 +12,24 @@ class Stream1D(FitsSet):
         super(Stream1D,self).__init__(rawtag, rawdir, extension="")
         self.streamid = streamid
         self.anadir = anadir
-
+        self.unlock=False
+        
 class Stream2D(FitsSet):    
     def __init__(self, streamid, rawdir, anadir, rawtag="IRDA0000", extension=""):
         super(Stream2D,self).__init__(rawtag, rawdir, extension="")
         self.streamid = streamid
         self.rawdir = rawdir
         self.anadir = anadir
+        self.unlock=False
         
-    def rawpath(self,string=False,check=True):
-        return self.path(string,check)
+    @property
+    def fitsid(self):
+        return self._fitsid
+
+    @fitsid.setter
+    def fitsid(self, fitsid):
+        self._fitsid = fitsid
+        self.rawpath=self.path(string=False,check=True)
 
     def extpath(self,extension,string=False,check=True):
         f=self.fitsdir
@@ -35,7 +43,7 @@ class Stream2D(FitsSet):
         
     def remove_bias(self,method = 'reference',hotpix_img = None):
         print("Bias Correction by M. KUZUHARA.")
-        IRD_bias_sube.main(self.anadir,self.rawpath(), method, hotpix_im = hotpix_img)
+        IRD_bias_sube.main(self.anadir,self.rawpath, method, hotpix_im = hotpix_img)
         self.fitsdir=self.anadir
         self.extension="_rb"
     
