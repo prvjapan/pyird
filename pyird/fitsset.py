@@ -62,8 +62,8 @@ class FitsSet(object):
         iraf.eche()
         apfits=FitsSet(tag,self.fitsdir)
         if ref is not None:
-            iraf.imred.echell.apall(input=self.path(check=False,string=True)[0],output=apfits.path(check=False,string=True)[0],find="n",recenter="n",reference=ref)
+            iraf.imred.echell.apall(input=self.path(check=False,string=True)[0],output=apfits.path(check=False,string=True)[0],find="n",recenter="n",resize="n",edit="y",trace="n",fittrace="n",extract="y",references=ref)
         else:
-            iraf.imred.echell.apall(input=self.path(check=False,string=True)[0],output=apfits.path(check=False,string=True)[0],find="y",recenter="y",reference="")
+            iraf.imred.echell.apall(input=self.path(check=False,string=True)[0],output=apfits.path(check=False,string=True)[0],find="y",recenter="y",resize="y",edit="y",trace="y",fittrace="y",references="")
         return apfits
         
