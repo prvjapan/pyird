@@ -41,3 +41,8 @@ Scripts
 - process_RNe.cpp (by T. Hirano, wrapped by H. Kawahara)
 
 
+Aperture
+------------------------------
+
+For n=51 (YJ) and n=21 (H)
+

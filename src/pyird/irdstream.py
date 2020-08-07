@@ -1,5 +1,5 @@
-from pyird.fitsset import FitsSet
 import pathlib
+from pyird.fitsset import FitsSet
 from pyraf import iraf
 from pyird import IRD_bias_sube
 from pyird import processRN
@@ -8,14 +8,14 @@ import tqdm
 __all__ = ['Stream1D','Stream2D']
 
 class Stream1D(FitsSet):    
-    def __init__(self, streamid, rawdir, anadir, rawtag="IRDA0000", extension=""):
+    def __init__(self, streamid, rawdir, anadir, rawtag="IRDA000", extension=""):
         super(Stream1D,self).__init__(rawtag, rawdir, extension="")
         self.streamid = streamid
         self.anadir = anadir
         self.unlock=False
         
 class Stream2D(FitsSet):    
-    def __init__(self, streamid, rawdir, anadir, rawtag="IRDA0000", extension=""):
+    def __init__(self, streamid, rawdir, anadir, rawtag="IRDA000", extension=""):
         super(Stream2D,self).__init__(rawtag, rawdir, extension="")
         self.streamid = streamid
         self.rawdir = rawdir
@@ -31,6 +31,16 @@ class Stream2D(FitsSet):
         self._fitsid = fitsid
         self.rawpath=self.path(string=False,check=True)
 
+    def fitsid_increment(self):
+        for i in range(0,len(self.fitsid)):
+            self.fitsid[i]=self.fitsid[i]+1
+        self.rawpath=self.path(string=False,check=True)
+            
+    def fitsid_decrement(self):
+        for i in range(0,len(self.fitsid)):
+            self.fitsid[i]=self.fitsid[i]-1
+        self.rawpath=self.path(string=False,check=True)
+            
     def extpath(self,extension,string=False,check=True):
         f=self.fitsdir
         e=self.extension
