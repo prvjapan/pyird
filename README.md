@@ -2,6 +2,16 @@
 
 Free from messy directory and file management of IRD analysis.
 
+INSTALL
+------------------------------------------
+python setup.py install
+
+g++ -fPIC -Wall -O3 -ffast-math -msse2 -shared -o process_RNe.so src/process_RNe.cpp  -I /home/kawahara/anaconda3/pkgs/python-2.7.18-h15b4118_1/include/python2.7 -lboost_python-py27 -lboost_numpy-py27
+
+cp process_RNe.so /home/kawahara/anaconda3/envs/py27/lib/python2.7/site-packages/pyird-0.0.0-py2.7.egg/pyird/
+
+
+
 Requirements
 ------------------------------------------
 
@@ -36,7 +46,7 @@ Classes
 Scripts
 ------------------------------
 
-- make_masking.py (by M. Kuzuhara)
+- makemask.py (by M. Kuzuhara, modified by H. Kawahara)
 - IRD_bias_sube.py (by M. Kuzuhara, modified by H. Kawahara)
 - process_RNe.cpp (by T. Hirano, wrapped by H. Kawahara)
 
@@ -45,4 +55,4 @@ Aperture
 ------------------------------
 
 For n=51 (YJ) and n=21 (H)
-
+Mask 104 (YJ) 
