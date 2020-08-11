@@ -151,7 +151,7 @@ def bias_subtract_whole(im, Nch = 32, hotpixmask = None):
    
 #####################################################################
 
-def main(outdir, data_list, method, hotpix_im = None, stripe_direction = 'horizon'):
+def main(outdir, data_list, method, rot=None, hotpix_im = None, stripe_direction = 'horizon'):
     import tqdm
     ######### open hot-pixel image ############
 
@@ -218,6 +218,10 @@ def main(outdir, data_list, method, hotpix_im = None, stripe_direction = 'horizo
            im = im.transpose()  
 
         ####################################################################
+        #180 deg rotation, usually for H band
+        if rot == "r":
+            im=im[::-1,::-1]
+        
         try:
             pyf.writeto(outdir/outdata_name, im, hd)
         except:

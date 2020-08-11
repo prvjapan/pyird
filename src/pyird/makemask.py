@@ -67,6 +67,7 @@ def makemsk(anadir,apfile,reffits):
     iraf.imdel(dummy_fits_name + "," + temporary_mask_pl + ".pl")
 
     ###### handle for H-band data #########
+    print(line_num)
     if line_num < 1000:
        print("here")
        msk_tmp = pyf.open(outputf + ".fits")[0].data

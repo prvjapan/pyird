@@ -51,9 +51,11 @@ class Stream2D(FitsSet):
         self.extension=e
         return path_
         
-    def remove_bias(self,method = 'reference',hotpix_img = None):
+    def remove_bias(self,rot=None,method = 'reference',hotpix_img = None):
         print("Bias Correction by M. KUZUHARA.")
-        IRD_bias_sube.main(self.anadir,self.rawpath, method, hotpix_im = hotpix_img)
+        if rot=="r":
+            print("180 degree rotation applied.")
+        IRD_bias_sube.main(self.anadir,self.rawpath, method,rot,hotpix_im = hotpix_img)
         self.fitsdir=self.anadir
         self.extension="_rb"
     
