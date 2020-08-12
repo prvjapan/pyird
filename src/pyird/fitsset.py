@@ -1,6 +1,6 @@
 import pathlib
 from pyraf import iraf
-
+import os
 __all__ = ['FitsSet']
 
 class FitsSet(object):
@@ -58,12 +58,27 @@ class FitsSet(object):
         return combined_fitsset
     
     def apall(self,tag,ref=None):
+        currentdir=os.getcwd() 
+        os.chdir(anadir)
+
         iraf.imred()
         iraf.eche()
         apfits=FitsSet(tag,self.fitsdir)
         if ref is not None:
-            iraf.imred.echell.apall(input=self.path(check=False,string=True)[0],output=apfits.path(check=False,string=True)[0],find="n",recenter="n",resize="n",edit="y",trace="n",fittrace="n",extract="y",references=ref)
+            iraf.imred.echell.apall(input=self.path(check=False,string=True)[0],output=apfits.path(check=False,string=True)[0],find="n",recenter="n",resize="n",edit="y",trace="n",fittrace="n",extract="y",references=ref,t_order=3)
         else:
-            iraf.imred.echell.apall(input=self.path(check=False,string=True)[0],output=apfits.path(check=False,string=True)[0],find="y",recenter="y",resize="y",edit="y",trace="y",fittrace="y",references="")
+            iraf.imred.echell.apall(input=self.path(check=False,string=True)[0],output=apfits.path(check=False,string=True)[0],find="y",recenter="y",resize="y",edit="y",trace="y",fittrace="y",references="",t_order=3)
+
+        os.chdir(currentdir)
+
         return apfits
         
+    def apnormalize(self,tag,ref):
+        currentdir=os.getcwd() 
+        os.chdir(anadir)
+
+        apnormalfits=FitsSet(tag,self.fitsdir)
+        iraf.imred.echell.apnormaize(input=self.path(check=False,string=True)[0],output=apnormalfits.path(check=False,string=True)[0],find="n",recenter="n",resize="n",edit="y",trace="n",fittrace="n",references=ref,order=35,niterat=1)
+
+        os.chdir(currentdir)
+        return apnormalfits
