@@ -54,5 +54,16 @@ Scripts
 Aperture
 ------------------------------
 
-For n=51 (YJ) and n=21 (H)
+For n=51 or 52 (YJ) and n=21 (H)
 Mask 104 (YJ) 
+
+
+Help tool for ECIDENTIFY
+--------------------------
+
+- calref.py
+
+s option: The number of the orders varies depending on environment. s option gives an offset that defines the order numbering. Try it if you couldn't find good match. In particular, for SMF/YJ, try s = 1.
+
+xorder 4
+yorder 3

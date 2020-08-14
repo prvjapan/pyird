@@ -13,16 +13,19 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='wav cal reference')
     parser.add_argument('-f', nargs=1,help='1D multispec fits',type=str)
     parser.add_argument('-o', nargs=1,help='order',type=int)
+    parser.add_argument('-s', default=[0],nargs=1,help='offset value, for SMF/YJ probably set 1. Depending on position. 1-51 or 1-52',type=int)
 
     args = parser.parse_args()        
-
+    offset=args.s[0]
     hd=fits.open(args.f[0])
     dat=(hd[0].data)
     if np.shape(dat)[0] == 21:
         chanfile="../../data/channel_H.list"
         norder=21
     elif np.shape(dat)[0] == 51:
-        sys.exit("YJ not yet")
+        chanfile="../../data/channel_YJ.list"
+        norder=51
+    elif np.shape(dat)[0] == 52:
         chanfile="../../data/channel_YJ.list"
         norder=51
     else:
@@ -52,7 +55,7 @@ if __name__ == "__main__":
         plt.ylim(np.min(med),np.max(med)*1.05)
         s=0
         for k,po in enumerate(porder):
-            if po==i+1:
+            if po==i+1-offset:
                 s=s+1
                 plt.axvline(pchan[k],color="green",ls=line[int(st[k])],alpha=0.3)
                 plt.text(pchan[k],np.max(med)*(0.8-0.05*s),str(wav[k]),color="green")
@@ -64,7 +67,7 @@ if __name__ == "__main__":
         ax2.plot(dat[i,:])
         s=0
         for k,po in enumerate(porder):
-            if po==i+1:
+            if po==i+1-offset:
                 s=s+1
                 plt.axvline(pchan[k],color="green",ls=line[int(st[k])],alpha=0.3)
                 plt.text(pchan[k],np.max(dat[i,:])*(0.8-0.05*s),str(wav[k]),color="green")
