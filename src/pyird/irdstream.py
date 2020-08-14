@@ -13,6 +13,25 @@ class Stream1D(FitsSet):
         self.streamid = streamid
         self.anadir = anadir
         self.unlock=False
+
+    @property
+    def fitsid(self):
+        return self._fitsid
+
+    @fitsid.setter
+    def fitsid(self, fitsid):
+        self._fitsid = fitsid
+        self.rawpath=self.path(string=False,check=True)
+
+    def fitsid_increment(self):
+        for i in range(0,len(self.fitsid)):
+            self.fitsid[i]=self.fitsid[i]+1
+        self.rawpath=self.path(string=False,check=True)
+            
+    def fitsid_decrement(self):
+        for i in range(0,len(self.fitsid)):
+            self.fitsid[i]=self.fitsid[i]-1
+        self.rawpath=self.path(string=False,check=True)
         
 class Stream2D(FitsSet):    
     def __init__(self, streamid, rawdir, anadir, rawtag="IRDA000", extension=""):
@@ -82,7 +101,7 @@ class Stream2D(FitsSet):
         self.fitsdir=self.anadir
         self.extension="_rbn"
 
-    def flatfielding(self,apflat,apref,extin="rb",extout="rbf",lower=-1,upper=2,badf="none"):
+    def flatfielding1D(self,apflat,apref,wavref=None,extin="rb",extout="rb_f1d",extwout="rb_f1dw",lower=-1,upper=2,badf="none"):
         iraf.task(hdsis_ecf = "home$scripts/hdsis_ecf.cl")
         currentdir=os.getcwd()
         os.chdir(str(self.anadir))
@@ -94,8 +113,6 @@ class Stream2D(FitsSet):
         #IS3
         lower=str(lower)#"-1"    #st_x
         upper=str(upper)#"2"      #ed_x
-        #badf="none"  #badfix
-          #badfix
         
         ########################
         iraf.imred()
@@ -106,31 +123,45 @@ class Stream2D(FitsSet):
         for i,fitsid in enumerate(tqdm.tqdm(ext_noexist)):
             iraf.hdsis_ecf(inimg=ext_noexist[i],outimg=extf_noexist[i],plot=plotyn,st_x=lower,ed_x=upper,flatimg=apflat_path,ref_ap=apref_path,badfix=badf)
 
+        if wavref != None:
+            wavref_path=wavref.path(string=False,check=True)[0].name #wav ref
+            ext_noexist, extonedw_noexist = self.check_existence(extin,extwout)
+            for i,fitsid in enumerate(tqdm.tqdm(ext_noexist)):
+                iraf.refs(input=extf_noexist[i],references=wavref_path,sort="mjd",group="mjd")
+                iraf.dispcor(input=extf_noexist[i],output=extonedw_noexist[i])
+                        
         os.chdir(currentdir)
 
-    def extract1D(self,apref,extin="rb",extout="rboned"):
+    def extract1D(self,apref,extin="rb",extout="rb_1d",expwout="rb_1dw"):
         currentdir=os.getcwd()
         os.chdir(str(self.anadir))
         apref_path=apref.path(string=False,check=True)[0].name #ref_ap
-
-        ## CHECK EXISTENCE
+        
         ext_noexist, extoned_noexist = self.check_existence(extin,extout)
         for i,fitsid in enumerate(tqdm.tqdm(ext_noexist)):
             iraf.imred.echell.apall(input=ext_noexist[i],output=extoned_noexist[i],find="n",recenter="n",resize="n",edit="n",trace="n",fittrace="n",extract="y",references=apref_path,review="n",interactive="n")
 
+        if wavref != None:
+            print()
+            wavref_path=wavref.path(string=False,check=True)[0].name #wav ref
+            ext_noexist, extonedw_noexist = self.check_existence(extin,extwout)
+            for i,fitsid in enumerate(tqdm.tqdm(ext_noexist)):
+                iraf.refs(input=extoned_noexist[i],references=wavref_path,select="match")
+                iraf.dispcor(input=extoned_noexist[i],output=extonedw_noexist[i],flux="no")
+            
         os.chdir(currentdir)
 
 
     def check_existence(self,extin,extout):
         extf=self.extpath("_"+extout,string=False,check=False)
-        ext=self.extpath("_"+extin,string=True,check=False)
+        ext=self.extpath("_"+extin,string=False,check=False)
         extf_noexist=[]
         ext_noexist=[]
         skip=0
         for i,extfi in enumerate(extf):
             if not extfi.exists():
-                extf_noexist.append(str(extfi))
-                ext_noexist.append(str(ext[i]))
+                extf_noexist.append(str(extfi.name))
+                ext_noexist.append(str(ext[i].name))
             else:
                 skip=skip+1
             
