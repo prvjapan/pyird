@@ -34,6 +34,13 @@ Compile such as (this is for python 27)
 g++ -fPIC -Wall -O3 -ffast-math -msse2 -shared -o process_RNe.so process_RNe.cpp  -I /home/kawahara/anaconda3/pkgs/python-2.7.18-h15b4118_1/include/python2.7 -lboost_python-py27 -lboost_numpy-py27
 ```
 
+
+```
+cp pyraf/scripts/hdsis_ecf.cl /home/kawahara/.iraf/scripts/
+```
+
+
+
 python setup.py install
 
 Classes
