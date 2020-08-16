@@ -25,27 +25,13 @@ import time
 import glob
 import os
 
-def makemsk(anadir,apfile,reffits):
+def makemsk(anadir,reffits):
     #mv to anadir
     currentdir=os.getcwd() 
     os.chdir(anadir)
     outputf="mask_from_" + reffits
-    
-    ## check which your target data, YJ or H ##
-    ## and determine where the blocked region id ##
-    
-    line_num = len(open(apfile, "r").readlines())
-
-    #if line_num > 1000:
-
     block_region_y0 = 2000
     block_region_y1 = 2048
-
-    #else:
-
-    #   block_region_y0 = 0
-    #   block_region_y1 = 40
-      
     ########################################### 
     ## make dummy image ##
     dummy = np.ones((2048,2048))*1000.
@@ -58,7 +44,7 @@ def makemsk(anadir,apfile,reffits):
     iraf.echelle(Stdout=1)
     temporary_mask_pl = "tmp_" + str(time.time())
     iraf.apmask(input = dummy_fits_name, output = temporary_mask_pl, 
-                apertures=apfile,references = reffits,
+                references = reffits,
                 interactive='no', find='no', recenter='no', resize='no',
                 edit='no', trace='no', fittrace='no', 
                 mask='yes', line='INDEF', nsum=10, buffer=0.0)
@@ -67,13 +53,10 @@ def makemsk(anadir,apfile,reffits):
     iraf.imdel(dummy_fits_name + "," + temporary_mask_pl + ".pl")
 
     ###### handle for H-band data #########
-    print(line_num)
-    if line_num < 1000:
-       print("here")
-       msk_tmp = pyf.open(outputf + ".fits")[0].data
-       msk_tmp = msk_tmp[::-1,::-1]
-       iraf.imdel(outputf + ".fits")
-       pyf.writeto(outputf + ".fits", msk_tmp)
+    msk_tmp = pyf.open(outputf + ".fits")[0].data
+#    msk_tmp = msk_tmp[::-1,::-1]
+    iraf.imdel(outputf + ".fits")
+    pyf.writeto(outputf + ".fits", msk_tmp)
        
     os.chdir(currentdir)
     return outputf
