@@ -32,6 +32,17 @@ class Stream1D(FitsSet):
         for i in range(0,len(self.fitsid)):
             self.fitsid[i]=self.fitsid[i]-1
         self.rawpath=self.path(string=False,check=True)
+
+    def extpath(self,extension,string=False,check=True):
+        f=self.fitsdir
+        e=self.extension
+        self.fitsdir=self.anadir
+        self.extension=extension
+        path_=self.path(string,check)
+        self.fitsdir=f
+        self.extension=e
+        return path_
+
         
 class Stream2D(FitsSet):    
     def __init__(self, streamid, rawdir, anadir, rawtag="IRDA000", extension=""):
