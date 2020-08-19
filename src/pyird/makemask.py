@@ -18,21 +18,28 @@ python make_maskimg.py "NAME_of_configration" (like white_mmf1_18Oct_yj)
 """
 
 import numpy as np
-import astropy.io.fits as pyf
 import pyraf.iraf as iraf
 import sys
 import time
 import glob
 import os
 import pathlib
-def makemsk(anadir,reffitlist=[]):
+from astropy.io import fits
+
+def makemsk(anadir,reffitlist=[],directfitslist=[],directfits_criterion=[]):
+    # reffit uses ap info
+    # directfits uses fits image directly
     #mv to anadir
     currentdir=os.getcwd() 
     os.chdir(anadir)
     outputf="mask_from"
     for reffits in reffitlist:
        outputf=outputf+"_"+reffits
-       
+
+    if len(directfitslist)>0:
+        for reffits in directfitslist:
+            outputf=outputf+"_D"+reffits
+            
     if pathlib.Path(outputf).exists():
         iraf.imdel(outputf)
     block_region_y0 = 2000
@@ -45,7 +52,7 @@ def makemsk(anadir,reffitlist=[]):
         dummy = np.ones((2048,2048))*1000.
         dummy[block_region_y0:block_region_y1,:] = 0.
         dummy_fits_name = "dummy_formsk_" + str(time.time()) + ".fits"
-        pyf.writeto(dummy_fits_name, dummy) 
+        fits.writeto(dummy_fits_name, dummy) 
 
         temporary_mask_pl = "tmp_" + str(time.time())
         iraf.apmask(input = dummy_fits_name, output = temporary_mask_pl, 
@@ -54,9 +61,13 @@ def makemsk(anadir,reffitlist=[]):
                     edit='no', trace='no', fittrace='no', 
                     mask='yes', line='INDEF', nsum=10, buffer=0.0)
         dummy_fits_name_out = "dummy_formsk_out" + str(time.time()) + ".fits"
-        iraf.imar(dummy_fits_name, "*", temporary_mask_pl + ".pl", \
-                  dummy_fits_name_out)
-        dumout.append(dummy_fits_name_out)
+        if len(reffitlist)==1:
+            iraf.imar(dummy_fits_name, "*", temporary_mask_pl + ".pl", \
+                      outputf + ".fits")
+        else:
+            iraf.imar(dummy_fits_name, "*", temporary_mask_pl + ".pl", \
+                      dummy_fits_name_out)
+            dumout.append(dummy_fits_name_out)
 
     if len(reffitlist)>1:
         dummy_fits_name=dumout[0]
@@ -69,13 +80,30 @@ def makemsk(anadir,reffitlist=[]):
                       dummy_fits_name_swap)
             dummy_fits_name=dummy_fits_name_swap
         
-
-    ###### handle for H-band data #########
-    msk_tmp = pyf.open(outputf + ".fits")[0].data
+        
+    dumdirect=[]
+    if len(directfitslist)>0:
+#        from scipy.signal import medfilt
+        for l,fitsimg in enumerate(directfitslist):
+            crit=directfits_criterion[l]
+            fits_file=str(fitsimg)
+            hdulist=fits.open(fits_file+".fits")
+            header=hdulist[0].header
+            img=hdulist[0].data
+#            img=medfilt(img, kernel_size=(3,3))
+            dmimg=np.zeros(np.shape(img))
+            dmimg[img>crit]=1000.0
+            dumdirect.append(dmimg)
+            
+    ################
+    msk_tmp = fits.open(outputf + ".fits")[0].data
     msk_tmp=np.array(msk_tmp)
+    if len(directfitslist)>0:
+        for l,fitsimg in enumerate(directfitslist):
+            msk_tmp=msk_tmp+dumdirect[l]
     msk_tmp[msk_tmp>1000]=1000.0
     iraf.imdel(outputf + ".fits")
-    pyf.writeto(outputf + ".fits", msk_tmp)
+    fits.writeto(outputf + ".fits", msk_tmp)
        
     os.chdir(currentdir)
     return outputf

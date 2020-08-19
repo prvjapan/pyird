@@ -43,29 +43,35 @@ def header_edit(hd, method):
 def bias_subtract_reference(im, hd, Nch = 32):
  
     xsize = np.shape(im)[1]; ysize = np.shape(im)[0]
-
-    dummy = np.ones((xsize,ysize))
-    
+    dummy = np.ones((xsize,ysize))    
     ch_pix_num = xsize/Nch
 
-    ###### bias removal for each stripe ###### 
+    ###### bias removal for each stripe ######
     for ch_num in range(Nch):
 
-        stripe = im[0:ysize, ch_pix_num*ch_num:ch_pix_num*(ch_num+1)]
-        ref1 = im[0:4, ch_pix_num*ch_num:ch_pix_num*(ch_num+1)]
-        ref2 = im[2044:ysize, ch_pix_num*ch_num: ch_pix_num*(ch_num+1)]
+        ysize = int(ysize)
+        x_start = int(ch_pix_num*ch_num)
+        x_end = int(ch_pix_num*(ch_num+1))    
+
+        stripe = im[0:ysize, x_start:x_end]
+        ref1 = im[0:4, x_start:x_end]
+        ref2 = im[2044:ysize, x_start:x_end]
+
         ref_all = np.concatenate( (ref1, ref2) )
+        
         clipped = stats.sigmaclip(ref_all, 3.0, 3.0)[0]
 
-        mean = np.mean(clipped)
+#        mean = np.nanmean(clipped)
+        mean = np.nanmedian(clipped) #by H.K.
 
         unbias_stripe = stripe - mean
 
-        dummy[0:xsize,ch_pix_num*ch_num: ch_pix_num*(ch_num+1)] = unbias_stripe
+        dummy[0:ysize,x_start: x_end] = unbias_stripe
 
     hd = header_edit(hd, 'reference')
 
     return dummy, hd
+
 
 #######################################################################
 ### subtract bias of each channel;                                  ###

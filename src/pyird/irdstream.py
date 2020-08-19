@@ -80,7 +80,20 @@ class Stream2D(FitsSet):
         self.fitsdir=f
         self.extension=e
         return path_
+    
+    def extclean(self,extension):
+        #Clean i.e. remove fits files if exists.
+        import os
+        if extension=="":
+            print("extclean cannot clean w/o extension fits.")
+            return
         
+        for i in range(len(self.path())):
+            if self.path(check=False)[i].exists():
+                os.remove(self.extpath(extension,check=False,string=True)[i])
+                print("rm old "+self.extpath(extension,check=False,string=True)[i])
+
+    
     def remove_bias(self,rot=None,method = 'reference',hotpix_img = None):
         print("Bias Correction by M. KUZUHARA.")
         if rot=="r":
@@ -112,7 +125,7 @@ class Stream2D(FitsSet):
         self.fitsdir=self.anadir
         self.extension="_rbn"
 
-    def flatfielding1D(self,apflat,apref,wavref=None,extin="rb",extout="rb_f1d",extwout="rb_f1dw",lower=-1,upper=2,badf="none"):
+    def flatfielding1D(self,apflat,apref,wavref=None,extin="_rb",extout="_rb_f1d",extwout="rb_f1dw",lower=-1,upper=2,badf="none"):
         iraf.task(hdsis_ecf = "home$scripts/hdsis_ecf.cl")
         currentdir=os.getcwd()
         os.chdir(str(self.anadir))
@@ -143,17 +156,35 @@ class Stream2D(FitsSet):
                         
         os.chdir(currentdir)
 
-    def extract1D(self,apref,extin="rb",extout="rb_1d",expwout="rb_1dw"):
+    def apscat(self,apref,extin="_rb",extout="_rbs",ulimit=8,llimit=-8):
+        ulimit=str(ulimit)
+        llimit=str(llimit)
+        apref_path=apref.path(string=False,check=True)[0].name #ref_ap
+
+        currentdir=os.getcwd()
+        os.chdir(str(self.anadir))
+        iraf.imred()
+        iraf.eche()
+        ext_noexist, extf_noexist = self.check_existence(extin,extout)
+        for i,fitsid in enumerate(tqdm.tqdm(ext_noexist)):
+            iraf.apresize(input=ext_noexist[i],ulimit=ulimit,llimit=llimit)
+            iraf.apscatter(input=ext_noexist[i],output=extf_noexist[i],references=apref_path,find="n",recenter="n",resize="n",edit="n",trace="n",fittrace="n",subtrac="y",smooth="y",fitscat="y",fitsmoo="y")
+        
+        os.chdir(currentdir)
+        
+    def extract1D(self,apref,wavref=None,extin="_rb",extout="_rb_1d",extwout="_rb_1dw"):
         currentdir=os.getcwd()
         os.chdir(str(self.anadir))
         apref_path=apref.path(string=False,check=True)[0].name #ref_ap
         
         ext_noexist, extoned_noexist = self.check_existence(extin,extout)
+        iraf.imred()
+        iraf.eche()
+
         for i,fitsid in enumerate(tqdm.tqdm(ext_noexist)):
-            iraf.imred.echell.apall(input=ext_noexist[i],output=extoned_noexist[i],find="n",recenter="n",resize="n",edit="n",trace="n",fittrace="n",extract="y",references=apref_path,review="n",interactive="n")
+            iraf.apall(input=ext_noexist[i],output=extoned_noexist[i],find="n",recenter="n",resize="n",edit="n",trace="n",fittrace="n",extract="y",references=apref_path,review="n",interactive="n")
 
         if wavref != None:
-            print()
             wavref_path=wavref.path(string=False,check=True)[0].name #wav ref
             ext_noexist, extonedw_noexist = self.check_existence(extin,extwout)
             for i,fitsid in enumerate(tqdm.tqdm(ext_noexist)):
@@ -164,8 +195,8 @@ class Stream2D(FitsSet):
 
 
     def check_existence(self,extin,extout):
-        extf=self.extpath("_"+extout,string=False,check=False)
-        ext=self.extpath("_"+extin,string=False,check=False)
+        extf=self.extpath(extout,string=False,check=False)
+        ext=self.extpath(extin,string=False,check=False)
         extf_noexist=[]
         ext_noexist=[]
         skip=0

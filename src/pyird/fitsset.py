@@ -1,6 +1,7 @@
 import pathlib
 from pyraf import iraf
 import os
+import tqdm
 __all__ = ['FitsSet']
 
 class FitsSet(object):
@@ -52,27 +53,30 @@ class FitsSet(object):
         return atlistname
 
     def imcombine(self,tag,combine="median"):
-        combined_fitsset=FitsSet(tag,self.anadir)
+        combined_fitsset=FitsSet(tag,self.fitsdir)
         combined_fitsset.clean()
         iraf.imcombine(input=self.at_list(listname=tag),output=combined_fitsset.path(check=False)[0],combine=combine)
         return combined_fitsset
     
-    def apall(self,tag,ref=None):
-        currentdir=os.getcwd() 
-        os.chdir(anadir)
-
+    def apall(self,apref,wavref=None,extout="_1d",extwout="_1dw"):
+        currentdir=os.getcwd()
+        os.chdir(str(self.fitsdir))
+        apref_path=apref.path(string=False,check=True)[0].name #ref_ap
         iraf.imred()
         iraf.eche()
-        apfits=FitsSet(tag,self.fitsdir)
-        if ref is not None:
-            iraf.imred.echell.apall(input=self.path(check=False,string=True)[0],output=apfits.path(check=False,string=True)[0],find="n",recenter="n",resize="n",edit="y",trace="n",fittrace="n",extract="y",references=ref,t_order=3)
-        else:
-            iraf.imred.echell.apall(input=self.path(check=False,string=True)[0],output=apfits.path(check=False,string=True)[0],find="y",recenter="y",resize="y",edit="y",trace="y",fittrace="y",references="",t_order=3)
 
+        for i,eachpath in enumerate(tqdm.tqdm(self.path(string=False,check=True))):
+            iraf.apall(input=eachpath.name,output=(eachpath.name).replace(".fits",extout+".fits"),find="n",recenter="n",resize="n",edit="n",trace="n",fittrace="n",extract="y",references=apref_path,review="n",interactive="n")
+
+        if wavref != None:
+            wavref_path=wavref.path(string=False,check=True)[0].name #wav ref
+            for i,eachpath in enumerate(tqdm.tqdm(self.path(string=False,check=True))):
+                iraf.refs(input=eachpath.name,references=wavref_path,select="match")
+                iraf.dispcor(input=eachpath.name,output=(eachpath.name).replace(".fits",extwout+".fits"),flux="no")
+            
         os.chdir(currentdir)
-
-        return apfits
-        
+        return
+    
     def apnormalize(self,tag,ref):
         currentdir=os.getcwd() 
         os.chdir(anadir)
@@ -82,3 +86,5 @@ class FitsSet(object):
 
         os.chdir(currentdir)
         return apnormalfits
+
+    
