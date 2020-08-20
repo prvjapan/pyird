@@ -101,8 +101,22 @@ class Stream2D(FitsSet):
         IRD_bias_sube.main(self.anadir,self.rawpath, method,rot,hotpix_im = hotpix_img)
         self.fitsdir=self.anadir
         self.extension="_rb"
-    
-    def rm_readnoise(self,maskfits):
+
+    def rm_readnoise(self,maskfits,extin="_rb",extout="_rbo"):
+        print("READ NOISE REDUCTION by H. Kawahara (OEGP).")
+        currentdir=os.getcwd()
+        os.chdir(str(self.anadir))
+
+        ext_noexist, extf_noexist = self.check_existence(extin,extout)
+        for i,fitsid in enumerate(tqdm.tqdm(ext_noexist)):
+            filemask=maskfits.path()[0]
+            processRN.wrap_kawahara_processRN(filen=ext_noexist[i],filemask=filemask,fitsout=extf_noexist[i])
+        self.fitsdir=self.anadir
+        self.extension=extout
+
+        os.chdir(currentdir)
+        
+    def rm_readnoise_spline(self,maskfits):
         print("READ NOISE REDUCTION by T. Hirano.")
         rbn=self.extpath("_rbn",string=False,check=False)
         rb=self.extpath("_rb",string=True,check=False)
@@ -121,7 +135,7 @@ class Stream2D(FitsSet):
             print("Read Noise Correction: Skipped "+str(skip)+" files because they already exists.")
 
         for i,fitsid in enumerate(tqdm.tqdm(rb_noexist)):
-            processRN.wrap_processRN(filen=rb_noexist[i],filemmf=maskfits.path()[0],fitsout=rbn_noexist[i])
+            processRN.wrap_hirano_processRN(filen=rb_noexist[i],filemmf=maskfits.path()[0],fitsout=rbn_noexist[i])
         self.fitsdir=self.anadir
         self.extension="_rbn"
 

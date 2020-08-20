@@ -26,12 +26,18 @@ import os
 import pathlib
 from astropy.io import fits
 
-def makemsk(anadir,reffitlist=[],directfitslist=[],directfits_criterion=[]):
+def makemsk(anadir,reffitlist=[],directfitslist=[],directfits_criterion=[],directrot=[]):
     # reffit uses ap info
     # directfits uses fits image directly
     #mv to anadir
     currentdir=os.getcwd() 
     os.chdir(anadir)
+    ### uniform mask ###
+    if len(reffitlist)==0 and len(directfitslist)==0:
+        dummy = np.zeros((2048,2048))
+        fits.writeto("mask_uniform.fits", dummy)
+        return
+    
     outputf="mask_from"
     for reffits in reffitlist:
        outputf=outputf+"_"+reffits
@@ -90,7 +96,10 @@ def makemsk(anadir,reffitlist=[],directfitslist=[],directfits_criterion=[]):
             hdulist=fits.open(fits_file+".fits")
             header=hdulist[0].header
             img=hdulist[0].data
-#            img=medfilt(img, kernel_size=(3,3))
+            if len(directrot)==len((directfitslist)):
+                if directrot[l]:
+                    print("Rotation applied: "+str(fits_file))
+                    img=img[::-1,::-1]
             dmimg=np.zeros(np.shape(img))
             dmimg[img>crit]=1000.0
             dumdirect.append(dmimg)

@@ -1,4 +1,34 @@
-def wrap_processRN(filen="raw/IRDA00003502_rb.fits",filemmf="../../destripe_codes/combined/mask_from_white_mmf12_201906_yj.fits",fitsout="obj/r03502.fits"):
+def wrap_kawahara_processRN(filen,filemask,fitsout):
+    #OEGP method
+    import astropy.io.fits as pyf
+    import numpy as np
+    from pyird import readnoise as rn
+
+    hdulist=pyf.open(filemask)
+    hdu=hdulist[0]
+    header=hdu.header
+    mask=np.array(hdu.data) 
+    mask[mask==0]=0
+    mask[mask>0]=1
+    mask=np.array(mask,dtype=np.int)
+    #input img
+    hdulist=pyf.open(filen)
+    hdu=hdulist[0]
+    header=hdu.header
+    img=np.array(hdu.data) 
+    imgorig=np.copy(img)
+
+    img[mask]=None
+    recimg=rn.RNestimate_OEGP(img)
+    cimg=imgorig-recimg
+    
+    hdu = pyf.PrimaryHDU(cimg, header)
+    hdulist = pyf.HDUList([hdu])
+    hdulist.writeto(fitsout,overwrite=True)
+
+
+def wrap_hirano_processRN(filen="raw/IRDA00003502_rb.fits",filemmf="../../destripe_codes/combined/mask_from_white_mmf12_201906_yj.fits",fitsout="obj/r03502.fits"):
+    
     import astropy.io.fits as pyf
     import numpy as np
     import process_RNe
@@ -28,7 +58,7 @@ if __name__ == "__main__":
     args = parser.parse_args()    
     numlist=pd.read_csv(args.f[0],names=["NUM"])
     for num in tqdm.tqdm(numlist["NUM"]):
-        wrap_processRN(filen="raw/IRDA0000"+str(num)+"_rb.fits",\
+        wrap_hirano_processRN(filen="raw/IRDA0000"+str(num)+"_rb.fits",\
                        filemmf="../../destripe_codes/combined/mask_from_white_mmf12_201906_yj.fits",\
                        fitsout="obj/r0"+str(num)+".fits")
 
