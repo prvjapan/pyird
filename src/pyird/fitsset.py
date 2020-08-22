@@ -58,7 +58,7 @@ class FitsSet(object):
         iraf.imcombine(input=self.at_list(listname=tag),output=combined_fitsset.path(check=False)[0],combine=combine)
         return combined_fitsset
     
-    def apall(self,apref,wavref=None,extout="_1d",extwout="_1dw"):
+    def apall(self,apref,wavref=None,extout="_1d",extwout=""):
         currentdir=os.getcwd()
         os.chdir(str(self.fitsdir))
         apref_path=apref.path(string=False,check=True)[0].name #ref_ap
@@ -71,9 +71,10 @@ class FitsSet(object):
         if wavref != None:
             wavref_path=wavref.path(string=False,check=True)[0].name #wav ref
             for i,eachpath in enumerate(tqdm.tqdm(self.path(string=False,check=True))):
+                out=(eachpath.name).replace(".fits","w.fits")
+                print("WAV",wavref_path, eachpath.name, out)
                 iraf.refs(input=eachpath.name,references=wavref_path,select="match")
-                iraf.dispcor(input=eachpath.name,output=(eachpath.name).replace(".fits",extwout+".fits"),flux="no")
-            
+                iraf.dispcor(input=eachpath.name,output=out,flux="no")
         os.chdir(currentdir)
         return
     

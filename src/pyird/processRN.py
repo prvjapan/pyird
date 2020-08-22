@@ -1,8 +1,10 @@
+
 def wrap_kawahara_processRN(filen,filemask,fitsout):
     #OEGP method
     import astropy.io.fits as pyf
     import numpy as np
     from pyird import readnoise as rn
+    from pyird import large_scaled
 
     hdulist=pyf.open(filemask)
     hdu=hdulist[0]
@@ -17,14 +19,20 @@ def wrap_kawahara_processRN(filen,filemask,fitsout):
     header=hdu.header
     img=np.array(hdu.data) 
     imgorig=np.copy(img)
-
-    #####
-    print("# of Masked pix is "+str(len(img[mask])))
+    #print("# of Masked pix is "+str(len(img[mask])))
     img[mask]=None
-    #####
     
+    check=large_scaled.check_mask_filling(mask,Ncor=64)
+    if check:
+        LSD=large_scaled.get_LSD(img,gpscale=64,Ncor=64,sigma=0.001)
+    else:
+        sys.exit("exit")
+    ###############################
+    img=img-LSD
     recimg=rn.RNestimate_OEGP(img)
-    cimg=imgorig-recimg
+    ###############################
+
+    cimg=imgorig-recimg-LSD
     
     hdu = pyf.PrimaryHDU(cimg, header)
     hdulist = pyf.HDUList([hdu])
