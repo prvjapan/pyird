@@ -139,7 +139,7 @@ class Stream2D(FitsSet):
         self.fitsdir=self.anadir
         self.extension="_rbn"
 
-    def flatfielding1D(self,apflat,apref,wavref=None,extin="_rb",extout="_rb_f1d",extwout="rb_f1dw",lower=-1,upper=2,badf="none"):
+    def flatfielding1D(self,apflat,apref,wavref=None,extin="_rb",extout="_rb_f1d",extwout="_rb_f1dw",lower=-1,upper=2,badf="none"):
         iraf.task(hdsis_ecf = "home$scripts/hdsis_ecf.cl")
         currentdir=os.getcwd()
         os.chdir(str(self.anadir))

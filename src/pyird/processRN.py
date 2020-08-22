@@ -10,7 +10,7 @@ def wrap_kawahara_processRN(filen,filemask,fitsout):
     mask=np.array(hdu.data) 
     mask[mask==0]=0
     mask[mask>0]=1
-    mask=np.array(mask,dtype=np.int)
+    mask=np.array(mask,dtype=np.bool)
     #input img
     hdulist=pyf.open(filen)
     hdu=hdulist[0]
@@ -18,7 +18,11 @@ def wrap_kawahara_processRN(filen,filemask,fitsout):
     img=np.array(hdu.data) 
     imgorig=np.copy(img)
 
+    #####
+    print("# of Masked pix is "+str(len(img[mask])))
     img[mask]=None
+    #####
+    
     recimg=rn.RNestimate_OEGP(img)
     cimg=imgorig-recimg
     

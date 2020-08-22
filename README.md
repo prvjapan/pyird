@@ -6,9 +6,9 @@ INSTALL
 ------------------------------------------
 python setup.py install
 
-g++ -fPIC -Wall -O3 -ffast-math -msse2 -shared -o process_RNe.so src/process_RNe.cpp  -I /home/kawahara/anaconda3/pkgs/python-2.7.18-h15b4118_1/include/python2.7 -lboost_python-py27 -lboost_numpy-py27
+g++ -fPIC -Wall -O3 -ffast-math -msse2 -shared -o process_RNe.so src/process_RNe.cpp  -I /home/kawahara/anaconda3/pkgs/python-3.6.18-h15b4118_1/include/python3.6 -lboost_python-py36 -lboost_numpy-py36
 
-cp process_RNe.so /home/kawahara/anaconda3/envs/py27/lib/python2.7/site-packages/pyird-0.0.0-py2.7.egg/pyird/
+cp process_RNe.so /home/kawahara/anaconda3/envs/py36/lib/python3.6/site-packages/pyird-0.0.0-py3.6.egg/pyird/
 
 
 
@@ -19,29 +19,33 @@ Recommended environment:
 
 ```
 conda config --add channels http://ssb.stsci.edu/astroconda
-conda create -n iraf27 python=2.7 iraf-all pyraf-all stsci
-source activate iraf27
+conda create -n iraf36 python=3.6 iraf-all pyraf-all stsci
+source activate iraf36
 mkdir ~iraf
 cd iraf
 mkiraf
 ```
 
+
+
+
+for the use of T.Hirano's code
+-----------------------------------
+
 Install boost (>1.63)
 
-Compile such as (this is for python 27)
+Compile such as (this is for python 36)
 
 ```
-g++ -fPIC -Wall -O3 -ffast-math -msse2 -shared -o process_RNe.so process_RNe.cpp  -I /home/kawahara/anaconda3/pkgs/python-2.7.18-h15b4118_1/include/python2.7 -lboost_python-py27 -lboost_numpy-py27
+g++ -fPIC -Wall -O3 -ffast-math -msse2 -shared -o process_RNe.so process_RNe.cpp  -I /home/kawahara/anaconda3/pkgs/python-3.6.18-h15b4118_1/include/python3.6 -lboost_python-py36 -lboost_numpy-py36
 ```
 
+for the use of hdsis_ecf
+----------------------
 
 ```
 cp pyraf/scripts/hdsis_ecf.cl /home/kawahara/.iraf/scripts/
 ```
-
-
-
-python setup.py install
 
 Classes
 ------------------
