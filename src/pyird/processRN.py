@@ -21,10 +21,11 @@ def wrap_kawahara_processRN(filen,filemask,fitsout):
     imgorig=np.copy(img)
     #print("# of Masked pix is "+str(len(img[mask])))
     img[mask]=None
-    
+
+    #Large Scale Distribution
     check=large_scaled.check_mask_filling(mask,Ncor=64)
     if check:
-        LSD=large_scaled.get_LSD(img,gpscale=64,Ncor=64,sigma=0.001)
+        LSD=large_scaled.get_LSD(img,gpscale=1024,Ncor=64,sigma=0.001)
     else:
         sys.exit("exit")
     ###############################
@@ -37,7 +38,6 @@ def wrap_kawahara_processRN(filen,filemask,fitsout):
     hdu = pyf.PrimaryHDU(cimg, header)
     hdulist = pyf.HDUList([hdu])
     hdulist.writeto(fitsout,overwrite=True)
-
 
 def wrap_hirano_processRN(filen="raw/IRDA00003502_rb.fits",filemmf="../../destripe_codes/combined/mask_from_white_mmf12_201906_yj.fits",fitsout="obj/r03502.fits"):
     

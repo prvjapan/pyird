@@ -15,7 +15,7 @@ def check_mask_filling(mask,Ncor=64):
         check=True
     return check
 
-def get_LSD(img,gpscale=64,Ncor=64,sigma=0.001):
+def get_LSD(img,gpscale=1024,Ncor=64,sigma=0.001):
     stacked_array=[]
     for i in range(0,Ncor):
         for j in range(0,Ncor):

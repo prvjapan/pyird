@@ -41,7 +41,6 @@ def GP2D(Dmat,sigma,xscale,yscale):
     #    Dest = Dmat - (sigma**2)*(Ux@P@Uy.T)
     return Dest
 
-
 def GP2Dcross(Dmat,Dpre,sigma,xscale,yscale):
     rat=np.array(np.shape(Dpre))/np.array(np.shape(Dmat))
     Nx,Ny=np.shape(Dmat)

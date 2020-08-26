@@ -13,7 +13,7 @@ META_PATH = os.path.join("src", "pyird", "__init__.py")
 CLASSIFIERS = [
     "Programming Language :: Python",
 ]
-INSTALL_REQUIRES = ["numpy","pyraf"]
+INSTALL_REQUIRES = ["numpy","pyraf","tqdm","scipy"]
 
 # END PROJECT SPECIFIC
 
