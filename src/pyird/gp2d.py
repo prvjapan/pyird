@@ -19,7 +19,7 @@ def Matern32(obst,tau):
     return K
 
 def Matern32cross(obst,pret,tau):
-    Dt = pret - np.array([obst]).T
+    Dt = obst - np.array([pret]).T
     fac=np.sqrt(3.0)*np.abs(Dt)/tau
     K=(1.0+fac)*np.exp(-fac)
     return K

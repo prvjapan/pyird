@@ -13,23 +13,26 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='wav cal reference')
     parser.add_argument('-f', nargs=1,help='1D multispec fits',type=str)
     parser.add_argument('-o', nargs=1,help='order',type=int)
+    parser.add_argument('-c', nargs=1,help='channel list',type=str)
+
     parser.add_argument('-s', default=[0],nargs=1,help='offset value, for SMF/YJ probably set 1. Depending on position. 1-51 or 1-52',type=int)
 
     args = parser.parse_args()        
     offset=args.s[0]
     hd=fits.open(args.f[0])
     dat=(hd[0].data)
-    if np.shape(dat)[0] == 21:
-        chanfile="../../data/channel_H.list"
-        norder=21
-    elif np.shape(dat)[0] == 51:
-        chanfile="../../data/channel_YJ.list"
-        norder=51
-    elif np.shape(dat)[0] == 52:
-        chanfile="../../data/channel_YJ.list"
-        norder=51
+    if args.c:
+        chanfile=args.c[0]
     else:
-        sys.exit("1D multispec is abnormal")
+        if np.shape(dat)[0] == 21:
+            chanfile="../../data/channel_H.list"
+            norder=21
+        elif np.shape(dat)[0] > 45:
+            chanfile="../../data/channel_YJ.list"
+            norder=np.shape(dat)[0]
+        else:
+            sys.exit("1D multispec is abnormal. Set chanfile (-c) by yourself.")
+            
     pdat=pd.read_csv(chanfile,delimiter=",")
 
     if args.o:
