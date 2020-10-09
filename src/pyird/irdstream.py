@@ -3,8 +3,10 @@ from pyird.fitsset import FitsSet
 from pyraf import iraf
 from pyird import IRD_bias_sube
 from pyird import processRN
+from pyird import directory_util
 import tqdm
 import os 
+import sys
 __all__ = ['Stream1D','Stream2D']
 
 class Stream1D(FitsSet):    
@@ -189,20 +191,28 @@ class Stream2D(FitsSet):
     def extract1D(self,apref,wavref=None,extin="_rb",extout="_rb_1d",extwout="_rb_1dw"):
         currentdir=os.getcwd()
         os.chdir(str(self.anadir))
-        apref_path=apref.path(string=False,check=True)[0].name #ref_ap
+
+        #check database
+        if not (self.anadir/"database").exists():
+            os.mkdir("database")
+
+        #COPYING ref file
+        apref_path=directory_util.cp(self.anadir,apref,"ap")
         
         ext_noexist, extoned_noexist = self.check_existence(extin,extout)
         iraf.imred()
         iraf.eche()
 
         for i,fitsid in enumerate(tqdm.tqdm(ext_noexist)):
-            iraf.apall(input=ext_noexist[i],output=extoned_noexist[i],find="n",recenter="n",resize="n",edit="n",trace="n",fittrace="n",extract="y",references=apref_path,review="n",interactive="n")
+            iraf.apall(input=ext_noexist[i],output=extoned_noexist[i],find="n",recenter="n",resize="n",edit="n",trace="n",fittrace="n",extract="y",references=apref_path.name,review="n",interactive="n")
 
         if wavref != None:
-            wavref_path=wavref.path(string=False,check=True)[0].name #wav ref
+            #CHECKING ecfile in database            
+            wavref_path=directory_util.cp(self.anadir,wavref,"ec")
+
             ext_noexist, extonedw_noexist = self.check_existence(extin,extwout)
             for i,fitsid in enumerate(tqdm.tqdm(ext_noexist)):
-                iraf.refs(input=extoned_noexist[i],references=wavref_path,select="match")
+                iraf.refs(input=extoned_noexist[i],references=wavref_path.name,select="match")
                 iraf.dispcor(input=extoned_noexist[i],output=extonedw_noexist[i],flux="no")
             
         os.chdir(currentdir)
@@ -225,3 +235,4 @@ class Stream2D(FitsSet):
             print("Skipped "+str(skip)+" files because they already exists.")
 
         return ext_noexist, extf_noexist
+
