@@ -2,15 +2,9 @@
 
 Free from messy directory and file management of IRD analysis.
 
-INSTALL
+BASIC INSTALL
 ------------------------------------------
 python setup.py install
-
-g++ -fPIC -Wall -O3 -ffast-math -msse2 -shared -o process_RNe.so src/process_RNe.cpp  -I /home/kawahara/anaconda3/pkgs/python-3.6.18-h15b4118_1/include/python3.6 -lboost_python-py36 -lboost_numpy-py36
-
-cp process_RNe.so /home/kawahara/anaconda3/envs/py36/lib/python3.6/site-packages/pyird-0.0.0-py3.6.egg/pyird/
-
-
 
 Requirements
 ------------------------------------------
@@ -38,7 +32,9 @@ Compile such as (this is for python 36)
 
 ```
 g++ -fPIC -Wall -O3 -ffast-math -msse2 -shared -o process_RNe.so process_RNe.cpp  -I /home/kawahara/anaconda3/pkgs/python-3.6.18-h15b4118_1/include/python3.6 -lboost_python-py36 -lboost_numpy-py36
+cp process_RNe.so /home/kawahara/anaconda3/envs/py36/lib/python3.6/site-packages/pyird-0.0.0-py3.6.egg/pyird/
 ```
+
 
 for the use of hdsis_ecf
 ----------------------
