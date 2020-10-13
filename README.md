@@ -20,6 +20,7 @@ cd iraf
 mkiraf
 ```
 
+See samples/
 
 
 
