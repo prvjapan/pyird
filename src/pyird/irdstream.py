@@ -11,7 +11,7 @@ __all__ = ['Stream1D','Stream2D']
 
 class Stream1D(FitsSet):    
     def __init__(self, streamid, rawdir, anadir, rawtag="IRDA000", extension=""):
-        super(Stream1D,self).__init__(rawtag, rawdir, extension="")
+        super(Stream1D,self).__init__(rawtag, rawdir, extension=extension)
         self.streamid = streamid
         self.anadir = anadir
         self.unlock=False
