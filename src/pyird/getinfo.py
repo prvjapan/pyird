@@ -1,4 +1,6 @@
 from astroquery.simbad import Simbad
+from astropy.coordinates import SkyCoord, EarthLocation
+from astropy import units as u
 
 def get_radec(name):
     """get ra and dec from name via Simbad
