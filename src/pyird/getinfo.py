@@ -1,15 +1,23 @@
+"""get information
+
+
+"""
+
 from astroquery.simbad import Simbad
-from astropy.coordinates import SkyCoord, EarthLocation
+from astropy.coordinates import SkyCoord
 from astropy import units as u
 
 def get_radec(name):
-    """get ra and dec from name via Simbad
-    Args:
-       name: object name
-    Returns:
-       ra in degree
-       dec in degree
+    """Get ra and dec from name via Simbad
+
+     Args:
+         name: object name
+
+     Returns:
+         ra in degree
+         dec in degree
     """
+    
     Simbad.SIMBAD_URL = "http://simbad.u-strasbg.fr/simbad/sim-script"
     Simbad.add_votable_fields("sp","flux(V)","flux(R)","flux(J)","flux(H)","flux(K)")                
     result_table = Simbad.query_object(name)

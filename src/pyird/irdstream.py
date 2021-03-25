@@ -1,3 +1,7 @@
+"""File stream for IRD analysis
+
+"""
+
 import pathlib
 from pyird.fitsset import FitsSet
 from pyraf import iraf
@@ -11,6 +15,12 @@ __all__ = ['Stream1D','Stream2D']
 
 class Stream1D(FitsSet):    
     def __init__(self, streamid, rawdir, anadir, rawtag="IRDA000", extension=""):
+        """initialization
+        Args:
+           streamid: ID for stream
+           rawdir: directory where the raw data are
+           anadir: directory in which the processed file will put
+        """
         super(Stream1D,self).__init__(rawtag, rawdir, extension=extension)
         self.streamid = streamid
         self.anadir = anadir
@@ -48,6 +58,13 @@ class Stream1D(FitsSet):
         
 class Stream2D(FitsSet):    
     def __init__(self, streamid, rawdir, anadir, rawtag="IRDA000", extension=""):
+        """initialization
+        Args:
+           streamid: ID for stream
+           rawdir: directory where the raw data are
+           anadir: directory in which the processed file will put
+        """
+
         super(Stream2D,self).__init__(rawtag, rawdir, extension="")
         self.streamid = streamid
         self.rawdir = rawdir
@@ -96,16 +113,22 @@ class Stream2D(FitsSet):
                 print("rm old "+self.extpath(extension,check=False,string=True)[i])
 
     
-    def remove_bias(self,rot=None,method = 'reference',hotpix_img = None):
+    def remove_bias(self,rot=None,method = 'reference',hotpix_img = None, info=False):
         print("Bias Correction by M. KUZUHARA.")
+        if info:
+            print("remove_bias: files=")
+            print(self.rawpath)
         if rot=="r":
             print("180 degree rotation applied.")
         IRD_bias_sube.main(self.anadir,self.rawpath, method,rot,hotpix_im = hotpix_img)
         self.fitsdir=self.anadir
         self.extension="_rb"
 
-    def rm_readnoise(self,maskfits,extin="_rb",extout="_rbo"):
+    def rm_readnoise(self,maskfits,extin="_rb",extout="_rbo",info=False):
         print("READ NOISE REDUCTION by H. Kawahara (OEGP).")
+        if info:
+            print("rm_readnoise: fits=")
+            print(maskfits)
         currentdir=os.getcwd()
         os.chdir(str(self.anadir))
 
@@ -189,6 +212,11 @@ class Stream2D(FitsSet):
         os.chdir(currentdir)
         
     def extract1D(self,apref,wavref=None,extin="_rb",extout="_rb_1d",extwout="_rb_1dw"):
+        """extract 1D specctra using IRAF/apall
+        Args:
+            apref: aperture reference
+            wavref: wavelength reference
+        """
         currentdir=os.getcwd()
         os.chdir(str(self.anadir))
 
@@ -229,6 +257,7 @@ class Stream2D(FitsSet):
                 extf_noexist.append(str(extfi.name))
                 ext_noexist.append(str(ext[i].name))
             else:
+                print(str(extfi.name),str(ext[i].name))
                 skip=skip+1
             
         if skip>1:

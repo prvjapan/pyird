@@ -1,10 +1,17 @@
-.. exojax documentation master file, created by
+.. pyird documentation master file, created by
    sphinx-quickstart on Mon Jan 11 14:38:51 2021.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-ExoJAX
+pyird
 ==================================
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Tutorial:
+
+   ./tutorial.rst
+
 
 .. toctree::
    :maxdepth: 1
@@ -17,7 +24,7 @@ ExoJAX
 License & Attribution
 ---------------------
 
-Copyright 2021 Hajime Kawahara.
+Copyright 2021 Hajime Kawahara, Masayuki Kuzuhara.
 
 PYIRD is free software made available under the MIT License. For details
 see the ``LICENSE``.

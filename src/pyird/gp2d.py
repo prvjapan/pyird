@@ -1,8 +1,20 @@
+"""Gaussian Process 2D
+
+
+"""
+
 from numpy import linalg as LA
 import scipy
 import numpy as np
 
 def RBF(obst,tau):
+    """RBF kernel
+    Args:
+        obst: variable
+        tau: scale
+    Returns
+        K
+    """
     Dt = obst - np.array([obst]).T
     K=np.exp(-(Dt)**2/2/(tau**2))
     return K
