@@ -1,0 +1,30 @@
+import matplotlib.pyplot as plt
+
+def plotmask(maskfits,obj):
+    """
+    Args:
+        maskfits: fitsset of mask
+        obj: fitsset of target/flat
+    """
+    from scipy.stats import median_absolute_deviation as mad
+    import numpy as np
+    darr=maskfits.data()
+    cimg=obj.data()
+    dimg=np.copy(cimg)
+    mmask=darr==0
+    cimg[mmask]=None
+    mmask=darr>0
+    dimg[mmask]=None
+    
+    madx=mad((dimg).flatten())
+    med=np.median((dimg).flatten())
+    
+    fig=plt.figure()
+    ax=fig.add_subplot(121)
+    c=plt.imshow(cimg,vmin=med-5*madx, vmax=med+5*madx)
+    plt.colorbar(c,shrink=0.5)
+    ax=fig.add_subplot(122)
+    d=plt.imshow(dimg,vmin=med-5*madx, vmax=med+5*madx)
+    plt.colorbar(d,shrink=0.5)    
+    plt.show()
+    

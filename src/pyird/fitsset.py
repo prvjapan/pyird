@@ -19,8 +19,36 @@ class FitsSet(object):
         self.fitsid = None
         self.unlock=True #unlock for cleanning (i.e. remove)
         self.not_ignore_warning=True
+
+    def data(self,indices=None):
+        """get header and data in an array form
+        Args:
+            indices: indices of fitsset, if None, 0 is used
+
+        Returns:
+            array of data
+        """
+        import astropy.io.fits as pyf
+        import numpy as np
+        if indices==None:
+            hdulist=pyf.open(np.array(self.path(string=True))[0])
+            hdu=hdulist[0]
+            return np.array(hdu.data)
+            
+        
+        data_arr=[]
+        for filen in np.array(self.path(string=True))[np.array(indices)]:
+            hdulist=pyf.open(filen)
+            hdu=hdulist[0]
+            data_arr.append(np.array(hdu.data))
+        return data_arr
         
     def path(self,string=False,check=True):
+        """get path array
+        
+        Returns:
+            array of paths
+        """
         fitsarray=[]
         if self.fitsid is None:
             d=self.fitsdir/(self.tag+self.extension+".fits")
@@ -44,7 +72,9 @@ class FitsSet(object):
         return fitsarray
 
     def clean(self):
-        #Clean i.e. remove fits files if exists.
+        """Clean i.e. remove fits files if exists.
+
+        """
         import os
         if self.unlock:
             for i in range(len(self.path())):
@@ -53,6 +83,10 @@ class FitsSet(object):
                     print("rm old "+self.path(check=False,string=True)[i])
     
     def at_list(self,listname="tmp"):
+        """make at list used in IRAF
+
+        """
+
         listname=listname+".list"
         atlistname=str(self.fitsdir/listname)
         f=open(atlistname,mode="w")
