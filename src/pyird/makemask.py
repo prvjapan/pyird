@@ -1,18 +1,14 @@
 ############################
-## Code Name:  mask_maskimg
-## Author(s): M. Kuzuhara (ABC)
-## Email: m.kuzuhara@nao.ac.jp
-## Last Update: 2019-01-08
-## included and modified for pyird by H. Kawahara
 """
 
-This script makes a mask image, where spectra regions have counts 1000, using iraf "apmask" and a previously-generated iraf configration database for spectrum extraction such as the one made via "apall". 
+Note:
+    This script makes a mask image, where spectra regions have counts 1000, using iraf "apmask" and a previously-generated iraf configration database for spectrum extraction such as the one made via "apall". 
 
-To use this script, you need to put "database" directory on your working directory, and the database directory needs to have the correcting configuration database. 
-
-usage>
-
-python make_maskimg.py "NAME_of_configration" (like white_mmf1_18Oct_yj)
+- Code Name:  mask_maskimg
+- Author(s): M. Kuzuhara (ABC)
+- Email: m.kuzuhara@nao.ac.jp
+- Last Update: 2019-01-08
+- included and modified for pyird by H. Kawahara
 
  
 """
@@ -27,9 +23,11 @@ import pathlib
 from astropy.io import fits
 
 def makemsk(anadir,reffitlist=[],directfitslist=[],directfits_criterion=[],directrot=[]):
-    # reffit uses ap info
-    # directfits uses fits image directly
-    #mv to anadir
+    """ make mask
+    Args:
+        anadir: directory for analysis
+    
+    """
     currentdir=os.getcwd() 
     os.chdir(anadir)
     ### uniform mask ###

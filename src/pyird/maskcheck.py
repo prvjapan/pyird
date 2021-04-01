@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-def plotmask(maskfits,obj):
+def plotmask(maskfits,obj,vmin=None,vmax=None):
     """
     Args:
         maskfits: fitsset of mask
@@ -19,12 +19,12 @@ def plotmask(maskfits,obj):
     madx=mad((dimg).flatten())
     med=np.median((dimg).flatten())
     
-    fig=plt.figure()
+    fig=plt.figure(figsize=(20,10))
     ax=fig.add_subplot(121)
-    c=plt.imshow(cimg,vmin=med-5*madx, vmax=med+5*madx)
+    c=plt.imshow(cimg,vmin=vmin, vmax=vmax)
     plt.colorbar(c,shrink=0.5)
     ax=fig.add_subplot(122)
-    d=plt.imshow(dimg,vmin=med-5*madx, vmax=med+5*madx)
+    d=plt.imshow(dimg,vmin=vmin, vmax=vmax)
     plt.colorbar(d,shrink=0.5)    
     plt.show()
     
