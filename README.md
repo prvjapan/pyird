@@ -14,7 +14,7 @@ Recommended environment:
 ```
 conda config --add channels http://ssb.stsci.edu/astroconda
 conda create -n iraf37 python=3.7 iraf-all pyraf-all ds9
-source activate iraf36
+source activate iraf3
 mkdir ~iraf
 cd iraf
 mkiraf
