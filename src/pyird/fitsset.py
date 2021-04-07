@@ -99,7 +99,7 @@ class FitsSet(object):
     def imcombine(self,tag,combine="median"):
         combined_fitsset=FitsSet(tag,self.fitsdir)
         combined_fitsset.clean()
-        iraf.imcombine(input=self.at_list(listname=tag),output=combined_fitsset.path(check=False)[0],combine=combine)
+        iraf.imcombine(input=self.at_list(listname=tag),output=combined_fitsset.path(check=False)[0],combine=combine)        
         return combined_fitsset
     
     def apall(self,apref,wavref=None,extout="_1d",extwout="_1dw"):

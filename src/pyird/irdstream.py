@@ -66,6 +66,7 @@ class Stream2D(FitsSet):
         """
 
         super(Stream2D,self).__init__(rawtag, rawdir, extension="")
+        
         self.streamid = streamid
         self.rawdir = rawdir
         self.anadir = anadir

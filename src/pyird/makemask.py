@@ -21,6 +21,7 @@ import glob
 import os
 import pathlib
 from astropy.io import fits
+import sys
 
 def makemsk(anadir,reffitlist=[],directfitslist=[],directfits_criterion=[],directrot=[]):
     """ make mask
@@ -28,14 +29,16 @@ def makemsk(anadir,reffitlist=[],directfitslist=[],directfits_criterion=[],direc
         anadir: directory for analysis
     
     """
-    currentdir=os.getcwd() 
-    os.chdir(anadir)
+    #### Moving analysis directory
+    iraf.cd(str(anadir))
+    print("Working at ",iraf.pwd())
+    
     ### uniform mask ###
     if len(reffitlist)==0 and len(directfitslist)==0:
         dummy = np.zeros((2048,2048))
         fits.writeto("mask_uniform.fits", dummy)
         return
-    
+
     outputf="mask_from"
     for reffits in reffitlist:
        outputf=outputf+"_"+reffits
@@ -57,7 +60,7 @@ def makemsk(anadir,reffitlist=[],directfitslist=[],directfits_criterion=[],direc
         dummy[block_region_y0:block_region_y1,:] = 0.
         dummy_fits_name = "dummy_formsk_" + str(time.time()) + ".fits"
         fits.writeto(dummy_fits_name, dummy) 
-
+        
         temporary_mask_pl = "tmp_" + str(time.time())
         iraf.apmask(input = dummy_fits_name, output = temporary_mask_pl, 
                     references = reff,
@@ -71,6 +74,7 @@ def makemsk(anadir,reffitlist=[],directfitslist=[],directfits_criterion=[],direc
         else:
             iraf.imar(dummy_fits_name, "*", temporary_mask_pl + ".pl", \
                       dummy_fits_name_out)
+
             dumout.append(dummy_fits_name_out)
 
     if len(reffitlist)>1:
@@ -83,7 +87,6 @@ def makemsk(anadir,reffitlist=[],directfitslist=[],directfits_criterion=[],direc
             iraf.imar(dummy_fits_name, "+", dumout[l+1], \
                       dummy_fits_name_swap)
             dummy_fits_name=dummy_fits_name_swap
-        
         
     dumdirect=[]
     if len(directfitslist)>0:
@@ -101,9 +104,11 @@ def makemsk(anadir,reffitlist=[],directfitslist=[],directfits_criterion=[],direc
             dmimg=np.zeros(np.shape(img))
             dmimg[img>crit]=1000.0
             dumdirect.append(dmimg)
-            
-    ################
-    msk_tmp = fits.open(outputf + ".fits")[0].data
+    try:
+        msk_tmp = fits.open(outputf + ".fits")[0].data
+    except:
+        print("Failed. Probably no ref file or directory mismatch.")
+        sys.exit()
     msk_tmp=np.array(msk_tmp)
     if len(directfitslist)>0:
         for l,fitsimg in enumerate(directfitslist):
@@ -111,8 +116,8 @@ def makemsk(anadir,reffitlist=[],directfitslist=[],directfits_criterion=[],direc
     msk_tmp[msk_tmp>1000]=1000.0
     iraf.imdel(outputf + ".fits")
     fits.writeto(outputf + ".fits", msk_tmp)
-       
-    os.chdir(currentdir)
+        
+
     return outputf
 
 #if __name__ == "__main__":
