@@ -102,7 +102,7 @@ class FitsSet(object):
         iraf.imcombine(input=self.at_list(listname=tag),output=combined_fitsset.path(check=False)[0],combine=combine)        
         return combined_fitsset
     
-    def apall(self,apref,wavref=None,extout="_1d",extwout="_1dw"):
+    def apall(self,apref,wavref=None,extout=".ec",extwout="_1dw"):
         """apall
         Args:
            apref: reference aperture

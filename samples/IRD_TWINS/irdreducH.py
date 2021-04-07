@@ -41,6 +41,10 @@ combined_thars1=thars1.imcombine("combined_thars1")
 #Apall 1D Flat
 combined_flat=fitsset.FitsSet("combined_flat_rb",anadir)
 apref_target=fitsset.FitsSet("refA",anadir) #aperture reference
+
+
+#YOU NEED WAVLENGTH CALIBRATION HERE
+
 wavref_target=fitsset.FitsSet("combined_thars1.ec",anadir) #wave reference
 combined_flat.apall(apref_target,wavref_target)
 
