@@ -44,6 +44,7 @@ if __name__ == "__main__":
             ),
             "write_to_template": '__version__ = "{version}"\n',
         },
+        version='0.0.1',
         author=find_meta("author"),
         author_email=find_meta("email"),
         maintainer=find_meta("author"),
