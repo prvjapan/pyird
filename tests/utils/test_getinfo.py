@@ -1,5 +1,5 @@
 import pytest
-from pyird.getinfo import get_radec
+from pyird.utils.getinfo import get_radec
 
 
 def test_get_radec():
