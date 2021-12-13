@@ -21,15 +21,24 @@ if __name__ == "__main__":
     offset=args.s[0]
     hd=fits.open(args.f[0])
     dat=(hd[0].data)
+    ssw=False
+    if np.shape(dat)[0] == 2048:
+        print("WARNING")
+        print("The Input is probably 2D image. Use 1D fits.")
+        ssw=True
+        
     if args.c:
         chanfile=args.c[0]
     else:
         if np.shape(dat)[0] == 21:
             chanfile="../../data/channel_H.list"
             norder=21
+            print("H band")
         elif np.shape(dat)[0] > 45:
             chanfile="../../data/channel_YJ.list"
             norder=np.shape(dat)[0]
+            print("YJ band")
+
         else:
             sys.exit("1D multispec is abnormal. Set chanfile (-c) by yourself.")
             
@@ -53,6 +62,9 @@ if __name__ == "__main__":
         
         fig=plt.figure(figsize=(15,12))        
         ax=fig.add_subplot(211)
+        if ssw:
+            pos=(np.min(med)+np.max(med)*1.05)/2.0
+            plt.text(0.0,pos,"WARNING: INPUT IS PROBABLY 2D FITS.",fontsize=50, color="red")
         ax.plot(med,".")
         ax.plot(dat[i,:],alpha=0.3)
         plt.ylim(np.min(med),np.max(med)*1.05)

@@ -25,8 +25,16 @@ import sys
 
 def makemsk(anadir,reffitlist=[],directfitslist=[],directfits_criterion=[],directrot=[]):
     """ make mask
+
     Args:
         anadir: directory for analysis
+        reffitlist: mask fits made by apall
+        directfitslist: direct fits
+        directfits_criterion: criterion for directfits
+        directrot: if True, rotate image in 90 deg.
+
+    Examples:
+        makemask.makemsk(str(anadir),["refC"],["hotpixel_200709_h","MMF"],[0.99,20.0],[True,False])
     
     """
     #### Moving analysis directory
