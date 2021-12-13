@@ -142,28 +142,6 @@ class Stream2D(FitsSet):
 
         os.chdir(currentdir)
         
-    def rm_readnoise_spline(self,maskfits):
-        print("READ NOISE REDUCTION by T. Hirano.")
-        rbn=self.extpath("_rbn",string=False,check=False)
-        rb=self.extpath("_rb",string=True,check=False)
-
-        rbn_noexist=[]
-        rb_noexist=[]
-        skip=0
-        for i,rbni in enumerate(rbn):
-            if not rbni.exists():
-                rbn_noexist.append(str(rbni))
-                rb_noexist.append(str(rb[i]))
-            else:
-                skip=skip+1
-            
-        if skip>1:
-            print("Read Noise Correction: Skipped "+str(skip)+" files because they already exists.")
-
-        for i,fitsid in enumerate(tqdm.tqdm(rb_noexist)):
-            processRN.wrap_hirano_processRN(filen=rb_noexist[i],filemmf=maskfits.path()[0],fitsout=rbn_noexist[i])
-        self.fitsdir=self.anadir
-        self.extension="_rbn"
 
     def flatfielding1D(self,apflat,apref,wavref=None,extin="_rb",extout="_rb_f1d",extwout="_rb_f1dw",lower=-1,upper=2,badf="none"):
         iraf.task(hdsis_ecf = "home$scripts/hdsis_ecf.cl")

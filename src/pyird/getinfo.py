@@ -21,7 +21,7 @@ def get_radec(name):
     Simbad.SIMBAD_URL = "http://simbad.u-strasbg.fr/simbad/sim-script"
     Simbad.add_votable_fields("sp","flux(V)","flux(R)","flux(J)","flux(H)","flux(K)")                
     result_table = Simbad.query_object(name)
-    namex=result_table["MAIN_ID"][0].decode('utf-8')
+    namex=result_table["MAIN_ID"][0]#.decode('utf-8')
     ra=result_table["RA"][0]
     dec=result_table["DEC"][0]
     c = SkyCoord(str(ra)+" "+str(dec), unit=(u.hourangle, u.deg)) 
