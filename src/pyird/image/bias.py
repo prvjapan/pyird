@@ -52,10 +52,11 @@ def bias_subtract(image):
     ref2x=(image_split[:,:,ysize-margin:ysize])
     ref=np.concatenate([ref1x,ref2x],axis=2) # both margin image (Nch, ch_pix_num, 2*margin)
     meancp=[]
-    for ch_num in range(Nch):
-        cp=stats.sigmaclip(ref[ch_num,:,:], snclip, snclip)[0]
-        meancp.append(np.nanmedian(cp))
-    meancp=np.array(meancp)
+#    for ch_num in range(Nch):
+#        cp=stats.sigmaclip(ref[ch_num,:,:], snclip, snclip)[0]
+#        meancp.append(np.nanmedian(cp))
+#    meancp=np.array(meancp)
+    meancp=np.zeros(Nch)
     unbias_stripe=image_split-meancp[:,np.newaxis,np.newaxis]
     image_rmbias=(unbias_stripe.reshape(Nch*ch_pix_num, 2048)).T
     return image_rmbias
