@@ -3,8 +3,8 @@
 """
 
 import pathlib
-from pyird.fitsset import FitsSet
-from pyraf import iraf
+from pyird.utils.fitsset import FitsSet
+#from pyraf import iraf
 from pyird import IRD_bias_sube
 from pyird import processRN
 from pyird import directory_util

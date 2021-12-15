@@ -9,7 +9,7 @@ def test_rmbias():
     channel_cube=image_to_channel_cube(a)    
     c=bias_subtract(channel_cube)
     image_rmbias=channel_cube_to_image(c)
-    assert (np.abs(np.sum(image_rmbias)-33139.3454845)) < 1.e-8
+    assert (np.abs(np.sum(image_rmbias)+10613.724679286175)) < 1.e-8
 
 if __name__=="__main__":
     test_rmbias()

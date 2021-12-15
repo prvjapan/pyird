@@ -5,6 +5,32 @@ from pyird import maskcheck as mc
 import sys
 import fitsids
 
+def IRDBD_Stream2D(mode="YJ"):
+    datadir,anadir,flatdatadir=directories(mode=mode)
+    
+    #Define Stream2D from raw data
+    targets=irdstream.Stream2D("targets",datadir,anadir)
+    targets.fitsid=\
+    list(range(42306,42324,2))\
+    +list(range(42548,42550,2))
+    
+    flat_mmf=irdstream.Stream2D("flat_mmf",flatdatadir,anadir)
+    flat_mmf.fitsid=\
+    list(range(41704,41904,2))
+
+#    thar strong
+    thars1=irdstream.Stream2D("thars1",datadir,anadir)
+    thars1.fitsid=list(range(42364,42440,2)) #THARSTAR
+    
+    if mode=="YJ":
+        print("YJ band")
+    elif mode=="H":
+        print("H band")
+        targets.fitsid_increment()
+        flat_mmf.fitsid_increment()
+        thars1.fitsid_increment()
+        
+    return targets, flat_mmf, thars1
 
 targets, flat_mmf, thars1=fitsids.IRDBD_Stream2D(mode="H")
 datadir,anadir,fdatadir=fitsids.directories(mode="H")
