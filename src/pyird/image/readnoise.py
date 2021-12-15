@@ -131,33 +131,6 @@ def extract_pattern_OEGP(img,channel_cube,xscale=10,yscale=5,sigma=0.01,cgdmode=
     Nch, ch_pix_num, xsize=np.shape(channel_cube)
     noechan=int(Nch/2) #number of odd or even channel
     nSRN=int(ch_pix_num/2)
-
-    a=channel_cube[0::2,0::2,:]
-    b=channel_cube[0::2,1::2,:]
-    c=channel_cube[1::2,-1::-2,:]
-    d=channel_cube[1::2,-2::-2,:]
-
-    
-    ##folding
-    subcubea=[]
-    subcubeb=[]
-    subcubec=[]
-    subcubed=[]
-
-    for jchan in range(0,Nch):
-        arr=img[jchan*ch_pix_num:(jchan+1)*ch_pix_num,:]
-        if np.mod(jchan,2)==0:
-            subcubea.append(arr[0::2,:])
-            subcubeb.append(arr[1::2,:])
-        else:
-            subcubec.append(arr[-1::-2,:])
-            subcubed.append(arr[-2::-2,:])
-    subcubea=np.array(subcubea)
-    print(subcubea[0,0,:])
-    print(a[0,0,:])
-    print(np.shape(a))
-    import sys
-    sys.exit()
             
     #here
     subcube_median=np.nanmedian(subcube,axis=(1,2))
