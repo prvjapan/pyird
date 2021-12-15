@@ -15,8 +15,9 @@ def bias_subtract(channel_cube):
        channel_cube: channel cube
 
     Returns:
-       unbiased_channel_cube: channel cube
-
+       unbiased channel cube
+       bias for channels
+        
     """
     snclip = 3.0 #clipping value
     ref=bias_region(channel_cube,margin=4)    
@@ -25,9 +26,8 @@ def bias_subtract(channel_cube):
         cp=stats.sigmaclip(ref[ch_num,:,:], snclip, snclip)[0]
         meancp.append(np.nanmedian(cp))
     meancp=np.array(meancp)
-    print(meancp)
     unbias_channel_cube=channel_cube-meancp[:,np.newaxis,np.newaxis]
-    return unbias_channel_cube
+    return unbias_channel_cube, meancp
 
 if __name__=="__main__":
     import numpy as np
@@ -57,8 +57,8 @@ if __name__=="__main__":
     #np.random.seed(1)
     #a=np.random.normal(0.0,1.0,(2048,2048))    
     channel_cube=image_to_channel_cube(im)
-    c=bias_subtract(channel_cube)
-    image_rmbias=channel_cube_to_image(c)
+    bias_subtracted_channel_cube, channel_bias=bias_subtract(channel_cube)
+    image_rmbias=channel_cube_to_image(bias_subtracted_channel_cube)
 
     fig=plt.figure()
     ax1=fig.add_subplot(121)
