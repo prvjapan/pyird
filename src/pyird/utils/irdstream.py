@@ -8,6 +8,8 @@ from pyird.utils.fitsset import FitsSet
 from pyird import IRD_bias_sube
 from pyird import processRN
 from pyird import directory_util
+import astropy.io.fits as pyf
+import numpy as np
 import tqdm
 import os 
 import sys
@@ -82,15 +84,36 @@ class Stream2D(FitsSet):
         self.rawpath=self.path(string=False,check=True)
 
     def fitsid_increment(self):
+        """Increase fits id +1
+ 
+        """
         for i in range(0,len(self.fitsid)):
             self.fitsid[i]=self.fitsid[i]+1
         self.rawpath=self.path(string=False,check=True)
             
     def fitsid_decrement(self):
+        """Decrease fits id +1
+ 
+        """
         for i in range(0,len(self.fitsid)):
             self.fitsid[i]=self.fitsid[i]-1
         self.rawpath=self.path(string=False,check=True)
-            
+
+    def load_fitsset(self):
+        """Load fitsset and make imcube
+        
+        Returns:
+           imcube
+
+        """
+        imcube=[]
+        for data in tqdm.tqdm(self.rawpath):
+            im = pyf.open(str(data))[0].data
+            imcube.append(im)
+        return np.array(imcube)
+        
+
+    ############################################################################################
     def extpath(self,extension,string=False,check=True):
         f=self.fitsdir
         e=self.extension
@@ -113,7 +136,8 @@ class Stream2D(FitsSet):
                 os.remove(self.extpath(extension,check=False,string=True)[i])
                 print("rm old "+self.extpath(extension,check=False,string=True)[i])
 
-    
+
+                
     def remove_bias(self,rot=None,method = 'reference',hotpix_img = None, info=False):
         print("Bias Correction by M. KUZUHARA.")
         if info:
