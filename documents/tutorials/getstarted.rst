@@ -1,4 +1,4 @@
-tutorial
+Get Started
 =======================
 
 pyird is a code that incorporates Kuzuhara's masking, Kawahara's readout noise processing (you can choose the plain version, but you need to install boost), and the iraf processing part, which can be automated, into a set of fits. Originally, it was a combination of various codes from
@@ -11,7 +11,7 @@ Prepare IRAF environment
 .. code:: sh
 	  
 	  conda config --add channels http://ssb.stsci.edu/astroconda
-	  conda create -n iraf37 python=3.7 iraf-all pyraf-all ds9
+	  conda create -n iraf37 python=3.7 iraf-all pyraf-all stsci ds9
 	  source activate iraf37
 	  mkdir ~iraf
 	  cd iraf
@@ -29,6 +29,21 @@ pyird installation
 	  python setup.py install
 	  cp data/thar_ird2.dat /home/USERS/anaconda3/envs/iraf37/iraf/noao/lib/linelists/
 
+
+doc update
+--------------------
+
+
+.. code:: sh
+	  
+	  python setup.py install
+	  rm -rf documents/pyird
+	  sphinx-apidoc -F -o documents/pyird src/pyird
+	  cd documents
+	  make clean
+	  make html
+
+	  
 - **fitssets**: The annoying thing about parsing is that you have to do the same operation on multiple fits files. In pyird, a set of fits is defined as a fitsset (a set of fits). In pyird, a set of fits is defined as a fitsset, and a single fit is also defined as a set of fits.
 In pyird, a set of fits is defined by a fitsset (a set of fits). For example, bias, readout, unidimensionalization, wavelength assignment, etc. are one-way processes, and each time they are performed, iraf emits a large number of new fits files. This is the reason why stream is defined separately from the fits set. Basically, it is a one-way process, so if a process has been done once and saved in a directory, it will be skipped even if the same instruction is given again.
 There are two types of streams: one for two-dimensional data (the endpoint is one-dimensional), and one for one-dimensional data.
@@ -42,18 +57,21 @@ There are two types of streams: one for two-dimensional data (the endpoint is on
 	  targets=irdstream.Stream2D("targets",datadir,anadir)
 	  targets.fitsid=list(range(42306,42324,2))
 
- When we make all the above odd (YJ+1=H)
+	  
+When we make all the above odd (YJ+1=H)
 
 .. code:: python
 	  
 	  targets.fitsid_increment()
 
- Stream's current location path
+Stream's current location path
+
 .. code:: python
 	  
 	  targets.path()
 	  >[PosixPath('/media/kawahara/kingyo/IRD_TWINS/data/IRDA00042306.fits'), PosixPath('/media/kawahara/kingyo/IRD_TWINS/data/IRDA 00042308.fits'), PosixPath('/media/kawahara/kingyo/IRD_TWINS/data/IRDA00042310.fits'), PosixPath('/media/kawahara/kingyo/IRD_TWINS/ data/IRDA00042312.fits'), PosixPath('/media/kawahara/kingyo/IRD_TWINS/data/IRDA00042314.fits'), PosixPath('/media/kawahara/kingyo/ IRD_TWINS/data/IRDA00042316.fits'), PosixPath('/media/kawahara/kingyo/IRD_TWINS/data/IRDA00042318.fits'), PosixPath('/media/kawahara /kingyo/IRD_TWINS/data/IRDA00042320.fits'), PosixPath('/media/kawahara/kingyo/IRD_TWINS/data/IRDA00042322.fits')]
 	  
+
 Since this is the starting point of the stream, the path of the fits set in the data directory is returned.
 If we print the path again after the bias removal process, we get
 
@@ -64,13 +82,12 @@ If we print the path again after the bias removal process, we get
 	  >[PosixPath('/media/kawahara/kingyo/IRD_TWINS/ana/H/IRDA00042306_rb.fits'), PosixPath('/media/kawahara/kingyo/IRD_TWINS/ana/H/IRDA 00042308_rb.fits'), PosixPath('/media/kawahara/kingyo/IRD_TWINS/ana/H/IRDA00042310_rb.fits'), PosixPath('/media/kawahara/kingyo/IRD_ TWINS/ana/H/IRDA00042312_rb.fits'), PosixPath('/media/kawahara/kingyo/IRD_TWINS/ana/H/IRDA00042314_rb.fits'), PosixPath('/media/ kawahara/kingyo/IRD_TWINS/ana/H/IRDA00042316_rb.fits'), PosixPath('/media/kawahara/kingyo/IRD_TWINS/ana/H/IRDA00042318_rb.fits'), PosixPath('/media/kawahara/kingyo/IRD_TWINS/ana/H/IRDA00042320_rb.fits'), PosixPath('/media/kawahara/kingyo/IRD_TWINS/ana/H/IRDA 00042322_rb.fits')]
 
 
-The path of the bias-removed fits is returned. Note that the path has been moved to the analysis directory, which is pathlib object by default.
-
- Extract the current location data (index=2,3) of Stream.
+The path of the bias-removed fits is returned. Note that the path has been moved to the analysis directory, which is pathlib object by default. Extract the current location data (index=2,3) of Stream.
 
 .. code:: python
 	  
 	  target.data([2,3])
+
 
 Getting started
 -----------------------

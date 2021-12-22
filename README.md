@@ -1,41 +1,7 @@
 # PYIRD
 
-
 Free from messy directory and file management of IRD analysis.
 Currently under heavily construction. Use develop branch for dev.
-
-Requirements
-------------------------------------------
-
-Recommended environment:
-
-```
-conda config --add channels http://ssb.stsci.edu/astroconda
-conda create -n iraf37 python=3.7 iraf-all pyraf-all ds9
-source activate iraf37
-mkdir ~iraf
-cd iraf
-mkiraf
-```
-
-BASIC INSTALL
-------------------------------------------
-python setup.py install
-
-Copy a Th-Ar list to the iraf linelist directory:
-
-```
-cp pyird/data/thar_ird2.dat /home/USERS/anaconda3/envs/iraf37/iraf/noao/lib/linelists/
-```
-
-
-
-for the use of hdsis_ecf
-----------------------
-
-```
-cp pyraf/scripts/hdsis_ecf.cl /home/kawahara/.iraf/scripts/
-```
 
 Classes
 ------------------
