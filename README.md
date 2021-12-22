@@ -44,14 +44,6 @@ Classes
 - irdstream.Stream2D -- 2D fits stream from raw images
 
 
-Scripts
-------------------------------
-
-- makemask.py (by M. Kuzuhara, modified by H. Kawahara)
-- IRD_bias_sube.py (by M. Kuzuhara, modified by H. Kawahara)
-- process_RNe.cpp (by T. Hirano, wrapped by H. Kawahara)
-
-
 Aperture
 ------------------------------
 
