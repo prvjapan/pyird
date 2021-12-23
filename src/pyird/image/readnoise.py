@@ -203,7 +203,7 @@ def extract_pattern_OEGP(img,channel_cube,xscale=10,yscale=5,sigma=0.01,cgdmode=
 
 if __name__=="__main__":
     import numpy as np
-    from pyird.image.channel import image_to_channel_cube, channel_cube_to_image
+    from pyird.image.channel import image_to_channel_cube, channel_cube_to_image, eopixel_split
     from pyird.image.bias import bias_subtract
     from pyird.utils import fitsset,irdstream
     import astropy.io.fits as pyf
@@ -228,19 +228,6 @@ if __name__=="__main__":
     
     #np.random.seed(1)
     #a=np.random.normal(0.0,1.0,(2048,2048))    
-    channel_cube=image_to_channel_cube(im)
-    c=bias_subtract(channel_cube)
-
-    if False:
-        image_rmbias=channel_cube_to_image(c)
-        fig=plt.figure()
-        ax1=fig.add_subplot(121)
-        cc=ax1.imshow(im,vmin=-15.0,vmax=-8.0)
-        plt.colorbar(cc)
-        ax2=fig.add_subplot(122)
-        cc=ax2.imshow(image_rmbias,vmin=-3.0,vmax=4.0)
-        plt.colorbar(cc)    
-        print(mad(im.flatten()),"->",mad(image_rmbias.flatten()))
-        plt.show()
-
-    extract_pattern_OEGP(a.T,channel_cube)
+    channel_cube=image_to_channel_cube(im,revert=True)
+    bias_subtracted_channel_cube, bias=bias_subtract(channel_cube)
+    eop=eopixel_split(bias_subtracted_channel_cube)
