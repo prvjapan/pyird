@@ -64,7 +64,6 @@ def read_trace_file(filename):
 
 
 if __name__=="__main__":
-    import pandas as pd
     filename="/home/kawahara/pyird/data/iraf/aprefA"
     read_trace_file(filename)
 
