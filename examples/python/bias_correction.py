@@ -4,14 +4,21 @@ datadir=pathlib.Path("/home/kawahara/pyird/data/dark/")
 anadir=pathlib.Path("/home/kawahara/pyird/data/dark/")
 dark=irdstream.Stream2D("targets",datadir,anadir)
 dark.fitsid=[41018]
+
+
+import astropy.io.fits as pyf
 for datapath in dark.rawpath:
     im = pyf.open(str(datapath))[0].data
+
+import matplotlib.pyplot as plt
 plt.imshow(im,vmin=-15,vmax=-8)
+plt.title("Raw dark image")
 plt.show()
 
-
+from pyird.image.channel import image_to_channel_cube, channel_cube_to_image
 channel_cube=image_to_channel_cube(im)
 plt.imshow(channel_cube[0,:,:],vmin=-15,vmax=-8)
+plt.title("Channel 0")
 plt.show()
 
 from pyird.image.bias import bias_subtract

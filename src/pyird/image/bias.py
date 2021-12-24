@@ -20,7 +20,7 @@ def bias_subtract(channel_cube):
         
     """
     snclip = 3.0 #clipping value
-    ref=bias_region(channel_cube,margin=4)    
+    ref=bias_region(channel_cube,margin=4)
     meancp=[]
     for ch_num in range(np.shape(channel_cube)[0]):
         cp=stats.sigmaclip(ref[ch_num,:,:], snclip, snclip)[0]

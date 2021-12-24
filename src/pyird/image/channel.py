@@ -55,7 +55,7 @@ def eopixel_split(channel_cube):
        channel cube
 
     Returns:
-       eop tensor (2 [e/o] x Nchannel x xsize x ysize)
+       eo tensor (2 [e/o] x Nchannel x xsize x ysize)
 
     """
     return np.array([channel_cube[:,0::2,:],channel_cube[:,1::2,:]])
@@ -64,7 +64,7 @@ def eopixel_combine(eop):
     """ inverse operation of eopixel_split
 
     Args:
-       eop tensor (2 [e/o] x Nchannel x xsize x ysize)
+       eo tensor (2 [e/o] x Nchannel x xsize x ysize)
 
     Returns:
        channel cube
