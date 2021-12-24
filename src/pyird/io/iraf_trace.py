@@ -3,10 +3,48 @@
 """
 import numpy as np
 
-def read_trace_file(filename):
+def finalize_trace(interp_function,xmin,xmax):
+    interp_function=np.array(interp_function,dtype=int)
+    xmin=np.array(xmin,dtype=int)
+    xmax=np.array(xmax,dtype=int)
+    return interp_function,xmin,xmax
+
+def read_trace_file(filelist):
     """
     Args:
-       trace file
+       trace files list
+
+    Returns:
+        y0, interp_function, xmin, xmax, coeff
+
+    """
+    try:
+        return read_trace_file_one(filelist)
+    except:
+        nf=len(filelist)
+        
+    if nf==1:
+        return read_trace_file_one(filelist[0])
+    
+    y0, interp_function, xmin, xmax, coeff=read_trace_file_one(filelist[0],finalize=False)
+    for filename in filelist[1:]:
+        y0, interp_function, xmin, xmax, coeff=read_trace_file_one(filename,finalize=False,\
+                                                                   y0=y0,\
+                                                                   interp_function=interp_function,\
+                                                                   xmin=xmin,\
+                                                                   xmax=xmax,\
+                                                                   coeff=coeff)
+    interp_function,xmin,xmax=finalize_trace(interp_function,xmin,xmax)
+    
+    return y0, interp_function, xmin, xmax, coeff
+            
+            
+        
+def read_trace_file_one(filename,finalize=True, y0=None, interp_function=None, xmin=None, xmax=None, coeff=None):
+    """
+    Args:
+       filename:trace file
+       finalize: if you do not read trace file anymore, specify True, otherwise False.
 
     Returns:
         y0, interp_function, xmin, xmax, coeff
@@ -17,13 +55,16 @@ def read_trace_file(filename):
         cont = f.readlines()
     f.close()
     norder=0
-    y0=[]
     read_curve=False
-    interp_function=[]
     curvepar=[]
-    xmin=[]
-    xmax=[]
-    coeff=[]
+
+    if y0 is None:
+        y0=[]
+        interp_function=[]
+        xmin=[]
+        xmax=[]
+        coeff=[]
+        
     for line in cont:
         arr=line.split()
         if len(arr)>0:
@@ -31,10 +72,10 @@ def read_trace_file(filename):
             if arr[0]=="begin":
                 #reset read_curve
                 if len(curvepar)>0:
-                    interp_function.append(curvepar[0])
+                    interp_function.append(float(curvepar[0]))
                     nlegendreorder=int(curvepar[1])
-                    xmin.append(curvepar[2])
-                    xmax.append(curvepar[3])
+                    xmin.append(float(curvepar[2]))
+                    xmax.append(float(curvepar[3]))
                     coeffval=[float(s) for s in curvepar[4:4+nlegendreorder]]
                     coeff.append(coeffval)
                     read_curve=False
@@ -53,14 +94,16 @@ def read_trace_file(filename):
     nlegendreorder=int(curvepar[1])
     coeffval=[float(s) for s in curvepar[4:4+nlegendreorder]]
     coeff.append(coeffval)
-    interp_function=np.array(interp_function,dtype=int)
-    xmin=np.array(xmin,dtype=int)
-    xmax=np.array(xmax,dtype=int)
+
+    if finalize==True:
+        interp_function,xmin,xmax=finalize_trace(interp_function,xmin,xmax)
     
     return y0, interp_function, xmin, xmax, coeff
 
 
 if __name__=="__main__":
-    filename="/home/kawahara/pyird/data/iraf/aprefA"
-    read_trace_file(filename)
-
+    import pkg_resources
+    pathA=(pkg_resources.resource_filename('pyird', "data/samples/aprefA"))
+    pathC=(pkg_resources.resource_filename('pyird', "data/samples/aprefC"))
+    y0, interp_function, xmin, xmax, coeff=read_trace_file([pathA,pathC])
+    print(len(y0))

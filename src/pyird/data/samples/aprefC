@@ -1,0 +1,1218 @@
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 1 19.83075 1024.
+	image	refC
+	aperture	1
+	beam	1
+	center	19.83075 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		754.
+		1994.
+		23.60288
+		41.55144
+		3.727486
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 2 32.55362 1024.
+	image	refC
+	aperture	2
+	beam	2
+	center	32.55362 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		464.
+		1994.
+		15.17606
+		48.04345
+		5.747736
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 3 73.58425 1024.
+	image	refC
+	aperture	3
+	beam	3
+	center	73.58425 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		3.601659
+		56.17176
+		9.954255
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 4 86.37454 1024.
+	image	refC
+	aperture	4
+	beam	4
+	center	86.37454 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		3.545141
+		56.20597
+		9.988245
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 5 128.4905 1024.
+	image	refC
+	aperture	5
+	beam	5
+	center	128.4905 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		3.646918
+		56.71922
+		10.13722
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 6 141.2766 1024.
+	image	refC
+	aperture	6
+	beam	6
+	center	141.2766 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		3.608719
+		56.74316
+		10.16732
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 7 184.5227 1024.
+	image	refC
+	aperture	7
+	beam	7
+	center	184.5227 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		3.738074
+		57.28276
+		10.33016
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 8 197.3355 1024.
+	image	refC
+	aperture	8
+	beam	8
+	center	197.3355 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		3.697585
+		57.31117
+		10.36243
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 9 241.7361 1024.
+	image	refC
+	aperture	9
+	beam	9
+	center	241.7361 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		3.865707
+		57.85679
+		10.51219
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 10 254.5491 1024.
+	image	refC
+	aperture	10
+	beam	10
+	center	254.5491 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		3.849324
+		57.8911
+		10.55279
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 11 300.3645 1024.
+	image	refC
+	aperture	11
+	beam	11
+	center	300.3645 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		3.84356
+		58.45872
+		10.71416
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 12 313.1724 1024.
+	image	refC
+	aperture	12
+	beam	12
+	center	313.1724 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		3.858174
+		58.49661
+		10.74798
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 13 360.2142 1024.
+	image	refC
+	aperture	13
+	beam	13
+	center	360.2142 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		3.916093
+		59.06997
+		10.91297
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 14 372.9816 1024.
+	image	refC
+	aperture	14
+	beam	14
+	center	372.9816 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		3.998464
+		59.10932
+		10.95519
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 15 421.3924 1024.
+	image	refC
+	aperture	15
+	beam	15
+	center	421.3924 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		4.021917
+		59.69818
+		11.11635
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 16 434.272 1024.
+	image	refC
+	aperture	16
+	beam	16
+	center	434.272 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		4.024158
+		59.74517
+		11.15652
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 17 483.9588 1024.
+	image	refC
+	aperture	17
+	beam	17
+	center	483.9588 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		4.165928
+		60.36076
+		11.33337
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 18 496.8105 1024.
+	image	refC
+	aperture	18
+	beam	18
+	center	496.8105 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		4.227582
+		60.40335
+		11.37439
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 19 548.1067 1024.
+	image	refC
+	aperture	19
+	beam	19
+	center	548.1067 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		4.205336
+		61.03184
+		11.54581
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 20 560.9958 1024.
+	image	refC
+	aperture	20
+	beam	20
+	center	560.9958 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		4.265078
+		61.08558
+		11.59734
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 21 613.6568 1024.
+	image	refC
+	aperture	21
+	beam	21
+	center	613.6568 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		4.390692
+		61.73512
+		11.77721
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 22 626.6249 1024.
+	image	refC
+	aperture	22
+	beam	22
+	center	626.6249 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		4.409085
+		61.78146
+		11.82086
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 23 680.9449 1024.
+	image	refC
+	aperture	23
+	beam	23
+	center	680.9449 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		4.45251
+		62.46209
+		12.00986
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 24 693.9401 1024.
+	image	refC
+	aperture	24
+	beam	24
+	center	693.9401 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		4.483322
+		62.50458
+		12.04628
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 25 749.8623 1024.
+	image	refC
+	aperture	25
+	beam	25
+	center	749.8623 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		4.570277
+		63.20645
+		12.24339
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 26 762.9156 1024.
+	image	refC
+	aperture	26
+	beam	26
+	center	762.9156 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		4.58969
+		63.26628
+		12.29196
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 27 820.5622 1024.
+	image	refC
+	aperture	27
+	beam	27
+	center	820.5622 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		4.669186
+		63.98657
+		12.49512
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 28 833.6355 1024.
+	image	refC
+	aperture	28
+	beam	28
+	center	833.6355 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		4.714744
+		64.03629
+		12.53811
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 29 893.1627 1024.
+	image	refC
+	aperture	29
+	beam	29
+	center	893.1627 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		4.708776
+		64.80491
+		12.76249
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 30 906.3231 1024.
+	image	refC
+	aperture	30
+	beam	30
+	center	906.3231 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		4.726816
+		64.84721
+		12.81707
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 31 967.5525 1024.
+	image	refC
+	aperture	31
+	beam	31
+	center	967.5525 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		4.889585
+		65.63459
+		13.02665
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 32 980.7266 1024.
+	image	refC
+	aperture	32
+	beam	32
+	center	980.7266 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		4.94271
+		65.69317
+		13.07375
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 33 1044.088 1024.
+	image	refC
+	aperture	33
+	beam	33
+	center	1044.088 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		4.958903
+		66.50986
+		13.30215
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 34 1057.369 1024.
+	image	refC
+	aperture	34
+	beam	34
+	center	1057.369 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		4.962909
+		66.56775
+		13.34235
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 35 1122.63 1024.
+	image	refC
+	aperture	35
+	beam	35
+	center	1122.63 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		5.136579
+		67.42709
+		13.56796
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 36 1135.995 1024.
+	image	refC
+	aperture	36
+	beam	36
+	center	1135.995 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		5.132925
+		67.49219
+		13.63078
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 37 1203.517 1024.
+	image	refC
+	aperture	37
+	beam	37
+	center	1203.517 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		5.216732
+		68.37346
+		13.87925
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 38 1216.886 1024.
+	image	refC
+	aperture	38
+	beam	38
+	center	1216.886 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		5.280888
+		68.4477
+		13.92615
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 39 1286.682 1024.
+	image	refC
+	aperture	39
+	beam	39
+	center	1286.682 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		5.396189
+		69.3926
+		14.21466
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 40 1300.256 1024.
+	image	refC
+	aperture	40
+	beam	40
+	center	1300.256 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		5.320208
+		69.45679
+		14.24714
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 41 1372.342 1024.
+	image	refC
+	aperture	41
+	beam	41
+	center	1372.342 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1984.
+		5.092624
+		69.97916
+		14.55922
+
+# Thu 10:58:18 10-Jun-2021
+begin	aperture refC 42 1385.784 1024.
+	image	refC
+	aperture	42
+	beam	42
+	center	1385.784 1024.
+	low	-3. -1023.
+	high	3. 1024.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	7
+		2.
+		3.
+		4.
+		1994.
+		5.657671
+		70.64052
+		14.75015
+

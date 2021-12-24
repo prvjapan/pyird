@@ -35,8 +35,10 @@ if __name__=="__main__":
     import matplotlib.pyplot as plt
     import pathlib
 
-    path=(pkg_resources.resource_filename('pyird', "data/samples/aprefA"))
-    y0, interp_function, xmin, xmax, coeff=read_trace_file(path)
+    pathC=(pkg_resources.resource_filename('pyird', "data/samples/aprefC"))
+    path_c=(pkg_resources.resource_filename('pyird', "data/samples/apref_c"))
+
+    y0, interp_function, xmin, xmax, coeff=read_trace_file([pathC,path_c])
 
     #
     x=[]
@@ -48,7 +50,8 @@ if __name__=="__main__":
     datadir=pathlib.Path("/home/kawahara/pyird/data/samples/REACH/")
     anadir=pathlib.Path("/home/kawahara/pyird/data/samples/REACH/")
     reach=irdstream.Stream2D("targets",datadir,anadir)
-    reach.fitsid=[47103]
+    #reach.fitsid=[47103]
+    reach.fitsid=[47077]
 
     import astropy.io.fits as pyf
     for datapath in reach.rawpath:
