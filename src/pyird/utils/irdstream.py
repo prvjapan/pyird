@@ -4,10 +4,7 @@
 
 import pathlib
 from pyird.utils.fitsset import FitsSet
-#from pyraf import iraf
-from pyird import IRD_bias_sube
-from pyird import processRN
-from pyird import directory_util
+from pyird.utils import directory_util
 import astropy.io.fits as pyf
 import numpy as np
 import tqdm
@@ -145,7 +142,7 @@ class Stream2D(FitsSet):
             print(self.rawpath)
         if rot=="r":
             print("180 degree rotation applied.")
-        IRD_bias_sube.main(self.anadir,self.rawpath, method,rot,hotpix_im = hotpix_img)
+        #IRD_bias_sube.main(self.anadir,self.rawpath, method,rot,hotpix_im = hotpix_img)
         self.fitsdir=self.anadir
         self.extension="_rb"
 
@@ -160,7 +157,7 @@ class Stream2D(FitsSet):
         ext_noexist, extf_noexist = self.check_existence(extin,extout)
         for i,fitsid in enumerate(tqdm.tqdm(ext_noexist)):
             filemask=maskfits.path()[0]
-            processRN.wrap_kawahara_processRN(filen=ext_noexist[i],filemask=filemask,fitsout=extf_noexist[i])
+            #processRN.wrap_kawahara_processRN(filen=ext_noexist[i],filemask=filemask,fitsout=extf_noexist[i])
         self.fitsdir=self.anadir
         self.extension=extout
 

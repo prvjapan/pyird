@@ -4,7 +4,7 @@
 
 import pathlib
 #from pyraf import iraf
-from pyird import directory_util
+from pyird.utils import directory_util
 import os
 import tqdm
 import sys
