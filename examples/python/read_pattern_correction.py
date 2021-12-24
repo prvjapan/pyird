@@ -15,9 +15,9 @@ for datapath in dark.rawpath:
     im = pyf.open(str(datapath))[0].data
 
 channel_cube=image_to_channel_cube(im,revert=True)
-bs_channel_cube, bias=bias_subtract(channel_cube)
-
+#bs_channel_cube, bias=bias_subtract(channel_cube)
 #eotensor=eopixel_split(bs_channel_cube)
+
 eotensor=eopixel_split(channel_cube)
 
 #### CODE

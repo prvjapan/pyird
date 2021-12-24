@@ -2,6 +2,8 @@ include src/pyird/data/channel_H.list
 include src/pyird/data/channel_YJ.list
 include src/pyird/data/thar_ird2.dat
 include src/pyird/data/samples/aprefA
+include src/pyird/data/samples/aprefB
+include src/pyird/data/samples/aprefC
 
 graft tests
 graft examples
