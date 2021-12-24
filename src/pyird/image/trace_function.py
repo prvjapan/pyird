@@ -37,11 +37,12 @@ if __name__=="__main__":
 
     path=(pkg_resources.resource_filename('pyird', "data/samples/aprefA"))
     y0, interp_function, xmin, xmax, coeff=read_trace_file(path)
+
+    #
     x=[]
     for i in range(len(y0)):
         x.append(list(range(xmin[i],xmax[i]+1)))
-    #x=np.linspace(xmin,xmax,1000)
-    
+    #
     tl=trace_legendre(x, y0, xmin, xmax, coeff)
 
     datadir=pathlib.Path("/home/kawahara/pyird/data/samples/REACH/")
@@ -55,7 +56,7 @@ if __name__=="__main__":
     channel_cube=image_to_channel_cube(im,revert=True)
     bs_channel_cube, bias=bias_subtract(channel_cube)
     im=channel_cube_to_image(bs_channel_cube)
-
+    
     if True:
         c=plt.imshow(im[::-1,::-1],vmin=-3.0,vmax=50.0,cmap="bone")
         plt.colorbar(c)
@@ -64,3 +65,24 @@ if __name__=="__main__":
         plt.savefig("ontrace.png")
         plt.show()
 
+    import tqdm
+    mask=np.zeros_like(im,dtype=bool)    
+    width=2
+    nx,ny=np.shape(im)
+    for i in tqdm.tqdm(range(len(y0))):
+        tl_tmp=np.array(tl[i],dtype=int)
+        for j,ix in enumerate(x[i]):
+            iys=np.max([0,tl_tmp[j]-width])
+            iye=np.min([ny,tl_tmp[j]+width+2])
+            mask[ix,iys:iye]=True 
+            
+    rotim=im[::-1,::-1]
+    rotim[mask]=None
+
+    if True:
+        c=plt.imshow(rotim,vmin=-3.0,vmax=50.0,cmap="bone_r")
+        plt.colorbar(c)
+        for i in range(0,len(y0)):
+            plt.plot(tl[i],x[i],alpha=1.0,color="red",ls="dotted",lw=2)
+        plt.savefig("ontrace.png")
+        plt.show()
