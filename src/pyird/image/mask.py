@@ -2,7 +2,7 @@ import numpy as np
 import tqdm
 
 def trace(im, trace_func, y0, xmin, xmax, coeff):
-    """make mask for trace parameters
+    """make mask for trace parameters for multiorder
     
     Args:
        im: image
@@ -25,7 +25,6 @@ def trace(im, trace_func, y0, xmin, xmax, coeff):
     x=[]
     for i in range(len(y0)):
         x.append(list(range(xmin[i],xmax[i]+1)))
-#    tl=trace_legendre(x, y0, xmin, xmax, coeff)
     tl=trace_func(x, y0, xmin, xmax, coeff)
     mask=np.zeros_like(im,dtype=bool)    
     width=2
@@ -37,3 +36,4 @@ def trace(im, trace_func, y0, xmin, xmax, coeff):
             iye=np.min([ny,tl_tmp[j]+width+2])
             mask[ix,iys:iye]=True
     return mask[::-1,::-1]
+
