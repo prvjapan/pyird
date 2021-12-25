@@ -19,7 +19,8 @@ def identify_hotpix(im):
 
     bkg_im = bkg.back()
     im_sub=im-bkg_im
-    obj = extract(im_sub, 1.5, err=bkg.globalrms)
+    obj = extract(im_sub, 10.0, err=bkg.globalrms)
+    print(len(obj))
     hotpix_mask = np.zeros_like(im, dtype=bool)
     mask_ellipse(hotpix_mask,x=obj['x'],y=obj['y'],a=obj['a'],b=obj['b'],theta=obj['theta'])
     
@@ -32,15 +33,13 @@ if __name__=="__main__":
     from pyird.utils import fitsset,irdstream
     from pyird.plot.showmask import show_hotpix
     import astropy.io.fits as pyf
-    import pathlib
-
-    
-    mode="YJ"
+    import pathlib    
+    mode="H"
     datadir=pathlib.Path("/home/kawahara/pyird/data/dark/")
     anadir=pathlib.Path("/home/kawahara/pyird/data/dark/") 
     dark=irdstream.Stream2D("targets",datadir,anadir)
     dark.fitsid=[41018]    
-    if mode=="H":
+    if mode=="YJ":
         dark.fitsid_increment()        
 
     print(dark.rawpath)
@@ -50,6 +49,6 @@ if __name__=="__main__":
 
     im_subbias=bias_subtract_image(im)
     mask,obj=identify_hotpix(im_subbias)
-    show_hotpix(obj,mask)
+    show_hotpix(obj,im_subbias)
     
 

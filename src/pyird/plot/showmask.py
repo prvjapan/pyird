@@ -14,7 +14,7 @@ def show_hotpix(obj,im):
     fig, ax = plt.subplots()
     m, s = np.mean(im), np.std(im)
     ax.imshow(im, interpolation='nearest', cmap='gray',
-                   vmin=m-s, vmax=m+s, origin='lower')
+                   vmin=m-5*s, vmax=m+5*s, origin='lower')
     
     # plot an ellipse for each object
     for i in range(len(obj)):
