@@ -7,6 +7,7 @@
 import numpy as np
 import scipy.stats as stats
 from pyird.image.channel import bias_region
+from pyird.image.channel import image_to_channel_cube, channel_cube_to_image
 import matplotlib.pyplot as plt
 
 def bias_subtract(channel_cube):
@@ -28,6 +29,18 @@ def bias_subtract(channel_cube):
     meancp=np.array(meancp)
     unbias_channel_cube=channel_cube-meancp[:,np.newaxis,np.newaxis]
     return unbias_channel_cube, meancp
+
+def bias_subtract_image(im):
+    """
+    Args:
+       im: image
+
+    Returns:
+       bias-subtracted image
+        
+    """
+    bias_subtracted_channel_cube, channel_bias=bias_subtract(image_to_channel_cube(im))
+    return channel_cube_to_image(bias_subtracted_channel_cube)
 
 if __name__=="__main__":
     import numpy as np
@@ -54,11 +67,10 @@ if __name__=="__main__":
     
     import matplotlib.pyplot as plt
     from scipy.stats import median_absolute_deviation as mad
-    #np.random.seed(1)
-    #a=np.random.normal(0.0,1.0,(2048,2048))    
-    channel_cube=image_to_channel_cube(im)
-    bias_subtracted_channel_cube, channel_bias=bias_subtract(channel_cube)
-    image_rmbias=channel_cube_to_image(bias_subtracted_channel_cube)
+    #channel_cube=image_to_channel_cube(im)
+    #bias_subtracted_channel_cube, channel_bias=bias_subtract(channel_cube)
+    #image_rmbias=channel_cube_to_image(bias_subtracted_channel_cube)
+    image_rmbias=bias_subtract_image(im)
 
     fig=plt.figure()
     ax1=fig.add_subplot(121)
