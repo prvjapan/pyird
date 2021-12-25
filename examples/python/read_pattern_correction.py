@@ -7,6 +7,7 @@ from pyird.image.channel import image_to_channel_cube, channel_cube_to_image, eo
 from pyird.image.bias import bias_subtract
 from pyird.image.trace_function import trace_legendre
 from pyird.io.iraf_trace import read_trace_file
+from pyird.plot.detector import show_profile
 
 mode="faint"
 if mode=="dark":
@@ -89,38 +90,9 @@ corrected_im=channel_cube_to_image(channel_cube_corrected)
 #############################################################
 
 
+show_profile(xprofile_offset_subtracted,yprofile_offset_subtracted,\
+             xprofile_offset_subtracted_model,yprofile_offset_subtracted_model):
 
-fig=plt.figure(figsize=(10,9))
-ax=fig.add_subplot(311)
-for ichan in range(0,nchan):
-    ax.plot(xprofile_offset_subtracted[0,ichan,:],alpha=0.1, color="C0")
-ax.plot(xprofile_offset_subtracted_model[0,:],alpha=1.0, color="C0",label="even pixels")
-for ichan in range(0,nchan):
-    ax.plot(xprofile_offset_subtracted[1,ichan,:],alpha=0.1, color="C1")
-ax.plot(xprofile_offset_subtracted_model[1,:],alpha=1.0, color="C1",label="odd pixels")
-ax.set_ylabel("X-profile")
-plt.legend()
-
-ax2=fig.add_subplot(312)
-for ichan in range(0,nchan):
-    ax2.plot(yprofile_offset_subtracted[0,ichan,:],alpha=0.1, color="C0")
-ax2.plot(yprofile_offset_subtracted_model[0,:],alpha=1.0, color="C0",label="even pixels")
-for ichan in range(0,nchan):
-    ax2.plot(yprofile_offset_subtracted[1,ichan,:],alpha=0.1, color="C1")
-ax2.plot(yprofile_offset_subtracted_model[1,:],alpha=1.0, color="C1",label="odd pixels")
-ax2.set_ylabel("Y-profile")
-ax3=fig.add_subplot(313)
-for ichan in range(0,nchan):
-    ax3.plot(yprofile_offset_subtracted[0,ichan,:],alpha=0.1, color="C0")
-ax3.plot(yprofile_offset_subtracted_model[0,:],alpha=1.0, color="C0",label="even pixels")
-for ichan in range(0,nchan):
-    ax3.plot(yprofile_offset_subtracted[1,ichan,:],alpha=0.1, color="C1")
-ax3.plot(yprofile_offset_subtracted_model[1,:],alpha=1.0, color="C1",label="odd pixels")
-ax3.set_ylabel("Y-profile")
-plt.xlim(100,140)
-plt.ylim(-3,3)
-plt.xlabel("pixel")
-plt.show()
 
 
 fig=plt.figure(figsize=(8,4))
@@ -132,7 +104,7 @@ elif mode=="faint":
 
 cc=ax1.imshow(im,vmin=vmin,vmax=vmax)
 plt.colorbar(cc,shrink=0.55)
-ax1.set_title("Raw dark image")
+ax1.set_title("Raw image")
 ax2=fig.add_subplot(122)
 cc=ax2.imshow(corrected_im,vmin=-3.0,vmax=4.0)
 plt.colorbar(cc,shrink=0.55)
