@@ -1,12 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
-def show_hotpix(obj,im,onoff=False):
+def show_hotpix(obj,im):
     """show hotpixels
 
     Args:
        obj: sep object
        im: image or mask
-       onoff: onoff display mode (use mask as im)
 
     """
     from matplotlib.patches import Ellipse
