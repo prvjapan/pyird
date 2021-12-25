@@ -11,13 +11,21 @@ from pyird.image.channel import image_to_channel_cube, channel_cube_to_image
 import matplotlib.pyplot as plt
 
 def bias_subtract(channel_cube):
-    """
+    """Bias subtraction for channel cube
+
     Args:
        channel_cube: channel cube
 
     Returns:
        unbiased channel cube
        bias for channels
+
+    Example:
+        >>> #this is equivalent to image_rmbias=bias_subtract_image(im)
+        >>> channel_cube=image_to_channel_cube(im)
+        >>> bias_subtracted_channel_cube, channel_bias=bias_subtract(channel_cube)
+        >>> image_rmbias=channel_cube_to_image(bias_subtracted_channel_cube)
+
         
     """
     snclip = 3.0 #clipping value
@@ -31,12 +39,17 @@ def bias_subtract(channel_cube):
     return unbias_channel_cube, meancp
 
 def bias_subtract_image(im):
-    """
+    """Bias subtraction for image
+
     Args:
        im: image
 
     Returns:
        bias-subtracted image
+
+    Examples:
+        >>> image_rmbias=bias_subtract_image(im)
+
         
     """
     bias_subtracted_channel_cube, channel_bias=bias_subtract(image_to_channel_cube(im))
