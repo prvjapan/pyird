@@ -31,4 +31,4 @@ def trace(im, trace_func, y0, xmin, xmax, coeff):
             iys=np.max([0,tl_tmp[j]-width])
             iye=np.min([ny,tl_tmp[j]+width+2])
             mask[ix,iys:iye]=True
-    return mask
+    return mask[::-1,::-1]
