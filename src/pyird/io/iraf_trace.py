@@ -17,6 +17,12 @@ def read_trace_file(filelist):
     Returns:
         y0, interp_function, xmin, xmax, coeff
 
+    Examples:        
+        >>> pathC=(pkg_resources.resource_filename('pyird', "data/samples/aprefC"))
+        >>> path_c=(pkg_resources.resource_filename('pyird', "data/samples/apref_c"))
+        >>> y0, interp_function, xmin, xmax, coeff=read_trace_file([pathC,path_c])
+
+
     """
     try:
         return read_trace_file_one(filelist)

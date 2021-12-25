@@ -16,6 +16,11 @@ def trace(im, trace_func, y0, xmin, xmax, coeff):
     Returns:
        mask
 
+    Examples:        
+        >>> from pyird.image.trace_function import trace_legendre
+        >>> mask=trace(im, trace_legendre, y0, xmin, xmax, coeff)
+
+
     """
     x=[]
     for i in range(len(y0)):

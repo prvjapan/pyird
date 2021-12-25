@@ -10,7 +10,13 @@ pyird
    :maxdepth: 1
    :caption: Tutorial:
 
-   tutorials/tutorial.rst
+   tutorials.rst
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Userguide:
+
+   userguide/pattern.rst
 
 
 .. toctree::

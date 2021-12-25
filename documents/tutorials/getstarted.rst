@@ -1,48 +1,5 @@
 Get Started
 =======================
-
-pyird is a code that incorporates Kuzuhara's masking, Kawahara's readout noise processing (you can choose the plain version, but you need to install boost), and the iraf processing part, which can be automated, into a set of fits. Originally, it was a combination of various codes from
-`Chimera <https://www.google.com/search?q=キメラ&source=lnms&tbm=isch&sa=X&ved=2ahUKEwjO8vTbjOzvAhUMrZQKHYLCABMQ_AUoAXoECAIQAw&biw=1368&bih=802?>`_
-, so please forgive me for some parts of it. The main goal is to make the process reproducible (eliminate as much as possible the hysteresis of the analysis) by assembling it in a single python file. The main goal is to make the process reproducible (to reduce the hysteresis of the analysis as much as possible) by using a single python file. However, aperture and ecidentify require manual processing with old-fashioned iraf.
-
-Prepare IRAF environment
---------------------------------
-
-.. code:: sh
-	  
-	  conda config --add channels http://ssb.stsci.edu/astroconda
-	  conda create -n iraf37 python=3.7 iraf-all pyraf-all stsci ds9
-	  source activate iraf37
-	  mkdir ~iraf
-	  cd iraf
-	  mkiraf
-
-
-pyird installation
---------------------------------
-
-.. code:: sh
-   
-	  conda activate iraf37
-	  git clone https://github.com/HajimeKawahara/pyird.git
-	  cd pyird
-	  python setup.py install
-	  cp data/thar_ird2.dat /home/USERS/anaconda3/envs/iraf37/iraf/noao/lib/linelists/
-
-
-doc update
---------------------
-
-
-.. code:: sh
-	  
-	  python setup.py install
-	  rm -rf documents/pyird
-	  sphinx-apidoc -F -o documents/pyird src/pyird
-	  cd documents
-	  make clean
-	  make html
-
 	  
 - **fitssets**: The annoying thing about parsing is that you have to do the same operation on multiple fits files. In pyird, a set of fits is defined as a fitsset (a set of fits). In pyird, a set of fits is defined as a fitsset, and a single fit is also defined as a set of fits.
 In pyird, a set of fits is defined by a fitsset (a set of fits). For example, bias, readout, unidimensionalization, wavelength assignment, etc. are one-way processes, and each time they are performed, iraf emits a large number of new fits files. This is the reason why stream is defined separately from the fits set. Basically, it is a one-way process, so if a process has been done once and saved in a directory, it will be skipped even if the same instruction is given again.
