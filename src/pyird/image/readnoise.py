@@ -1,6 +1,7 @@
 import numpy as np
 from pyird import gp2d
 
+
 def coarse_gp(array,subarray,xscale,yscale,Ncor):
     # coaese graining and 2D GP recovery
     ## remove outlier

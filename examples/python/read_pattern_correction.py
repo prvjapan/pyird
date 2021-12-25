@@ -5,9 +5,6 @@ import pathlib
 import matplotlib.pyplot as plt
 from pyird.image.channel import image_to_channel_cube, channel_cube_to_image, eopixel_split, eopixel_combine
 from pyird.image.bias import bias_subtract
-from pyird.image.trace_function import trace_legendre
-from pyird.io.iraf_trace import read_trace_file
-from pyird.plot.detector import show_profile
 
 mode="faint"
 if mode=="dark":
@@ -33,34 +30,22 @@ for datapath in target.rawpath:
 
 #aperture
 if mode=="faint":
+    from pyird.io.iraf_trace import read_trace_file
     pathC=(pkg_resources.resource_filename('pyird', "data/samples/aprefC"))
     path_c=(pkg_resources.resource_filename('pyird', "data/samples/apref_c"))
     y0, interp_function, xmin, xmax, coeff=read_trace_file([pathC,path_c])
 
-    #trace
-    x=[]
-    for i in range(len(y0)):
-        x.append(list(range(xmin[i],xmax[i]+1)))
-    tl=trace_legendre(x, y0, xmin, xmax, coeff)
-
-    import tqdm
-    mask=np.zeros_like(im,dtype=bool)    
-    width=2
-    nx,ny=np.shape(im)
-    for i in tqdm.tqdm(range(len(y0))):
-        tl_tmp=np.array(tl[i],dtype=int)
-        for j,ix in enumerate(x[i]):
-            iys=np.max([0,tl_tmp[j]-width])
-            iye=np.min([ny,tl_tmp[j]+width+2])
-            mask[ix,iys:iye]=True
+    from pyird.image.mask import trace
+    from pyird.image.trace_function import trace_legendre
+    mask=trace(im, trace_legendre, y0, xmin, xmax, coeff)
             
-    calim=np.copy(im[::-1,::-1])
-    calim[mask]=np.nan
-    calim=calim[::-1,::-1]
     
 #############################################################
 # REMOVAL CODE
 
+    calim=np.copy(im[::-1,::-1])
+    calim[mask]=np.nan
+    calim=calim[::-1,::-1]
 
 cal_channel_cube=image_to_channel_cube(calim,revert=True)
 cal_eotensor=eopixel_split(cal_channel_cube)
@@ -89,9 +74,9 @@ channel_cube_corrected=eopixel_combine(eotensor_corrected)
 corrected_im=channel_cube_to_image(channel_cube_corrected)
 #############################################################
 
-
+from pyird.plot.detector import show_profile
 show_profile(xprofile_offset_subtracted,yprofile_offset_subtracted,\
-             xprofile_offset_subtracted_model,yprofile_offset_subtracted_model):
+             xprofile_offset_subtracted_model,yprofile_offset_subtracted_model)
 
 
 

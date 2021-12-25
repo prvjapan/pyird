@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-import numpy
+import numpy as np
 
 def show_profile(xprofile_offset_subtracted,yprofile_offset_subtracted,\
                  xprofile_offset_subtracted_model,yprofile_offset_subtracted_model):

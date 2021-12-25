@@ -23,7 +23,7 @@ def trace_legendre(x, y0, xmin, xmax, coeff):
         trace_lines.append(f)
 
     return trace_lines
-    
+
 if __name__=="__main__":
     import pkg_resources
     from pyird.utils import irdstream
