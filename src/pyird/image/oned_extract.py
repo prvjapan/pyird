@@ -22,6 +22,8 @@ def flatten(im, trace_func, y0, xmin, xmax, coeff):
 
 
     """
+    rotim=np.copy(im[::-1,::-1])
+    
     x=[]
     for i in range(len(y0)):
         x.append(list(range(xmin[i],xmax[i]+1)))
@@ -35,7 +37,7 @@ def flatten(im, trace_func, y0, xmin, xmax, coeff):
         for j,ix in enumerate(x[i]):
             iys=np.max([0,tl_tmp[j]-width])
             iye=np.min([ny,tl_tmp[j]+width+2])
-            eachspec.append(np.sum(im[ix,iys:iye]))
+            eachspec.append(np.sum(rotim[ix,iys:iye]))
         spec.append(eachspec)
     return spec
 
@@ -55,8 +57,8 @@ if __name__=="__main__":
     datadir=pathlib.Path("/home/kawahara/pyird/data/samples/REACH/")
     anadir=pathlib.Path("/home/kawahara/pyird/data/samples/REACH/")
     target=irdstream.Stream2D("targets",datadir,anadir)
-    target.fitsid=[47077]
-
+#    target.fitsid=[47077]
+    target.fitsid=[47103]
     # Load an image
     for datapath in target.rawpath:
         im = pyf.open(str(datapath))[0].data
@@ -78,5 +80,10 @@ if __name__=="__main__":
     y0, interp_function, xmin, xmax, coeff=read_trace_file(pathA)
 
     #flatten
-    spec=flatten(im, trace_legendre, y0, xmin, xmax, coeff)
+    spec=flatten(corrected_im, trace_legendre, y0, xmin, xmax, coeff)
 
+    
+    fig=plt.figure()
+    for esp in spec:
+        plt.plot(esp)
+    plt.show()

@@ -22,6 +22,7 @@ def trace(im, trace_func, y0, xmin, xmax, coeff):
 
 
     """
+       
     x=[]
     for i in range(len(y0)):
         x.append(list(range(xmin[i],xmax[i]+1)))
@@ -36,4 +37,41 @@ def trace(im, trace_func, y0, xmin, xmax, coeff):
             iye=np.min([ny,tl_tmp[j]+width+2])
             mask[ix,iys:iye]=True
     return mask[::-1,::-1]
+
+if __name__=="__main__":
+    import numpy as np
+    import pkg_resources
+    from pyird.utils import irdstream
+    import pathlib
+    import matplotlib.pyplot as plt
+    from pyird.image.trace_function import trace_legendre
+    from pyird.image.pattern_model import median_XY_profile
+    from pyird.io.iraf_trace import read_trace_file
+    import astropy.io.fits as pyf
+    
+    datadir=pathlib.Path("/home/kawahara/pyird/data/samples/REACH/")
+    anadir=pathlib.Path("/home/kawahara/pyird/data/samples/REACH/")
+    target=irdstream.Stream2D("targets",datadir,anadir)
+#    target.fitsid=[47077]
+    target.fitsid=[47103]
+    # Load an image
+    for datapath in target.rawpath:
+        im = pyf.open(str(datapath))[0].data
+        
+    #image for calibration 
+    pathA=(pkg_resources.resource_filename('pyird', "data/samples/aprefA"))
+    y0, interp_function, xmin, xmax, coeff=read_trace_file(pathA)
+    mask=trace(im, trace_legendre, y0, xmin, xmax, coeff)
+
+    immasked=np.copy(im)
+    immasked[mask]=None
+
+    fig=plt.figure()
+    ax=fig.add_subplot(121)
+    ax.imshow(im,vmin=-3.0,vmax=40.0)
+    ax.set_title("raw")
+    ax2=fig.add_subplot(122)
+    ax2.imshow(immasked,vmin=-3.0,vmax=40.0)
+    ax2.set_title("masked")
+    plt.show()
 
