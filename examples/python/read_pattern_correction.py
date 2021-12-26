@@ -4,8 +4,22 @@ from pyird.utils import irdstream
 import pathlib
 import matplotlib.pyplot as plt
 from pyird.image.channel import image_to_channel_cube, channel_cube_to_image, eopixel_split, eopixel_combine
-from pyird.image.bias import bias_subtract
+from pyird.image.bias import bias_subtract_image
+from pyird.image.hotpix import identify_hotpix
+import astropy.io.fits as pyf
 
+#hotpixel mask
+datadir=pathlib.Path("/home/kawahara/pyird/data/dark/")
+anadir=pathlib.Path("/home/kawahara/pyird/data/dark/") 
+dark=irdstream.Stream2D("targets",datadir,anadir)
+dark.fitsid=[41018]    
+for data in dark.rawpath:
+    im = pyf.open(str(data))[0].data
+im_subbias=bias_subtract_image(im)
+hotpix_mask,obj=identify_hotpix(im_subbias)
+
+
+#Load data
 mode="faint"
 if mode=="dark":
     datadir=pathlib.Path("/home/kawahara/pyird/data/dark/")
@@ -24,7 +38,6 @@ else:
     sys.exit()
 
 # Load an image
-import astropy.io.fits as pyf
 for datapath in target.rawpath:
     im = pyf.open(str(datapath))[0].data
 
@@ -42,6 +55,7 @@ if mode=="faint":
     from pyird.image.trace_function import trace_legendre
     mask=trace(im, trace_legendre, y0, xmin, xmax, coeff)
     calim[mask]=np.nan
+    calim[hotpix_mask]=np.nan
             
     
 #############################################################

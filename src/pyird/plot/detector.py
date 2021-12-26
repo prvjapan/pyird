@@ -45,3 +45,22 @@ def show_profile(xprofile_offset_subtracted,yprofile_offset_subtracted,\
     plt.xlabel("pixel")
     plt.savefig("profile.png")
     plt.show()
+
+def corrected_detector(im, model_im, corrected_im, vmax=10.0, vmin=-15.0):
+    fig=plt.figure(figsize=(8,4))
+    ax1=fig.add_subplot(131)
+    cc=ax1.imshow(im,vmin=vmin,vmax=vmax)
+    plt.colorbar(cc,shrink=0.55)
+    ax1.set_title("Raw image")
+    
+    ax2=fig.add_subplot(132)
+    cc=ax2.imshow(model_im,vmin=vmin,vmax=vmax)
+    plt.colorbar(cc,shrink=0.55)
+    ax2.set_title("Model image")
+    
+    ax3=fig.add_subplot(133)
+    cc=ax3.imshow(corrected_im,vmin=-3.0,vmax=4.0)
+    plt.colorbar(cc,shrink=0.55)
+    ax3.set_title("pattern corrected")
+    plt.savefig("pattern_correction.png")
+    plt.show()

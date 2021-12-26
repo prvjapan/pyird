@@ -1,10 +1,12 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
-def identify_hotpix(im):
+def identify_hotpix(im,threshold=10.0):
     """Identification of hotpixels using sep
 
     Args:
        im: image
+       threshold: threshold of sep
 
     Returns:
        hotpix_mask: hot pixel mask
@@ -19,8 +21,7 @@ def identify_hotpix(im):
 
     bkg_im = bkg.back()
     im_sub=im-bkg_im
-    obj = extract(im_sub, 10.0, err=bkg.globalrms)
-    print(len(obj))
+    obj = extract(im_sub, threshold, err=bkg.globalrms)
     hotpix_mask = np.zeros_like(im, dtype=bool)
     mask_ellipse(hotpix_mask,x=obj['x'],y=obj['y'],a=obj['a'],b=obj['b'],theta=obj['theta'])
     
