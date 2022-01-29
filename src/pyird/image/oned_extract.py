@@ -14,12 +14,8 @@ def flatten(im, trace_func, y0, xmin, xmax, coeff):
        coeff: coefficients
 
     Returns:
-       mask
-
-    Examples:        
-        >>> from pyird.image.trace_function import trace_legendre
-        >>> mask=trace(im, trace_legendre, y0, xmin, xmax, coeff)
-
+       raw multiorder spectra
+       multiorder pixel coordinate
 
     """
     rotim=np.copy(im[::-1,::-1])
@@ -31,15 +27,19 @@ def flatten(im, trace_func, y0, xmin, xmax, coeff):
     width=2
     nx,ny=np.shape(im)
     spec=[]
+    pixcoord=[]
     for i in tqdm.tqdm(range(len(y0))):
         tl_tmp=np.array(tl[i],dtype=int)
         eachspec=[]
+        eachpixcoord=[]
         for j,ix in enumerate(x[i]):
             iys=np.max([0,tl_tmp[j]-width])
             iye=np.min([ny,tl_tmp[j]+width+2])
             eachspec.append(np.sum(rotim[ix,iys:iye]))
+            eachpixcoord.append(ix)
         spec.append(eachspec)
-    return spec
+        pixcoord.append(eachpixcoord)
+    return spec,pixcoord
 
 
 if __name__=="__main__":
@@ -53,7 +53,7 @@ if __name__=="__main__":
     from pyird.image.pattern_model import median_XY_profile
     from pyird.io.iraf_trace import read_trace_file
     import astropy.io.fits as pyf
-    
+
     datadir=pathlib.Path("/home/kawahara/pyird/data/samples/REACH/")
     anadir=pathlib.Path("/home/kawahara/pyird/data/samples/REACH/")
     target=irdstream.Stream2D("targets",datadir,anadir)
@@ -80,10 +80,13 @@ if __name__=="__main__":
     y0, interp_function, xmin, xmax, coeff=read_trace_file(pathA)
 
     #flatten
-    spec=flatten(corrected_im, trace_legendre, y0, xmin, xmax, coeff)
-
+    spec,pixcoord=flatten(corrected_im, trace_legendre, y0, xmin, xmax, coeff)
     
-    fig=plt.figure()
-    for esp in spec:
-        plt.plot(esp)
+    fig=plt.figure(figsize=(12,7))
+    for i,esp in enumerate(spec):
+        plt.plot(pixcoord[i],esp,label="order "+str(i))
+    plt.xlabel("pixel coordinate")
+    plt.ylabel("raw spectra")
+    plt.legend()
+    plt.savefig("fig_flatten.png")
     plt.show()

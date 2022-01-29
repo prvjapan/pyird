@@ -1,16 +1,16 @@
 import numpy as np
 
-def image_to_channel_cube(image,revert=True):
+def image_to_channel_cube(image,revert=True,Nch=32):
     """ conversion of an image to a channel cube
     Args:
        image: 2D image
        revert: if True reverting odd channels
+       Nch: Number of the channels of a detector. For IRD Nch=32
 
     Returns:
        channel cube
 
     """
-    Nch = 32 # number of the channels of IRD detector
     channel_cube=np.array(np.split(image,Nch)) # (Nch, ch_pix_num, 2048)
     if revert:
         channel_cube=revert_channel_cube(channel_cube)

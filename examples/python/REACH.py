@@ -61,9 +61,14 @@ y0, interp_function, xmin, xmax, coeff=read_trace_file(pathA)
 
 #flatten
 from pyird.image.oned_extract import flatten
-spec=flatten(corrected_im, trace_legendre, y0, xmin, xmax, coeff)
+rawspec=flatten(corrected_im, trace_legendre, y0, xmin, xmax, coeff)
 
 fig=plt.figure()
-for esp in spec[5:6]:
-    plt.plot(esp)
+ax=fig.add_subplot(111)
+for esp in rawspec:
+    plt.plot(esp,alpha=0.1, color="gray")
+#plt.plot()
+plt.xlabel("pixel coordinate")
+ax.axvspan(64*17, 64*18, color = "coral",alpha=0.3)
+ax.set_ylim(-25,75)
 plt.show()
