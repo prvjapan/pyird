@@ -63,7 +63,6 @@ y0, interp_function, xmin, xmax, coeff=read_trace_file(pathA)
 from pyird.image.oned_extract import flatten
 spec=flatten(corrected_im, trace_legendre, y0, xmin, xmax, coeff)
 
-
 fig=plt.figure()
 for esp in spec[5:6]:
     plt.plot(esp)
