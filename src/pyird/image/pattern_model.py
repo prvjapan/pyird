@@ -7,7 +7,10 @@ from pyird.image.channel import image_to_channel_cube, channel_cube_to_image, eo
 from pyird.plot.detector import show_profile
 
 def median_XY_profile(calim,show=True):
-    """
+    """ a simple readout pattern model
+
+    Note:
+        This function assumes model = cmosub_med X + cmosub_med Y+ cmo, where cmos_med=cmo-subtracted median and cmo=channel median offset.
     
     Args:
         calim: masked image for read pattern calibration
