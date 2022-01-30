@@ -63,12 +63,20 @@ y0, interp_function, xmin, xmax, coeff=read_trace_file(pathA)
 from pyird.image.oned_extract import flatten
 rawspec,pixcoord=flatten(corrected_im, trace_legendre, y0, xmin, xmax, coeff)
 
+#rsd
+from pyird.spec.rsdmat import multiorder_to_rsd
+rsd=multiorder_to_rsd(rawspec, pixcoord)
+
+
 fig=plt.figure()
 ax=fig.add_subplot(111)
 for i,esp in enumerate(rawspec):
-    plt.plot(pixcoord[i],esp,alpha=0.1, color="gray")
-#plt.plot()
+    plt.plot(pixcoord[i],esp,alpha=0.3, color="gray")
+plt.plot(np.nanmedian(rsd[:,-6:-1],axis=1),alpha=1.0, color="C1",label="median (-6:-1)")
+plt.plot(np.nanmedian(rsd[:,:],axis=1),alpha=1.0, color="C0",label="median")
+plt.legend()
 plt.xlabel("pixel coordinate")
 ax.axvspan(64*17, 64*18, color = "coral",alpha=0.3)
 ax.set_ylim(-25,75)
+plt.savefig("local_trend.png")
 plt.show()
