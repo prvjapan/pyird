@@ -3,7 +3,7 @@ import tqdm
 
 
 def trace(im, trace_func, y0, xmin, xmax, coeff):
-    """make mask for trace parameters for multiorder
+    """make mask for trace parameters for multiorder.
 
     Args:
        im: image
@@ -20,8 +20,6 @@ def trace(im, trace_func, y0, xmin, xmax, coeff):
     Examples:        
         >>> from pyird.image.trace_function import trace_legendre
         >>> mask=trace(im, trace_legendre, y0, xmin, xmax, coeff)
-
-
     """
 
     x = []
@@ -40,7 +38,7 @@ def trace(im, trace_func, y0, xmin, xmax, coeff):
     return mask[::-1, ::-1]
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import numpy as np
     import pkg_resources
     from pyird.utils import irdstream
@@ -50,9 +48,9 @@ if __name__ == "__main__":
     from pyird.io.iraf_trace import read_trace_file
     import astropy.io.fits as pyf
 
-    datadir = pathlib.Path("/home/kawahara/pyird/data/samples/REACH/")
-    anadir = pathlib.Path("/home/kawahara/pyird/data/samples/REACH/")
-    target = irdstream.Stream2D("targets", datadir, anadir)
+    datadir = pathlib.Path('/home/kawahara/pyird/data/samples/REACH/')
+    anadir = pathlib.Path('/home/kawahara/pyird/data/samples/REACH/')
+    target = irdstream.Stream2D('targets', datadir, anadir)
 #    target.fitsid=[47077]
     target.fitsid = [47103]
     # Load an image
@@ -60,7 +58,7 @@ if __name__ == "__main__":
         im = pyf.open(str(datapath))[0].data
 
     # image for calibration
-    pathA = (pkg_resources.resource_filename('pyird', "data/samples/aprefA"))
+    pathA = (pkg_resources.resource_filename('pyird', 'data/samples/aprefA'))
     y0, interp_function, xmin, xmax, coeff = read_trace_file(pathA)
     mask = trace(im, trace_legendre, y0, xmin, xmax, coeff)
 
@@ -70,8 +68,8 @@ if __name__ == "__main__":
     fig = plt.figure()
     ax = fig.add_subplot(121)
     ax.imshow(im, vmin=-3.0, vmax=40.0)
-    ax.set_title("raw")
+    ax.set_title('raw')
     ax2 = fig.add_subplot(122)
     ax2.imshow(immasked, vmin=-3.0, vmax=40.0)
-    ax2.set_title("masked")
+    ax2.set_title('masked')
     plt.show()

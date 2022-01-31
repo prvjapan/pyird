@@ -1,6 +1,4 @@
-"""Load IRAF-made aperture file
-
-"""
+"""Load IRAF-made aperture file."""
 import numpy as np
 
 
@@ -77,7 +75,7 @@ def read_trace_file_one(filename, finalize=True, y0=None, interp_function=None, 
         arr = line.split()
         if len(arr) > 0:
             # identify begin
-            if arr[0] == "begin":
+            if arr[0] == 'begin':
                 # reset read_curve
                 if len(curvepar) > 0:
                     interp_function.append(float(curvepar[0]))
@@ -90,10 +88,10 @@ def read_trace_file_one(filename, finalize=True, y0=None, interp_function=None, 
 
                 norder = norder+1
                 y0.append(float(arr[4]))
-            elif arr[0] == "curve":
+            elif arr[0] == 'curve':
                 read_curve = True
                 curvepar = []
-            elif read_curve and arr[0] != "#":
+            elif read_curve and arr[0] != '#':
                 curvepar.append(float(arr[0]))
 
     interp_function.append(float(curvepar[0]))
@@ -110,9 +108,9 @@ def read_trace_file_one(filename, finalize=True, y0=None, interp_function=None, 
     return y0, interp_function, xmin, xmax, coeff
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import pkg_resources
-    pathA = (pkg_resources.resource_filename('pyird', "data/samples/aprefA"))
-    pathC = (pkg_resources.resource_filename('pyird', "data/samples/aprefC"))
+    pathA = (pkg_resources.resource_filename('pyird', 'data/samples/aprefA'))
+    pathC = (pkg_resources.resource_filename('pyird', 'data/samples/aprefC'))
     y0, interp_function, xmin, xmax, coeff = read_trace_file([pathA, pathC])
     print(len(y0))

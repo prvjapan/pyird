@@ -1,11 +1,9 @@
-"""reading linelist 
-
-"""
+"""reading linelist."""
 import numpy as np
 
 
 def read_linelist(filename):
-    """read thar list file
+    """read thar list file.
 
     Args:
        path to a linelist file
@@ -18,13 +16,12 @@ def read_linelist(filename):
         >>> import pkg_resources
         >>> path=(pkg_resources.resource_filename('pyird', "data/thar_ird2.dat"))
         >>> wavref=read_linelist(path)
-
     """
-    wavref = np.loadtxt(filename, comments="#")
+    wavref = np.loadtxt(filename, comments='#')
     return wavref
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import pkg_resources
-    path = (pkg_resources.resource_filename('pyird', "data/thar_ird2.dat"))
+    path = (pkg_resources.resource_filename('pyird', 'data/thar_ird2.dat'))
     wavref = read_linelist(path)

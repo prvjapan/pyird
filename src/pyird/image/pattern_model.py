@@ -4,7 +4,7 @@ from pyird.plot.detector import show_profile
 
 
 def median_XY_profile(calim, show=True):
-    """ a simple readout pattern model
+    """a simple readout pattern model.
 
     Note:
         This function assumes model = cmosub_med X + cmosub_med Y+ cmo, where cmos_med=cmo-subtracted median and cmo=channel median offset.
@@ -15,7 +15,6 @@ def median_XY_profile(calim, show=True):
 
     Returns:
         model pattern image
-
     """
     cal_channel_cube = image_to_channel_cube(calim, revert=True)
     cal_eotensor = eopixel_split(cal_channel_cube)

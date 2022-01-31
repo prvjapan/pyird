@@ -6,9 +6,9 @@
 
 import numpy as np
 
-__author__ = "Marcos Duarte, https://github.com/demotu/BMC"
-__version__ = "1.0.4"
-__license__ = "MIT"
+__author__ = 'Marcos Duarte, https://github.com/demotu/BMC'
+__version__ = '1.0.4'
+__license__ = 'MIT'
 
 
 def detect_peaks(x, mph=None, mpd=1, threshold=0, edge='rising',

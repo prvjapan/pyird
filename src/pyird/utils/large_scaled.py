@@ -11,7 +11,7 @@ def check_mask_filling(mask, Ncor=64):
     stacked_array = np.array(stacked_array)
     course_mask = np.sum(stacked_array, axis=0)
     if len(course_mask[course_mask == Ncor*Ncor]) > 0:
-        print("Warning: Too many mask. Fill them by smoothing.")
+        print('Warning: Too many mask. Fill them by smoothing.')
         check = False
     else:
         check = True

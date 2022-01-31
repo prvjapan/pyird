@@ -27,7 +27,7 @@ def wrap_kawahara_processRN(filen, filemask, fitsout):
     if check:
         LSD = large_scaled.get_LSD(img, gpscale=1024, Ncor=64, sigma=0.001)
     else:
-        sys.exit("exit")
+        sys.exit('exit')
     ###############################
     img = img-LSD
     recimg = rn.RNestimate_OEGP(img)

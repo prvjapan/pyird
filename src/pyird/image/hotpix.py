@@ -2,7 +2,7 @@ import numpy as np
 
 
 def identify_hotpix(im, threshold=10.0):
-    """Identification of hotpixels using sep
+    """Identification of hotpixels using sep.
 
     Args:
        im: image
@@ -11,7 +11,6 @@ def identify_hotpix(im, threshold=10.0):
     Returns:
        hotpix_mask: hot pixel mask
        obj: sep object
-
     """
     from sep import Background, extract, mask_ellipse
     try:
@@ -29,19 +28,19 @@ def identify_hotpix(im, threshold=10.0):
     return hotpix_mask, obj
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import numpy as np
     from pyird.image.bias import bias_subtract_image
     from pyird.utils import irdstream
     from pyird.plot.showmask import show_hotpix
     import astropy.io.fits as pyf
     import pathlib
-    mode = "H"
-    datadir = pathlib.Path("/home/kawahara/pyird/data/dark/")
-    anadir = pathlib.Path("/home/kawahara/pyird/data/dark/")
-    dark = irdstream.Stream2D("targets", datadir, anadir)
+    mode = 'H'
+    datadir = pathlib.Path('/home/kawahara/pyird/data/dark/')
+    anadir = pathlib.Path('/home/kawahara/pyird/data/dark/')
+    dark = irdstream.Stream2D('targets', datadir, anadir)
     dark.fitsid = [41018]
-    if mode == "YJ":
+    if mode == 'YJ':
         dark.fitsid_increment()
 
     print(dark.rawpath)

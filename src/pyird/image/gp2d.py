@@ -1,7 +1,4 @@
-"""Gaussian Process 2D
-
-
-"""
+"""Gaussian Process 2D."""
 
 from numpy import linalg as LA
 import numpy as np
@@ -59,7 +56,7 @@ def GP2D(Dmat, sigma, xscale, yscale):
 
 
 def GP2Dcross(Dmat, Dpre, sigma, xscale, yscale):
-    """GP 2D for different size between input and prediction
+    """GP 2D for different size between input and prediction.
 
     Note:
        It should be Dmat <= Dpre. See #12 for equations.
@@ -70,7 +67,6 @@ def GP2Dcross(Dmat, Dpre, sigma, xscale, yscale):
         sigma: observational Gaussian noise std
         xscale: GP correlated length (hyperparameter) for X
         yscale: GP correlated length (hyperparameter) for Y
-
     """
     rat = np.array(np.shape(Dpre))/np.array(np.shape(Dmat))
     Nx, Ny = np.shape(Dmat)

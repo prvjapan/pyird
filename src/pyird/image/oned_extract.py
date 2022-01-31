@@ -3,7 +3,7 @@ import numpy as np
 
 
 def flatten(im, trace_func, y0, xmin, xmax, coeff):
-    """make mask for trace parameters for multiorder
+    """make mask for trace parameters for multiorder.
 
     Args:
        im: image
@@ -17,7 +17,6 @@ def flatten(im, trace_func, y0, xmin, xmax, coeff):
     Returns:
        raw multiorder spectra
        multiorder pixel coordinate
-
     """
     rotim = np.copy(im[::-1, ::-1])
 
@@ -43,7 +42,7 @@ def flatten(im, trace_func, y0, xmin, xmax, coeff):
     return spec, pixcoord
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import numpy as np
     import pkg_resources
     from pyird.utils import irdstream
@@ -55,9 +54,9 @@ if __name__ == "__main__":
     from pyird.io.iraf_trace import read_trace_file
     import astropy.io.fits as pyf
 
-    datadir = pathlib.Path("/home/kawahara/pyird/data/samples/REACH/")
-    anadir = pathlib.Path("/home/kawahara/pyird/data/samples/REACH/")
-    target = irdstream.Stream2D("targets", datadir, anadir)
+    datadir = pathlib.Path('/home/kawahara/pyird/data/samples/REACH/')
+    anadir = pathlib.Path('/home/kawahara/pyird/data/samples/REACH/')
+    target = irdstream.Stream2D('targets', datadir, anadir)
 #    target.fitsid=[47077]
     target.fitsid = [47103]
     # Load an image
@@ -65,8 +64,8 @@ if __name__ == "__main__":
         im = pyf.open(str(datapath))[0].data
 
     # image for calibration
-    pathC = (pkg_resources.resource_filename('pyird', "data/samples/aprefC"))
-    path_c = (pkg_resources.resource_filename('pyird', "data/samples/apref_c"))
+    pathC = (pkg_resources.resource_filename('pyird', 'data/samples/aprefC'))
+    path_c = (pkg_resources.resource_filename('pyird', 'data/samples/apref_c'))
     y0, interp_function, xmin, xmax, coeff = read_trace_file([pathC, path_c])
 
     mask = trace(im, trace_legendre, y0, xmin, xmax, coeff)
@@ -77,7 +76,7 @@ if __name__ == "__main__":
     corrected_im = im-model_im
 
     # trace
-    pathA = (pkg_resources.resource_filename('pyird', "data/samples/aprefA"))
+    pathA = (pkg_resources.resource_filename('pyird', 'data/samples/aprefA'))
     y0, interp_function, xmin, xmax, coeff = read_trace_file(pathA)
 
     # flatten
@@ -86,9 +85,9 @@ if __name__ == "__main__":
 
     fig = plt.figure(figsize=(12, 7))
     for i, esp in enumerate(spec):
-        plt.plot(pixcoord[i], esp, label="order "+str(i))
-    plt.xlabel("pixel coordinate")
-    plt.ylabel("raw spectra")
+        plt.plot(pixcoord[i], esp, label='order '+str(i))
+    plt.xlabel('pixel coordinate')
+    plt.ylabel('raw spectra')
     plt.legend()
-    plt.savefig("fig_flatten.png")
+    plt.savefig('fig_flatten.png')
     plt.show()

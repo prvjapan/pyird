@@ -19,7 +19,7 @@ def image_to_channel_cube(image, revert=True, Nch=32):
 
 
 def channel_cube_to_image(channel_cube, revert=True):
-    """ conversion of a channel cube to an image
+    """conversion of a channel cube to an image.
 
     Args:
        channel_cube: channel_cube
@@ -27,7 +27,6 @@ def channel_cube_to_image(channel_cube, revert=True):
 
     Returns:
        image: 2D image
-
     """
     Nch, ch_pix_num, ysize = np.shape(channel_cube)
     if revert:
@@ -40,41 +39,38 @@ def channel_cube_to_image(channel_cube, revert=True):
 
 
 def revert_channel_cube(channel_cube):
-    """Revert y direction of odd channels
+    """Revert y direction of odd channels.
 
     Args:
        channel cube
 
     Returns:
        channel cube (odd channel revereted)
-
     """
     channel_cube[1::2, 0::, :] = channel_cube[1::2, -1::-1, :]
     return channel_cube
 
 
 def eopixel_split(channel_cube):
-    """Revert y direction of odd channels
+    """Revert y direction of odd channels.
 
     Args:
        channel cube
 
     Returns:
        eo tensor (2 [e/o] x Nchannel x xsize x ysize)
-
     """
     return np.array([channel_cube[:, 0::2, :], channel_cube[:, 1::2, :]])
 
 
 def eopixel_combine(eop):
-    """ inverse operation of eopixel_split
+    """inverse operation of eopixel_split.
 
     Args:
        eo tensor (2 [e/o] x Nchannel x xsize x ysize)
 
     Returns:
        channel cube
-
     """
     _, l, m, n = np.shape(eop)
     channel_cube = np.zeros((l, 2*m, n))
@@ -91,7 +87,7 @@ def bias_region(channel_cube, margin=4):
     return ref
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import numpy as np
 
     a = np.random.normal(0.0, 1.0, 2048*2048).reshape(2048, 2048)
@@ -108,9 +104,9 @@ if __name__ == "__main__":
     import astropy.io.fits as pyf
     import pathlib
     import matplotlib.pyplot as plt
-    datadir = pathlib.Path("/home/kawahara/pyird/data/dark/")
-    anadir = pathlib.Path("/home/kawahara/pyird/data/dark/")
-    dark = irdstream.Stream2D("targets", datadir, anadir)
+    datadir = pathlib.Path('/home/kawahara/pyird/data/dark/')
+    anadir = pathlib.Path('/home/kawahara/pyird/data/dark/')
+    dark = irdstream.Stream2D('targets', datadir, anadir)
     dark.fitsid = [41018]
     for datapath in dark.rawpath:
         im = pyf.open(str(datapath))[0].data
@@ -131,15 +127,15 @@ if __name__ == "__main__":
     med = np.median(pf, axis=2)
     pf = pf-med[:, :, np.newaxis]
     plt.plot(np.median(pf, axis=1)[0, :], lw=2,
-             alpha=1, color="C0", label="Even")
+             alpha=1, color='C0', label='Even')
     plt.plot(np.median(pf, axis=1)[1, :], lw=2,
-             alpha=1, color="C1", label="Odd")
+             alpha=1, color='C1', label='Odd')
 
     for i in range(0, int(np.shape(eop)[1])):
-        plt.plot(pf[0, i, :], alpha=0.2, color="C0")
+        plt.plot(pf[0, i, :], alpha=0.2, color='C0')
     for i in range(0, int(np.shape(eop)[1])):
-        plt.plot(pf[1, i, :], alpha=0.2, color="C1")
+        plt.plot(pf[1, i, :], alpha=0.2, color='C1')
 
     plt.legend()
-    plt.xlabel("X-direction")
+    plt.xlabel('X-direction')
     plt.show()

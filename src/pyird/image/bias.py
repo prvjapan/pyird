@@ -1,8 +1,6 @@
-""" Bias subtraction
-   
-    - originally developed by M. Kuzuhara
+"""Bias subtraction.
 
-
+- originally developed by M. Kuzuhara
 """
 import numpy as np
 import scipy.stats as stats
@@ -12,7 +10,7 @@ import matplotlib.pyplot as plt
 
 
 def bias_subtract(channel_cube):
-    """Bias subtraction for channel cube
+    """Bias subtraction for channel cube.
 
     Args:
        channel_cube: channel cube
@@ -26,8 +24,6 @@ def bias_subtract(channel_cube):
         >>> channel_cube=image_to_channel_cube(im)
         >>> bias_subtracted_channel_cube, channel_bias=bias_subtract(channel_cube)
         >>> image_rmbias=channel_cube_to_image(bias_subtracted_channel_cube)
-
-
     """
     snclip = 3.0  # clipping value
     ref = bias_region(channel_cube, margin=4)
@@ -41,7 +37,7 @@ def bias_subtract(channel_cube):
 
 
 def bias_subtract_image(im):
-    """Bias subtraction for image
+    """Bias subtraction for image.
 
     Args:
        im: image
@@ -51,15 +47,13 @@ def bias_subtract_image(im):
 
     Examples:
         >>> image_rmbias=bias_subtract_image(im)
-
-
     """
     bias_subtracted_channel_cube, channel_bias = bias_subtract(
         image_to_channel_cube(im))
     return channel_cube_to_image(bias_subtracted_channel_cube)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import numpy as np
     from pyird.image.channel import image_to_channel_cube, channel_cube_to_image
     from pyird.utils import irdstream
@@ -67,12 +61,12 @@ if __name__ == "__main__":
     import tqdm
     import pathlib
 
-    mode = "YJ"
-    datadir = pathlib.Path("/home/kawahara/pyird/data/dark/")
-    anadir = pathlib.Path("/home/kawahara/pyird/data/dark/")
-    dark = irdstream.Stream2D("targets", datadir, anadir)
+    mode = 'YJ'
+    datadir = pathlib.Path('/home/kawahara/pyird/data/dark/')
+    anadir = pathlib.Path('/home/kawahara/pyird/data/dark/')
+    dark = irdstream.Stream2D('targets', datadir, anadir)
     dark.fitsid = [41018]
-    if mode == "H":
+    if mode == 'H':
         dark.fitsid_increment()
 
     print(dark.rawpath)
@@ -94,5 +88,5 @@ if __name__ == "__main__":
     ax2 = fig.add_subplot(122)
     cc = ax2.imshow(image_rmbias, vmin=-3.0, vmax=4.0)
     plt.colorbar(cc)
-    print(mad(im.flatten()), "->", mad(image_rmbias.flatten()))
+    print(mad(im.flatten()), '->', mad(image_rmbias.flatten()))
     plt.show()

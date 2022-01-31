@@ -1,3 +1,1 @@
-"""wavelength calibrator
-
-"""
+"""wavelength calibrator."""

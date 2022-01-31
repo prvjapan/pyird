@@ -20,7 +20,7 @@ def coarse_gp(array, subarray, xscale, yscale, Ncor):
     return GLP
 
 
-def RNestimate_OEGP(img, xscale=10, yscale=5, sigma=0.01, cgdmode="gp"):
+def RNestimate_OEGP(img, xscale=10, yscale=5, sigma=0.01, cgdmode='gp'):
     # OEGP (Odd/Even+Gaussian Process) method by H.Kawahara
 
     # cgdmode="gp": channel global distribtuion infered by GP2d
@@ -56,7 +56,7 @@ def RNestimate_OEGP(img, xscale=10, yscale=5, sigma=0.01, cgdmode="gp"):
     #######################
 
     #######################
-    if cgdmode == "gp":
+    if cgdmode == 'gp':
         # Channel Global Distribution
         CGDa = []
         Ncor = 64
@@ -88,21 +88,21 @@ def RNestimate_OEGP(img, xscale=10, yscale=5, sigma=0.01, cgdmode="gp"):
     iap = 0
     for jchan in range(0, nchan):
         arr = np.zeros((nRN, npix))
-        if cgdmode == "gp":
+        if cgdmode == 'gp':
             CGD = np.zeros(np.shape(rec))
             CGD[:, 4:-4] = CGDa[iap]
             arr[0::2, :] = rec[:, :]+CGD
-        elif cgdmode == "median":
+        elif cgdmode == 'median':
             arr[0::2, :] = rec[:, :]+subcube_median[2*jchan]
         else:
-            sys.exit("No availbale cgdmode.")
+            sys.exit('No availbale cgdmode.')
         iap = iap+1
 
-        if cgdmode == "gp":
+        if cgdmode == 'gp':
             CGD = np.zeros(np.shape(rec))
             CGD[:, 4:-4] = CGDa[iap]
             arr[1::2, :] = rec[:, :]+CGD
-        elif cgdmode == "median":
+        elif cgdmode == 'median':
             arr[1::2, :] = rec[:, :]+subcube_median[2*jchan+1]
 
         iap = iap+1
@@ -115,7 +115,7 @@ def RNestimate_OEGP(img, xscale=10, yscale=5, sigma=0.01, cgdmode="gp"):
     return recimg
 
 
-def extract_pattern_OEGP(img, channel_cube, xscale=10, yscale=5, sigma=0.01, cgdmode="gp"):
+def extract_pattern_OEGP(img, channel_cube, xscale=10, yscale=5, sigma=0.01, cgdmode='gp'):
     # OEGP (Odd/Even+Gaussian Process) method by H.Kawahara
 
     # cgdmode="gp": channel global distribtuion infered by GP2d
@@ -137,7 +137,7 @@ def extract_pattern_OEGP(img, channel_cube, xscale=10, yscale=5, sigma=0.01, cgd
     #######################
 
     #######################
-    if cgdmode == "gp":
+    if cgdmode == 'gp':
         # Channel Global Distribution
         CGDa = []
         Ncor = 64
@@ -169,21 +169,21 @@ def extract_pattern_OEGP(img, channel_cube, xscale=10, yscale=5, sigma=0.01, cgd
     iap = 0
     for jchan in range(0, Nch):
         arr = np.zeros((ch_pix_num, xsize))
-        if cgdmode == "gp":
+        if cgdmode == 'gp':
             CGD = np.zeros(np.shape(rec))
             CGD[:, 4:-4] = CGDa[iap]
             arr[0::2, :] = rec[:, :]+CGD
-        elif cgdmode == "median":
+        elif cgdmode == 'median':
             arr[0::2, :] = rec[:, :]+subcube_median[2*jchan]
         else:
-            sys.exit("No availbale cgdmode.")
+            sys.exit('No availbale cgdmode.')
         iap = iap+1
 
-        if cgdmode == "gp":
+        if cgdmode == 'gp':
             CGD = np.zeros(np.shape(rec))
             CGD[:, 4:-4] = CGDa[iap]
             arr[1::2, :] = rec[:, :]+CGD
-        elif cgdmode == "median":
+        elif cgdmode == 'median':
             arr[1::2, :] = rec[:, :]+subcube_median[2*jchan+1]
 
         iap = iap+1
@@ -196,7 +196,7 @@ def extract_pattern_OEGP(img, channel_cube, xscale=10, yscale=5, sigma=0.01, cgd
     return recimg
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import numpy as np
     from pyird.image.channel import eopixel_split, image_to_channel_cube
     from pyird.image.bias import bias_subtract
@@ -205,12 +205,12 @@ if __name__ == "__main__":
     import tqdm
     import pathlib
 
-    mode = "YJ"
-    datadir = pathlib.Path("/home/kawahara/pyird/data/dark/")
-    anadir = pathlib.Path("/home/kawahara/pyird/data/dark/")
-    dark = irdstream.Stream2D("targets", datadir, anadir)
+    mode = 'YJ'
+    datadir = pathlib.Path('/home/kawahara/pyird/data/dark/')
+    anadir = pathlib.Path('/home/kawahara/pyird/data/dark/')
+    dark = irdstream.Stream2D('targets', datadir, anadir)
     dark.fitsid = [41018]
-    if mode == "H":
+    if mode == 'H':
         dark.fitsid_increment()
 
     print(dark.rawpath)

@@ -2,7 +2,7 @@ import numpy as np
 
 
 def trace_legendre(x, y0, xmin, xmax, coeff):
-    """ trace Legendre function 
+    """trace Legendre function.
 
     Args:
        x: x-array
@@ -10,7 +10,6 @@ def trace_legendre(x, y0, xmin, xmax, coeff):
        xmin: xmin
        xmax: xmax
        coeff: Legendre polynomial coefficients
-
     """
     from numpy.polynomial.legendre import legval
     norder = len(y0)
@@ -26,11 +25,11 @@ def trace_legendre(x, y0, xmin, xmax, coeff):
     return trace_lines
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import pkg_resources
     from pyird.io.iraf_trace import read_trace_file
     import numpy as np
 
-    pathC = (pkg_resources.resource_filename('pyird', "data/samples/aprefC"))
-    path_c = (pkg_resources.resource_filename('pyird', "data/samples/apref_c"))
+    pathC = (pkg_resources.resource_filename('pyird', 'data/samples/aprefC'))
+    path_c = (pkg_resources.resource_filename('pyird', 'data/samples/apref_c'))
     y0, interp_function, xmin, xmax, coeff = read_trace_file([pathC, path_c])
