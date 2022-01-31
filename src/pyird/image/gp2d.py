@@ -54,6 +54,19 @@ def GP2D(Dmat,sigma,xscale,yscale):
     return Dest
 
 def GP2Dcross(Dmat,Dpre,sigma,xscale,yscale):
+    """GP 2D for different size between input and prediction
+
+    Note:
+       It should be Dmat <= Dpre. See #12 for equations.
+
+    Args:
+        Dmat: input 2D matrix
+        Dpre: prediction matrix form (empty)
+        sigma: observational Gaussian noise std
+        xscale: GP correlated length (hyperparameter) for X
+        yscale: GP correlated length (hyperparameter) for Y
+
+    """
     rat=np.array(np.shape(Dpre))/np.array(np.shape(Dmat))
     Nx,Ny=np.shape(Dmat)
     
