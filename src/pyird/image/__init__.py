@@ -1,4 +1,4 @@
-__all__ = ['fitsset','irdstream']
+__all__ = ['fitsset', 'irdstream']
 
 __version__ = "0.0.2"
 

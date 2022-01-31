@@ -4,7 +4,9 @@
 
 """
 import numpy as np
-def imcombine(imcube,mode="median"):
+
+
+def imcombine(imcube, mode="median"):
     """combine images to a image
 
     Args:
@@ -14,49 +16,50 @@ def imcombine(imcube,mode="median"):
        image
 
     """
-    if mode=="median":
-        mask=imcube!=imcube
-        if np.shape(imcube[mask])[0]>0: #nan check
-            im=np.nanmedian(imcube,axis=0)
+    if mode == "median":
+        mask = imcube != imcube
+        if np.shape(imcube[mask])[0] > 0:  # nan check
+            im = np.nanmedian(imcube, axis=0)
         else:
-            im=np.median(imcube,axis=0)
-    elif mode=="mean":
-        mask=imcube!=imcube
-        if np.shape(imcube[mask])[0]>0: #nan check
-            im=np.nanmean(imcube,axis=0)
+            im = np.median(imcube, axis=0)
+    elif mode == "mean":
+        mask = imcube != imcube
+        if np.shape(imcube[mask])[0] > 0:  # nan check
+            im = np.nanmean(imcube, axis=0)
         else:
-            im=np.mean(imcube,axis=0)
+            im = np.mean(imcube, axis=0)
     else:
         print("No mode in imcombine.")
     return im
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     import numpy as np
     from pyird.image.channel import image_to_channel_cube, channel_cube_to_image
-    from pyird.utils import fitsset,irdstream
+    from pyird.utils import fitsset, irdstream
     import astropy.io.fits as pyf
     import tqdm
     import pathlib
     import matplotlib.pyplot as plt
-    
-    mode="YJ"
-    datadir=pathlib.Path("/media/kawahara/kingyo_bkup/kingyo/IRD_G196_3B/20210317_cal/")
-    anadir=pathlib.Path("/home/kawahara/pyird/data/flat/")
 
-    flat_mmf=irdstream.Stream2D("flat_mmf",datadir,anadir)
-    flat_mmf.fitsid=\
-    list(range(41704,41904,2))
-    if mode=="H":
+    mode = "YJ"
+    datadir = pathlib.Path(
+        "/media/kawahara/kingyo_bkup/kingyo/IRD_G196_3B/20210317_cal/")
+    anadir = pathlib.Path("/home/kawahara/pyird/data/flat/")
+
+    flat_mmf = irdstream.Stream2D("flat_mmf", datadir, anadir)
+    flat_mmf.fitsid =\
+        list(range(41704, 41904, 2))
+    if mode == "H":
         flat_mmf.fitsid_increment()
-    imcube=flat_mmf.load_fitsset()
-    cflat=imcombine(imcube)
-    plt.plot(cflat[1024,:])
+    imcube = flat_mmf.load_fitsset()
+    cflat = imcombine(imcube)
+    plt.plot(cflat[1024, :])
     plt.show()
 #    def imcombine(self,tag,combine="median"):
 #        combined_fitsset=FitsSet(tag,self.fitsdir)
 #        combined_fitsset.clean()
-#        iraf.imcombine(input=self.at_list(listname=tag),output=combined_fitsset.path(check=False)[0],combine=combine) #       
+#        iraf.imcombine(input=self.at_list(listname=tag),output=combined_fitsset.path(check=False)[0],combine=combine) #
 #        return combined_fitsset
 
 #    combined_flat=flat_mmf.imcombine("combined_flat")
