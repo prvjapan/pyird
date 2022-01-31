@@ -26,10 +26,7 @@ def RNestimate_OEGP(img, xscale=10, yscale=5, sigma=0.01, cgdmode="gp"):
     # cgdmode="gp": channel global distribtuion infered by GP2d
     # cgdmode="median": channel global distribtuion infered by by median
 
-    from numpy import linalg as LA
-    import scipy
     import numpy as np
-    import time
 
     #####################
     # infer common subprofile
@@ -124,10 +121,7 @@ def extract_pattern_OEGP(img, channel_cube, xscale=10, yscale=5, sigma=0.01, cgd
     # cgdmode="gp": channel global distribtuion infered by GP2d
     # cgdmode="median": channel global distribtuion infered by by median
 
-    from numpy import linalg as LA
-    import scipy
     import numpy as np
-    import time
 
     Nch, ch_pix_num, xsize = np.shape(channel_cube)
     noechan = int(Nch/2)  # number of odd or even channel
@@ -204,14 +198,12 @@ def extract_pattern_OEGP(img, channel_cube, xscale=10, yscale=5, sigma=0.01, cgd
 
 if __name__ == "__main__":
     import numpy as np
-    from pyird.image.channel import image_to_channel_cube, channel_cube_to_image, eopixel_split
+    from pyird.image.channel import eopixel_split, image_to_channel_cube
     from pyird.image.bias import bias_subtract
-    from pyird.utils import fitsset, irdstream
+    from pyird.utils import irdstream
     import astropy.io.fits as pyf
     import tqdm
     import pathlib
-    import matplotlib.pyplot as plt
-    from scipy.stats import median_absolute_deviation as mad
 
     mode = "YJ"
     datadir = pathlib.Path("/home/kawahara/pyird/data/dark/")

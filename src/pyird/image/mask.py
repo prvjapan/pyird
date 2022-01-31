@@ -47,7 +47,6 @@ if __name__ == "__main__":
     import pathlib
     import matplotlib.pyplot as plt
     from pyird.image.trace_function import trace_legendre
-    from pyird.image.pattern_model import median_XY_profile
     from pyird.io.iraf_trace import read_trace_file
     import astropy.io.fits as pyf
 

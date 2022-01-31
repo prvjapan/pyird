@@ -4,7 +4,6 @@
 """
 
 from numpy import linalg as LA
-import scipy
 import numpy as np
 
 
@@ -48,9 +47,9 @@ def GP2D(Dmat, sigma, xscale, yscale):
     Kx = Matern32(x, xscale)
     Ky = Matern32(y, yscale)
     kapx, Ux = LA.eigh(Kx)
-    Lx = np.diag(kapx)
+    np.diag(kapx)
     kapy, Uy = LA.eigh(Ky)
-    Ly = np.diag(kapy)
+    np.diag(kapy)
     invL = 1.0/(np.outer(kapx, kapy)+sigma**2)
     P = invL*(np.dot(Ux.T, np.dot(Dmat, Uy)))
     #    P = invL*(Ux.T@Dmat@Uy)
@@ -86,9 +85,9 @@ def GP2Dcross(Dmat, Dpre, sigma, xscale, yscale):
     Kx = RBF(x, xscale)
     Ky = RBF(y, yscale)
     kapx, Ux = LA.eigh(Kx)
-    Lx = np.diag(kapx)
+    np.diag(kapx)
     kapy, Uy = LA.eigh(Ky)
-    Ly = np.diag(kapy)
+    np.diag(kapy)
     invL = 1.0/(np.outer(kapx, kapy)+sigma**2)
     P = invL*(np.dot(Ux.T, np.dot(Dmat, Uy)))
     Kxp = RBFcross(x, xp, xscale)

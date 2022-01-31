@@ -1,8 +1,4 @@
 import numpy as np
-import pkg_resources
-from pyird.utils import irdstream
-import pathlib
-import matplotlib.pyplot as plt
 from pyird.image.channel import image_to_channel_cube, channel_cube_to_image, eopixel_split, eopixel_combine
 from pyird.plot.detector import show_profile
 

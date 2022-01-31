@@ -62,7 +62,7 @@ def bias_subtract_image(im):
 if __name__ == "__main__":
     import numpy as np
     from pyird.image.channel import image_to_channel_cube, channel_cube_to_image
-    from pyird.utils import fitsset, irdstream
+    from pyird.utils import irdstream
     import astropy.io.fits as pyf
     import tqdm
     import pathlib

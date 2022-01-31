@@ -28,13 +28,8 @@ def trace_legendre(x, y0, xmin, xmax, coeff):
 
 if __name__ == "__main__":
     import pkg_resources
-    from pyird.utils import irdstream
     from pyird.io.iraf_trace import read_trace_file
-    from pyird.image.channel import image_to_channel_cube, channel_cube_to_image, eopixel_split, eopixel_combine
-    from pyird.image.bias import bias_subtract
     import numpy as np
-    import matplotlib.pyplot as plt
-    import pathlib
 
     pathC = (pkg_resources.resource_filename('pyird', "data/samples/aprefC"))
     path_c = (pkg_resources.resource_filename('pyird', "data/samples/apref_c"))

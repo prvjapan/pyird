@@ -4,11 +4,8 @@
 
 if __name__ == "__main__":
     import numpy as np
-    from pyird.image.channel import image_to_channel_cube, channel_cube_to_image
     from pyird.image.operator import imcombine
-    from pyird.utils import fitsset, irdstream, detect_peaks
-    import astropy.io.fits as pyf
-    import tqdm
+    from pyird.utils import detect_peaks, irdstream
     import pathlib
     import matplotlib.pyplot as plt
 

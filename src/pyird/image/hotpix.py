@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -32,9 +31,8 @@ def identify_hotpix(im, threshold=10.0):
 
 if __name__ == "__main__":
     import numpy as np
-    import matplotlib.pyplot as plt
     from pyird.image.bias import bias_subtract_image
-    from pyird.utils import fitsset, irdstream
+    from pyird.utils import irdstream
     from pyird.plot.showmask import show_hotpix
     import astropy.io.fits as pyf
     import pathlib
