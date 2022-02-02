@@ -9,7 +9,7 @@ def image_to_channel_cube(image, revert=True, Nch=32):
        Nch: Number of the channels of a detector. For IRD Nch=32
 
     Returns:
-       channel cube
+       channel cube (Nch, ch_pix_num, 2048)
 
     """
     channel_cube = np.array(np.split(image, Nch))  # (Nch, ch_pix_num, 2048)
