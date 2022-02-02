@@ -1,3 +1,5 @@
+import numpy as np
+
 def calc_coarsed_array(array, Ncor):
     """coarsed array."""
     each = (array-np.median(array))

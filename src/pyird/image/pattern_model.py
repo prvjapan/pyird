@@ -2,6 +2,7 @@ import numpy as np
 from pyird.image.channel import image_to_channel_cube, channel_cube_to_image, eopixel_split, eopixel_combine
 from pyird.plot.detector import show_profile
 
+
 def median_XY_profile(calim, rm_nct=True, Ncor=64, show=True):
     """a simple readout pattern model.
 
@@ -13,7 +14,7 @@ def median_XY_profile(calim, rm_nct=True, Ncor=64, show=True):
         rm_nct: remove non-common trends of channel using GP
         Ncor: coarse graing number for rm_nct
         show: showing profile
-    
+
 
     Returns:
         model pattern image
@@ -46,11 +47,50 @@ def median_XY_profile(calim, rm_nct=True, Ncor=64, show=True):
     model_channel_cube = eopixel_combine(image_pattern_model_eotensor)
     if rm_nct:
         from pyird.gp.gputils import calc_coarsed_array
-        Nch=np.shape(model_channel_cube)[0]
-        for i in range(0,Nch):
-            cgda=model_channel_cube[i,:,:]
-            calc_coarsed_array.coarse_gp(cgda, subarray, Ncor)
-            
+        from pyird.gp.gp2d import GP2Dcross
+
+        Nch = np.shape(model_channel_cube)[0]
+        for i in range(0, Nch):
+            nctrend = cal_channel_cube[i, :, :]-model_channel_cube[i, :, :]
+
+            subarray = np.zeros_like(nctrend)
+            subarray = subarray[:, 4:-4]
+
+            coarsed_array = calc_coarsed_array(nctrend, Ncor)
+            coarsed_array[coarsed_array !=
+                          coarsed_array] = np.nanmedian(coarsed_array)
+
+            sigma = 0.1
+            xscale = 32
+            yscale = 64
+            nctrend_model = GP2Dcross(
+                coarsed_array, subarray, sigma, xscale, yscale)
+            model_channel_cube[i, :, 4:-
+                               4] = model_channel_cube[i, :, 4:-4]+nctrend_model
+
+            if False:
+                import matplotlib.pyplot as plt
+                ss = 3.0*np.nanstd(nctrend_model)
+                fig = plt.figure()
+                ax = fig.add_subplot(311)
+                a = plt.imshow(nctrend, vmin=-ss, vmax=ss)
+                plt.colorbar(a, orientation='horizontal')
+                ax.set_aspect(0.1/ax.get_data_ratio())
+                ax.set_title('raw residuals: channel='+str(i))
+
+                ax = fig.add_subplot(312)
+                a = plt.imshow(coarsed_array, vmin=-ss, vmax=ss)
+                plt.colorbar(a, orientation='horizontal')
+                ax.set_aspect(0.1/ax.get_data_ratio())
+                ax.set_title('coarse grained')
+
+                ax = fig.add_subplot(313)
+                a = plt.imshow(nctrend_model, vmin=-ss, vmax=ss)
+                plt.colorbar(a, orientation='horizontal')
+                ax.set_aspect(0.1/ax.get_data_ratio())
+                ax.set_title('nct model')
+                plt.show()
+
     model_image = channel_cube_to_image(model_channel_cube)
 
     return model_image
