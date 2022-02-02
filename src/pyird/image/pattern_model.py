@@ -2,8 +2,7 @@ import numpy as np
 from pyird.image.channel import image_to_channel_cube, channel_cube_to_image, eopixel_split, eopixel_combine
 from pyird.plot.detector import show_profile
 
-
-def median_XY_profile(calim, show=True):
+def median_XY_profile(calim, rm_nct=True, Ncor=64, show=True):
     """a simple readout pattern model.
 
     Note:
@@ -11,7 +10,10 @@ def median_XY_profile(calim, show=True):
 
     Args:
         calim: masked image for read pattern calibration
+        rm_nct: remove non-common trends of channel using GP
+        Ncor: coarse graing number for rm_nct
         show: showing profile
+    
 
     Returns:
         model pattern image
@@ -42,6 +44,13 @@ def median_XY_profile(calim, show=True):
         + channel_median_offset[:, :, np.newaxis, np.newaxis]
 
     model_channel_cube = eopixel_combine(image_pattern_model_eotensor)
+    if rm_nct:
+        from pyird.gp.gputils import calc_coarsed_array
+        Nch=np.shape(model_channel_cube)[0]
+        for i in range(0,Nch):
+            cgda=model_channel_cube[i,:,:]
+            calc_coarsed_array.coarse_gp(cgda, subarray, Ncor)
+            
     model_image = channel_cube_to_image(model_channel_cube)
 
     return model_image

@@ -4,8 +4,9 @@ from numpy import linalg as LA
 import GPy
 import matplotlib.pyplot as plt
 
-def GP2Dgpy(X,Z,Nx,Ny):
-    """GP 2D for matrix input with mask
+
+def GP2Dgpy(X, Z, Nx, Ny):
+    """GP 2D for matrix input with mask.
 
     Args:
        X: 2D coordinate (N x 2)
@@ -15,7 +16,6 @@ def GP2Dgpy(X,Z,Nx,Ny):
 
     Returns:
        X1,X2,GP prediction (50%)
-
     """
 
     xgrid = np.linspace(0, Nx, Nx)
@@ -28,9 +28,9 @@ def GP2Dgpy(X,Z,Nx,Ny):
     X1, X2 = np.meshgrid(xgrid, ygrid)
     input_grid = np.array([X1.flatten(), X2.flatten()]).T
     z_pred = model.predict_quantiles(input_grid, quantiles=(50,))[0]
-    Zpred=z_pred.reshape(Ny,Nx)
+    Zpred = z_pred.reshape(Ny, Nx)
 
-    return X1,X2,Zpred
+    return X1, X2, Zpred
 
 
 def RBF(obst, tau):
@@ -121,27 +121,27 @@ def GP2Dcross(Dmat, Dpre, sigma, xscale, yscale):
     return Dest
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     np.random.seed(seed=1)
 
-    #data
+    # data
     Nx = 32
     Ny = 32
-    N=Nx*Ny
+    N = Nx*Ny
     xgrid = np.linspace(0, Nx, Nx)
     ygrid = np.linspace(0, Ny, Ny)
-    X = (np.array(np.meshgrid(xgrid, ygrid))).reshape(2,Nx*Ny).T
+    X = (np.array(np.meshgrid(xgrid, ygrid))).reshape(2, Nx*Ny).T
     print(np.shape(X))
-    Z = np.sin(X[:, 0:1]/10) * np.sin(X[:, 1:2]/10) + np.random.randn(N, 1)*0.05
-       
+    Z = np.sin(X[:, 0:1]/10) * np.sin(X[:, 1:2]/10) + \
+        np.random.randn(N, 1)*0.05
+
     # prediction
-    X1,X2,Zpred=GP2Dgpy(X,Z,Nx,Ny)
-    
+    X1, X2, Zpred = GP2Dgpy(X, Z, Nx, Ny)
+
     from mpl_toolkits.mplot3d import Axes3D
-    fig=plt.figure()
+    fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    surf = ax.plot_surface(X1, X2, Zpred, cmap='bwr', linewidth=0,alpha=0.3)
-    ax.scatter3D(X[:,0],X[:,1],Z,color="k")
+    surf = ax.plot_surface(X1, X2, Zpred, cmap='bwr', linewidth=0, alpha=0.3)
+    ax.scatter3D(X[:, 0], X[:, 1], Z, color='k')
     fig.colorbar(surf)
     plt.show()
-    
