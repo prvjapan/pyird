@@ -47,7 +47,7 @@ def median_XY_profile(calim, rm_nct=True, Ncor=64, show=True):
     model_channel_cube = eopixel_combine(image_pattern_model_eotensor)
     if rm_nct:
         from pyird.gp.gputils import calc_coarsed_array
-        from pyird.gp.gp2d import GP2Dcross
+        from gpkron.gp2d import GP2D, RBF
 
         Nch = np.shape(model_channel_cube)[0]
         for i in range(0, Nch):
@@ -63,8 +63,7 @@ def median_XY_profile(calim, rm_nct=True, Ncor=64, show=True):
             sigma = 0.1
             xscale = 32
             yscale = 64
-            nctrend_model = GP2Dcross(
-                coarsed_array, subarray, sigma, xscale, yscale)
+            nctrend_model = GP2D(coarsed_array, RBF, sigma, (xscale, yscale),pshape=np.shape(subarray))
             model_channel_cube[i, :, 4:-
                                4] = model_channel_cube[i, :, 4:-4]+nctrend_model
 
