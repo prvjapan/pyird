@@ -143,8 +143,9 @@ def plot_result(wavsol, data, npix=2048):
 
 if __name__ == '__main__':
     # Load a Th-Ar spectrum
-    tharfile = '../../../data/thar_mmf2_a_H_20210317.fits'
-    hd = fits.open(tharfile)
+    import pkg_resources
+    path = (pkg_resources.resource_filename('pyird', 'data/thar_mmf2_a_H_20210317.fits'))
+    hd = fits.open(path)
     dat = (hd[0].data)
 
     # Load a channel list
