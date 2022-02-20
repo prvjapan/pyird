@@ -2,16 +2,17 @@ import numpy as np
 from pyird.image.channel import image_to_channel_cube, channel_cube_to_image, eopixel_split, eopixel_combine
 from pyird.plot.detector import show_profile
 
-def median_XY_profile(calim, rm_nct=True, Ncor=64, sigma=0.1, xscale=32, yscale=64, show=True):
+def median_XY_profile(calim, rm_nct=True, Ncor=64, margin_npixel=4, sigma=0.1, xscale=32, yscale=64, show=True):
     """a simple readout pattern model.
 
     Note:
-        This function assumes model = cmosub_med X + cmosub_med Y+ cmo, where cmos_med=cmo-subtracted median and cmo=channel median offset. When rm_cnt=True option corrects non-common trends of channels using a 2D GP.
+        This function assumes model = cmosub_med X + cmosub_med Y+ cmo, where cmos_med=cmo-subtracted median and cmo=channel median offset. When rm_cnt=True option corrects non-common trends of channels using a 2D GP. See #10 (https://github.com/prvjapan/pyird/issues/10).
 
     Args:
         calim: masked image for read pattern calibration
         rm_nct: remove non-common trends of channel using a GP
         Ncor: coarse graing number for rm_nct
+        margin_npixel: # of pixels for detector margin 
         sigma: GP diagonal component
         xscale: GP x scale
         yscale: GP y scale
@@ -55,15 +56,15 @@ def median_XY_profile(calim, rm_nct=True, Ncor=64, sigma=0.1, xscale=32, yscale=
             nctrend = cal_channel_cube[i, :, :]-model_channel_cube[i, :, :]
 
             subarray = np.zeros_like(nctrend)
-            subarray = subarray[:, 4:-4]
+            subarray = subarray[:, margin_npixel:-margin_npixel]
 
             coarsed_array = calc_coarsed_array(nctrend, Ncor)
             coarsed_array[coarsed_array !=
                           coarsed_array] = np.nanmedian(coarsed_array)
 
             nctrend_model = GP2D(coarsed_array, RBF, sigma, (xscale, yscale),pshape=np.shape(subarray))
-            model_channel_cube[i, :, 4:-
-                               4] = model_channel_cube[i, :, 4:-4]+nctrend_model
+            model_channel_cube[i, :, margin_npixel:-
+                               margin_npixel] = model_channel_cube[i, :, margin_npixel:-margin_npixel]+nctrend_model
 
     model_image = channel_cube_to_image(model_channel_cube)
 
