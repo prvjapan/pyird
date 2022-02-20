@@ -6,11 +6,11 @@ def median_XY_profile(calim, rm_nct=True, Ncor=64, sigma=0.1, xscale=32, yscale=
     """a simple readout pattern model.
 
     Note:
-        This function assumes model = cmosub_med X + cmosub_med Y+ cmo, where cmos_med=cmo-subtracted median and cmo=channel median offset.
+        This function assumes model = cmosub_med X + cmosub_med Y+ cmo, where cmos_med=cmo-subtracted median and cmo=channel median offset. When rm_cnt=True option corrects non-common trends of channels using a 2D GP.
 
     Args:
         calim: masked image for read pattern calibration
-        rm_nct: remove non-common trends of channel using GP
+        rm_nct: remove non-common trends of channel using a GP
         Ncor: coarse graing number for rm_nct
         sigma: GP diagonal component
         xscale: GP x scale

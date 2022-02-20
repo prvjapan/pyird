@@ -76,6 +76,17 @@ def show_profile(xprofile_offset_subtracted, yprofile_offset_subtracted,
 
 
 def corrected_detector(im, model_im, corrected_im, vmax=10.0, vmin=-15.0):
+    """plot detector images
+
+    Args:
+       im: raw image
+       model_im: model image
+       corrected_im: image after correction
+       vmin: color vmin
+       vmax: color vmax
+
+    """
+    
     fig = plt.figure(figsize=(8, 4))
     ax1 = fig.add_subplot(131)
     cc = ax1.imshow(im, vmin=vmin, vmax=vmax)
