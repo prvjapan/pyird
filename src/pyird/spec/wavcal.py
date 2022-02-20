@@ -111,38 +111,11 @@ def sigmaclip(data, wavsol, N=3):
     return residuals, drop_ind
 
 
-def plot_result(wavsol, data, npix=2048):
-    """show the reference ThAr pixels and fitted model and their residuals.
-
-    Args:
-        wavsol: fitting model
-        data: the reference ThAr data
-        npix: number of detector pixels in y direction
-    """
-    wavsol_2d = wavsol.reshape(npix, l-j)
-    fig = plt.figure(figsize=(15, 5))
-    ax1 = fig.add_subplot(121)
-    for i in range(len(wavsol_2d[0])):
-        ax1.plot(wavsol_2d[:, i], color='tab:blue')
-        data_plot = np.copy(data[:, i])
-        data_plot[data_plot == 0] = np.nan
-        ax1.plot(data_plot, '.', color='r')
-        #ax.text(2050, result_plot[i][-1]-5, i, color='green',fontsize=10)
-    ax1.set(xlabel='pixel', ylabel='wavelength [nm]')
-
-    ax2 = fig.add_subplot(122)
-    for i, data_tmp in enumerate((data.ravel())):
-        if data_tmp != 0:
-            pix = i % npix + 1
-            res = data_tmp-wavsol[i]
-            ax2.plot(pix, res, '.', color='tab:blue')
-    ax2.set(xlabel='pixel', ylabel='residual [nm]')
-    # plt.savefig('wavcal_final.png')
-    plt.show()
 
 
 if __name__ == '__main__':
     # Load a Th-Ar spectrum
+    from pyird.plot.order import plot_refthar
     import pkg_resources
     path = (pkg_resources.resource_filename('pyird', 'data/thar_mmf2_a_H_20210317.fits'))
     hd = fits.open(path)
@@ -150,11 +123,11 @@ if __name__ == '__main__':
 
     # Load a channel list
     if np.shape(dat)[0] == 21:
-        chanfile = '../../../data/channel_H.list'
+        chanfile = (pkg_resources.resource_filename('pyird', 'data/channel_H.list'))
         norder = 21
         print('H band')
     elif np.shape(dat)[0] > 45:
-        chanfile = '../../../data/channel_YJ.list'
+        chanfile = (pkg_resources.resource_filename('pyird', 'data/channel_YJ.list'))
         norder = np.shape(dat)[0]
         print('YJ band')
 
@@ -202,7 +175,7 @@ if __name__ == '__main__':
     print('standard deviation of residuals of 1st iteration = %.5f' %
           np.std(residuals))
 
-    plot_result(wavsol1, data1)
+    plot_refthar(wavsol1, data1, l-j)
 
     # read thar_ird2.dat
     wavref = read_linelist('../data/thar_ird2.dat')
@@ -266,4 +239,4 @@ if __name__ == '__main__':
         if len(drop_ind) != 0:
             pdat2 = pdat2.drop(pdat2.index[drop_ind])
 
-    plot_result(wavsol2, data2)
+    plot_refthar(wavsol2, data2, l-j)
