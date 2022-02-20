@@ -1,10 +1,5 @@
-from pyird.io.read_linelist import read_linelist
-from astropy.io import fits
 import numpy as np
-from scipy.signal import medfilt
 from scipy.optimize import leastsq
-import pandas as pd
-
 import matplotlib.pyplot as plt
 
 
@@ -70,6 +65,7 @@ def errfunc(p, XY, data, Ni, Nx):
 
 def fit_wav_solution(XY, data, Ni, Nx):
     """optimize the fitting by using least-square method.
+
     Args:
         XY: meshgrid of (pixels, orders)
         data: fitted data
@@ -111,23 +107,29 @@ def sigmaclip(data, wavsol, N=3):
     return residuals, drop_ind
 
 
-
-
 if __name__ == '__main__':
     # Load a Th-Ar spectrum
+    import pandas as pd
     from pyird.plot.order import plot_refthar
+    from pyird.io.read_linelist import read_linelist
+    from astropy.io import fits
+    from scipy.signal import medfilt
+
     import pkg_resources
-    path = (pkg_resources.resource_filename('pyird', 'data/thar_mmf2_a_H_20210317.fits'))
+    path = (pkg_resources.resource_filename(
+        'pyird', 'data/thar_mmf2_a_H_20210317.fits'))
     hd = fits.open(path)
     dat = (hd[0].data)
 
     # Load a channel list
     if np.shape(dat)[0] == 21:
-        chanfile = (pkg_resources.resource_filename('pyird', 'data/channel_H.list'))
+        chanfile = (pkg_resources.resource_filename(
+            'pyird', 'data/channel_H.list'))
         norder = 21
         print('H band')
     elif np.shape(dat)[0] > 45:
-        chanfile = (pkg_resources.resource_filename('pyird', 'data/channel_YJ.list'))
+        chanfile = (pkg_resources.resource_filename(
+            'pyird', 'data/channel_YJ.list'))
         norder = np.shape(dat)[0]
         print('YJ band')
 
@@ -203,21 +205,21 @@ if __name__ == '__main__':
                 pdat2 = pd.concat([pdat2, df_tmp], ignore_index=True)
 
     data2 = pdat_to_wavmat(pdat2)
-    """ # compare previous wav-channel list & new wav-channel list
-    fig=plt.figure(figsize=(7,5))
-    ax=fig.add_subplot(111)
+    # """ # compare previous wav-channel list & new wav-channel list
+    fig = plt.figure(figsize=(7, 5))
+    ax = fig.add_subplot(111)
     for i in range(len(data1[0])):
-        ax.plot(wavsol1_2d[:,i],color="gray",alpha=0.5)
-        data1_plot = np.copy(data1[:,i])
-        data1_plot[data1_plot==0] = np.nan
-        ax.plot(data1_plot, ".",color="r")
-        data2_plot = np.copy(data2[:,i])
-        data2_plot[data2_plot==0] = np.nan
-        ax.plot(data2_plot, "x",color="blue")
+        ax.plot(wavsol1_2d[:, i], color='gray', alpha=0.5)
+        data1_plot = np.copy(data1[:, i])
+        data1_plot[data1_plot == 0] = np.nan
+        ax.plot(data1_plot, '.', color='r')
+        data2_plot = np.copy(data2[:, i])
+        data2_plot[data2_plot == 0] = np.nan
+        ax.plot(data2_plot, 'x', color='blue')
         #ax.text(2050, result_plot[i][-1]-5, i, color='green',fontsize=10)
-    ax.set(xlabel="pixel",ylabel="wavelength [nm]")
+    ax.set(xlabel='pixel', ylabel='wavelength [nm]')
     plt.show()
-    """
+    # """
 
     # iterate fitting polynomial function
     Ni, Nx = 5, 4
