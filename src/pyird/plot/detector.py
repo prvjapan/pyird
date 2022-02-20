@@ -17,12 +17,18 @@ def show_profile(xprofile_offset_subtracted, yprofile_offset_subtracted,
     ax = fig.add_subplot(311)
     for ichan in range(0, nchan):
         ax.plot(xprofile_offset_subtracted[0, ichan, :], alpha=0.1, color='C0')
-        ax.plot(xprofile_offset_subtracted_model[0, :],
-                alpha=1.0, color='C0', label='even pixels')
+        if ichan==0:
+            ax.plot(xprofile_offset_subtracted_model[0, :],alpha=1.0, color='C0', label='even pixels')
+        else:
+            ax.plot(xprofile_offset_subtracted_model[0, :],alpha=1.0, color='C0')
+
     for ichan in range(0, nchan):
         ax.plot(xprofile_offset_subtracted[1, ichan, :], alpha=0.1, color='C1')
-        ax.plot(
-            xprofile_offset_subtracted_model[1, :], alpha=1.0, color='C1', label='odd pixels')
+        if ichan==0:
+            ax.plot(xprofile_offset_subtracted_model[1, :], alpha=1.0, color='C1', label='odd pixels')
+        else:
+            ax.plot(xprofile_offset_subtracted_model[1, :], alpha=1.0, color='C1')
+            
     ax.set_ylabel('X-profile')
     plt.legend()
 
@@ -30,25 +36,37 @@ def show_profile(xprofile_offset_subtracted, yprofile_offset_subtracted,
     for ichan in range(0, nchan):
         ax2.plot(yprofile_offset_subtracted[0,
                  ichan, :], alpha=0.1, color='C0')
-        ax2.plot(
-            yprofile_offset_subtracted_model[0, :], alpha=1.0, color='C0', label='even pixels')
+        if ichan==0:
+            ax2.plot(yprofile_offset_subtracted_model[0, :], alpha=1.0, color='C0', label='even pixels')
+        else:
+            ax2.plot(yprofile_offset_subtracted_model[0, :], alpha=1.0, color='C0')
+
     for ichan in range(0, nchan):
         ax2.plot(yprofile_offset_subtracted[1,
                  ichan, :], alpha=0.1, color='C1')
-        ax2.plot(
-            yprofile_offset_subtracted_model[1, :], alpha=1.0, color='C1', label='odd pixels')
+        if ichan==0:
+            ax2.plot(yprofile_offset_subtracted_model[1, :], alpha=1.0, color='C1', label='odd pixels')
+        else:
+            ax2.plot(yprofile_offset_subtracted_model[1, :], alpha=1.0, color='C1')
+            
     ax2.set_ylabel('Y-profile')
     ax3 = fig.add_subplot(313)
     for ichan in range(0, nchan):
         ax3.plot(yprofile_offset_subtracted[0,
                  ichan, :], alpha=0.1, color='C0')
-        ax3.plot(
-            yprofile_offset_subtracted_model[0, :], alpha=1.0, color='C0', label='even pixels')
+        if ichan==0:
+            ax3.plot(yprofile_offset_subtracted_model[0, :], alpha=1.0, color='C0', label='even pixels')
+        else:
+            ax3.plot(yprofile_offset_subtracted_model[0, :], alpha=1.0, color='C0')
+            
     for ichan in range(0, nchan):
         ax3.plot(yprofile_offset_subtracted[1,
                  ichan, :], alpha=0.1, color='C1')
-        ax3.plot(
-            yprofile_offset_subtracted_model[1, :], alpha=1.0, color='C1', label='odd pixels')
+        if ichan==0:
+            ax3.plot(yprofile_offset_subtracted_model[1, :], alpha=1.0, color='C1', label='odd pixels')
+        else:
+            ax3.plot(yprofile_offset_subtracted_model[1, :], alpha=1.0, color='C1')
+
     ax3.set_ylabel('Y-profile')
     plt.xlim(100, 140)
     plt.ylim(-3, 3)
