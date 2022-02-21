@@ -6,6 +6,7 @@ include src/pyird/data/samples/aprefB
 include src/pyird/data/samples/aprefC
 include src/pyird/data/samples/apref_a
 include src/pyird/data/samples/apref_c
+include src/pyird/data/thar_mmf2_a_H_20210317.fits
 
 graft tests
 graft examples
