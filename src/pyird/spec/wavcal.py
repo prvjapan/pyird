@@ -76,7 +76,7 @@ def fit_wav_solution(XY, data, Ni, Nx):
         best fit parameters (coefficients of 2d legendre series)
     """
     p0 = np.ones(Ni*Nx)
-    p1, cov = leastsq(errfunc, p0, args=((X, Y), data, Ni, Nx))
+    p1, cov = leastsq(errfunc, p0, args=(XY, data, Ni, Nx))
     p1 = p1.reshape(Ni, Nx)
     return p1
 
