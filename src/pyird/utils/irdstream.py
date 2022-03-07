@@ -32,16 +32,29 @@ class Stream1D(FitsSet):
         self.rawpath = self.path(string=False, check=True)
 
     def fitsid_increment(self):
+        """increase fitsid +1
+        """
         for i in range(0, len(self.fitsid)):
             self.fitsid[i] = self.fitsid[i]+1
         self.rawpath = self.path(string=False, check=True)
 
     def fitsid_decrement(self):
+        """decrease fitsid +1
+        """
         for i in range(0, len(self.fitsid)):
             self.fitsid[i] = self.fitsid[i]-1
         self.rawpath = self.path(string=False, check=True)
 
     def extpath(self, extension, string=False, check=True):
+        """decrease fitsid +1
+
+        Args:
+           extension: extension
+        
+        Returns:
+           path array of fits files w/ extension
+
+        """
         f = self.fitsdir
         e = self.extension
         self.fitsdir = self.anadir
@@ -103,6 +116,15 @@ class Stream2D(FitsSet):
 
     ############################################################################################
     def extpath(self, extension, string=False, check=True):
+        """decrease fitsid +1
+
+        Args:
+           extension: extension
+        
+        Returns:
+           path array of fits files w/ extension
+
+        """
         f = self.fitsdir
         e = self.extension
         self.fitsdir = self.anadir
