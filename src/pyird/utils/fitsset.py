@@ -1,6 +1,5 @@
 """Set of fits files."""
 
-#from pyraf import iraf
 import sys
 __all__ = ['FitsSet']
 
@@ -81,50 +80,3 @@ class FitsSet(object):
         atlistname = '@'+atlistname
         return atlistname
 
-#    def imcombine(self,tag,combine="median"):
-#        combined_fitsset=FitsSet(tag,self.fitsdir)
-#        combined_fitsset.clean()
-#        iraf.imcombine(input=self.at_list(listname=tag),output=combined_fitsset.path(check=False)[0],combine=combine) #
-#        return combined_fitsset
-#
-#    def apall(self,apref,wavref=None,extout=".ec",extwout="_1dw"):
-#        """apall
-#        Args:
-#           apref: reference aperture
-#        """
-#
-#        currentdir=os.getcwd()
-#        os.chdir(str(self.fitsdir))
-#        apref_path=apref.path(string=False,check=True)[0].name #ref_ap
-#        iraf.imred()
-#        iraf.eche()
-#        extoned=[]
-#        for i,eachpath in enumerate(tqdm.tqdm(self.path(string=False,check=True))):
-#            outfile=(eachpath.name).replace(".fits",extout+".fits")
-#            extoned.append(outfile)
-#            iraf.apall(input=eachpath.name,output=outfile,find="n",recenter="n",resize="n",edit="n",trace="n",fittrace#="n",extract="y",references=apref_path,review="n",interactive="n")
-#
-#
-#        if wavref != None:
-#            #wavref_path=wavref.path(string=False,check=True)[0].name #wav ref
-#            #CHECKING ecfile in database
-#            wavref_path=directory_util.cp(self.fitsdir,wavref,"ec")
-#            for i,eachpath in enumerate(tqdm.tqdm(self.path(string=False,check=True))):
-#                outwfile=(eachpath.name).replace(".fits",extwout+".fits")
-#                print("WAV",extoned[i],wavref_path)
-#                iraf.refs(input=extoned[i],references=wavref_path.name,select="match")
-#                iraf.dispcor(input=extoned[i],output=outwfile,flux="no")
-#
-#
-#        os.chdir(currentdir)
-#        return
-
-#    def apnormalize(self,tag,ref):
-#        currentdir=os.getcwd()
-#        os.chdir(anadir)
-#
-#        apnormalfits=FitsSet(tag,self.fitsdir)
-#        iraf.imred.echell.apnormaize(input=self.path(check=False,string=True)[0],output=apnormalfits.path(check=False,string=True)[0],find="n",recenter="n",resize="n",edit="y",trace="n",fittrace="n",references=ref,order=35,niterat=1)
-#
-#        os.chdir(currentdir)
-#        return apnormalfits
