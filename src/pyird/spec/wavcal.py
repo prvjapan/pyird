@@ -30,13 +30,14 @@ def pdat_to_wavmat(pdat, j, l, npix=2048):
     return mat
 
 
-def fitfunc(XY, Ni, Nx, *params):
-    """calculate 2d Legendre series.
+def fitfunc(XY, Ni, Nx, poly='chebyshev',*params):
+    """calculate 2d polynomial series.
 
     Args:
         XY: meshgrid of (pixels, orders)
         Ni: order of the fitting function arong each echelle order
         Nx: order of the fitting function with respect to the aperture number
+        poly: 'chebyshev' or 'legendre' for fitting polynomial series
         params: fitting coefficients
 
     Returns:
@@ -46,7 +47,10 @@ def fitfunc(XY, Ni, Nx, *params):
     m = XY[1][:, 0]
     ms = XY[1]
     p = np.array(params).reshape((Ni, Nx))
-    f = np.polynomial.legendre.leggrid2d(m, pix, p)/ms
+    if poly=='chebyshev':
+        f = np.polynomial.chebyshev.chebgrid2d(m, pix, p)/ms
+    elif poly=='legendre':
+        f = np.polynomial.legendre.leggrid2d(m, pix, p)/ms
     f = f.T
     return f.ravel()
 
