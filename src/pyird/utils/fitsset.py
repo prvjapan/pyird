@@ -44,14 +44,7 @@ class FitsSet(object):
             array of paths
         """
         fitsarray = []
-        if self.fitsid is None:
-            print(self.fitsdir, self.tag, self.extension)
-            d = self.fitsdir/(self.tag+self.extension+'.fits')
-            if string:
-                fitsarray.append(str(d))
-            else:
-                fitsarray.append(d)
-        else:
+        if self.fitsid is not None:
             for num in self.fitsid:
                 d = self.fitsdir/(self.tag+str(num)+self.extension+'.fits')
                 if check and not d.exists():

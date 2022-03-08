@@ -10,7 +10,7 @@ __all__ = ['Stream1D', 'Stream2D']
 
 
 class Stream1D(FitsSet):
-    def __init__(self, streamid, rawdir, anadir, rawtag='IRDA000', extension=''):
+    def __init__(self, streamid, rawdir, anadir, fitsid=None, rawtag='IRDA000', extension=''):
         """initialization
         Args:
            streamid: ID for stream
@@ -21,6 +21,11 @@ class Stream1D(FitsSet):
         self.streamid = streamid
         self.anadir = anadir
         self.unlock = False
+        if fitsid is not None:
+            print("fitsid:",fitsid)
+            self.fitsid=fitsid
+        else:
+            print("No fitsid yet.")
 
     @property
     def fitsid(self):
@@ -66,20 +71,26 @@ class Stream1D(FitsSet):
 
 
 class Stream2D(FitsSet):
-    def __init__(self, streamid, rawdir, anadir, rawtag='IRDA000', extension=''):
+    def __init__(self, streamid, rawdir, anadir, fitsid=None, rawtag='IRDA000', extension=''):
         """initialization
         Args:
            streamid: ID for stream
            rawdir: directory where the raw data are
            anadir: directory in which the processed file will put
+           fitsid: fitsid
+
         """
-
-        super(Stream2D, self).__init__(rawtag, rawdir, extension='')
-
+        super(Stream2D, self).__init__(rawtag, rawdir, extension='')        
         self.streamid = streamid
         self.rawdir = rawdir
         self.anadir = anadir
         self.unlock = False
+        if fitsid is not None:
+            print("fitsid:",fitsid)
+            self.fitsid=fitsid
+        else:
+            print("No fitsid yet.")
+            
 
     @property
     def fitsid(self):
