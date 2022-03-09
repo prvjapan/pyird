@@ -173,20 +173,45 @@ class Stream2D(FitsSet):
         self.fitsdir = self.anadir
         self.extension = '_rb'
 
-    def rm_readnoise(self, maskfits, extin='_rb', extout='_rbo', info=False):
-        if info:
-            print('rm_readnoise: fits=')
-            print(maskfits)
+    def clean_pattern(self, extout, trace_path_list, hotpix_mask=None, extin="", info=False):
+        """
+
+        Args:
+           extout: output extension
+           path list of trace files
+           extin: input extension
+           hotpix_mask: hot pixel mask
+           info: show info?
+
+        """
+        from pyird.io.iraf_trace import read_trace_file
+        from pyird.image.pattern_model import median_XY_profile
+        from pyird.image.trace_function import trace_legendre
+        from pyird.image.mask import trace
+        
         currentdir = os.getcwd()
         os.chdir(str(self.anadir))
+        if info:
+            print('clean_pattern:')
 
         ext_noexist, extf_noexist = self.check_existence(extin, extout)
         for i, fitsid in enumerate(tqdm.tqdm(ext_noexist)):
-            maskfits.path()[0]
-            # processRN.wrap_kawahara_processRN(filen=ext_noexist[i],filemask=filemask,fitsout=extf_noexist[i])
+            filen=ext_noexist[i]
+            im = pyf.open(filen)[0].data            
+            calim = np.copy(im) # image for calibration
+            y0, interp_function, xmin, xmax, coeff = read_trace_file(trace_path_list)
+            mask = trace(im, trace_legendre, y0, xmin, xmax, coeff)
+            calim[mask] = np.nan
+            if hotpix_mask is not None:
+                calim[hotpix_mask] = np.nan
+            model_im = median_XY_profile(calim)
+            corrected_im = im-model_im
+            ### FITS SAVE (NOT YET)
+            assert False
+            ###
+
         self.fitsdir = self.anadir
         self.extension = extout
-
         os.chdir(currentdir)
 
     def flatfielding1D(self):
