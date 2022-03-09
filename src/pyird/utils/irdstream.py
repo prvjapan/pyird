@@ -85,6 +85,7 @@ class Stream2D(FitsSet):
         self.rawdir = rawdir
         self.anadir = anadir
         self.unlock = False
+        self.info=False
         if fitsid is not None:
             print("fitsid:",fitsid)
             self.fitsid=fitsid
@@ -163,8 +164,8 @@ class Stream2D(FitsSet):
                 print('rm old '+self.extpath(extension,
                       check=False, string=True)[i])
 
-    def remove_bias(self, rot=None, method='reference', hotpix_img=None, info=False):
-        if info:
+    def remove_bias(self, rot=None, method='reference', hotpix_img=None):
+        if self.info:
             print('remove_bias: files=')
             print(self.rawpath)
         if rot == 'r':
@@ -173,7 +174,7 @@ class Stream2D(FitsSet):
         self.fitsdir = self.anadir
         self.extension = '_rb'
 
-    def clean_pattern(self, extout, trace_path_list, hotpix_mask=None, extin="", info=False):
+    def clean_pattern(self, extout, trace_path_list, hotpix_mask=None, extin=""):
         """
 
         Args:
@@ -181,7 +182,6 @@ class Stream2D(FitsSet):
            path list of trace files
            extin: input extension
            hotpix_mask: hot pixel mask
-           info: show info?
 
         """
         from pyird.io.iraf_trace import read_trace_file
@@ -191,24 +191,26 @@ class Stream2D(FitsSet):
         
         currentdir = os.getcwd()
         os.chdir(str(self.anadir))
-        if info:
-            print('clean_pattern:')
+        if self.info:
+            print('clean_pattern: output extension=',extout)
 
-        ext_noexist, extf_noexist = self.check_existence(extin, extout)
-        for i, fitsid in enumerate(tqdm.tqdm(ext_noexist)):
-            filen=ext_noexist[i]
-            im = pyf.open(filen)[0].data            
+        extin_noexist, extout_noexist = self.check_existence(extin, extout)
+        for i, fitsid in enumerate(tqdm.tqdm(extin_noexist)):
+            filen=extin_noexist[i]
+            hdu=pyf.open(filen)[0]
+            im = hdu.data
+            header = hdu.header
             calim = np.copy(im) # image for calibration
             y0, interp_function, xmin, xmax, coeff = read_trace_file(trace_path_list)
             mask = trace(im, trace_legendre, y0, xmin, xmax, coeff)
             calim[mask] = np.nan
             if hotpix_mask is not None:
                 calim[hotpix_mask] = np.nan
-            model_im = median_XY_profile(calim)
+            model_im = median_XY_profile(calim,show=False)
             corrected_im = im-model_im
-            ### FITS SAVE (NOT YET)
-            assert False
-            ###
+            hdu = pyf.PrimaryHDU(corrected_im, header)
+            hdulist = pyf.HDUList([hdu])
+            hdulist.writeto(extout_noexist[i], overwrite=True)
 
         self.fitsdir = self.anadir
         self.extension = extout
@@ -223,6 +225,18 @@ class Stream2D(FitsSet):
         return
     
     def check_existence(self, extin, extout):
+        """check files do not exist or not
+
+        Args:
+           extin: extension of input files
+           extout: extension of output files
+
+        Returns:
+           input file name w/ no exist
+           output file name w/ no exist
+
+        """
+        
         extf = self.extpath(extout, string=False, check=False)
         ext = self.extpath(extin, string=False, check=False)
         extf_noexist = []
@@ -233,7 +247,8 @@ class Stream2D(FitsSet):
                 extf_noexist.append(str(extfi.name))
                 ext_noexist.append(str(ext[i].name))
             else:
-                print(str(extfi.name), str(ext[i].name))
+                if self.info:
+                    print("Ignore ",str(ext[i].name),"->",str(extfi.name))
                 skip = skip+1
 
         if skip > 1:

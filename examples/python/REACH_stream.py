@@ -29,46 +29,22 @@ hotpix_mask, obj = identify_hotpix(im_subbias)
 # Load data
 datadir = pathlib.Path('/home/kawahara/pyird/data/samples/REACH/')
 anadir = pathlib.Path('/home/kawahara/pyird/data/samples/REACH/')
-target = irdstream.Stream2D('targets', datadir, anadir, fitsid=[47077])
-# target.fitsid=[47103]
-
-# Load an image
-for datapath in target.rawpath:
-    im = pyf.open(str(datapath))[0].data
-
-# image for calibration
-calim = np.copy(im)
-
-# read pattern removal
+target = irdstream.Stream2D('targets', datadir, anadir, fitsid=[47078,47103])
+target.info = True #show detailed info
 
 pathC = (pkg_resources.resource_filename('pyird', 'data/samples/aprefC'))
 path_c = (pkg_resources.resource_filename('pyird', 'data/samples/apref_c'))
-y0, interp_function, xmin, xmax, coeff = read_trace_file([pathC, path_c])
-mask = trace(im, trace_legendre, y0, xmin, xmax, coeff)
-calim[mask] = np.nan
-calim[hotpix_mask] = np.nan
+target.clean_pattern(extin="",extout="_cp",trace_path_list=[pathC,path_c],hotpix_mask=hotpix_mask)
 
 
-plt.imshow(calim)
-plt.show()
 
-model_im = median_XY_profile(calim)
-corrected_im = im-model_im
-
-corrected_detector(im, model_im, corrected_im)
+#corrected_detector(im, model_im, corrected_im)
 
 ###########################################
 # One Dimensionalization
 ###########################################
-
-# trace
-pathA = (pkg_resources.resource_filename('pyird', 'data/samples/aprefB'))
-y0, interp_function, xmin, xmax, coeff = read_trace_file(pathA)
-
-# flatten
-rawspec, pixcoord = flatten(
-    corrected_im, trace_legendre, y0, xmin, xmax, coeff)
-
+import sys
+sys.exit()
 # rsd
 rsd = multiorder_to_rsd(rawspec, pixcoord)
 
