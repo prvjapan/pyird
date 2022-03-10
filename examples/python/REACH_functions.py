@@ -47,11 +47,6 @@ y0, interp_function, xmin, xmax, coeff = read_trace_file([pathC, path_c])
 mask = trace(im, trace_legendre, y0, xmin, xmax, coeff)
 calim[mask] = np.nan
 calim[hotpix_mask] = np.nan
-
-
-plt.imshow(calim)
-plt.show()
-
 model_im = median_XY_profile(calim)
 corrected_im = im-model_im
 

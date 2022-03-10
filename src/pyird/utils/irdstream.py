@@ -9,67 +9,6 @@ import os
 __all__ = ['Stream1D', 'Stream2D']
 
 
-class Stream1D(FitsSet):
-    def __init__(self, streamid, rawdir, anadir, fitsid=None, rawtag='IRDA000', extension=''):
-        """initialization
-        Args:
-           streamid: ID for stream
-           rawdir: directory where the raw data are
-           anadir: directory in which the processed file will put
-        """
-        super(Stream1D, self).__init__(rawtag, rawdir, extension=extension)
-        self.streamid = streamid
-        self.anadir = anadir
-        self.unlock = False
-        if fitsid is not None:
-            print("fitsid:",fitsid)
-            self.fitsid=fitsid
-        else:
-            print("No fitsid yet.")
-
-    @property
-    def fitsid(self):
-        return self._fitsid
-
-    @fitsid.setter
-    def fitsid(self, fitsid):
-        self._fitsid = fitsid
-        self.rawpath = self.path(string=False, check=True)
-
-    def fitsid_increment(self):
-        """increase fitsid +1
-        """
-        for i in range(0, len(self.fitsid)):
-            self.fitsid[i] = self.fitsid[i]+1
-        self.rawpath = self.path(string=False, check=True)
-
-    def fitsid_decrement(self):
-        """decrease fitsid +1
-        """
-        for i in range(0, len(self.fitsid)):
-            self.fitsid[i] = self.fitsid[i]-1
-        self.rawpath = self.path(string=False, check=True)
-
-    def extpath(self, extension, string=False, check=True):
-        """decrease fitsid +1
-
-        Args:
-           extension: extension
-        
-        Returns:
-           path array of fits files w/ extension
-
-        """
-        f = self.fitsdir
-        e = self.extension
-        self.fitsdir = self.anadir
-        self.extension = extension
-        path_ = self.path(string, check)
-        self.fitsdir = f
-        self.extension = e
-        return path_
-
-
 class Stream2D(FitsSet):
     def __init__(self, streamid, rawdir, anadir, fitsid=None, rawtag='IRDA000', extension=''):
         """initialization
@@ -174,14 +113,14 @@ class Stream2D(FitsSet):
         self.fitsdir = self.anadir
         self.extension = '_rb'
 
-    def clean_pattern(self, extout, trace_path_list, hotpix_mask=None, extin=""):
+    def clean_pattern(self, trace_path_list, hotpix_mask=None, extout="_cp", extin=None):
         """
 
         Args:
-           extout: output extension
-           path list of trace files
-           extin: input extension
+           trace_path_list: path list of trace files
            hotpix_mask: hot pixel mask
+           extout: output extension
+           extin: input extension
 
         """
         from pyird.io.iraf_trace import read_trace_file
@@ -193,6 +132,9 @@ class Stream2D(FitsSet):
         os.chdir(str(self.anadir))
         if self.info:
             print('clean_pattern: output extension=',extout)
+
+        if extin is None:
+            extin=self.extension
 
         extin_noexist, extout_noexist = self.check_existence(extin, extout)
         for i, fitsid in enumerate(tqdm.tqdm(extin_noexist)):
@@ -216,6 +158,47 @@ class Stream2D(FitsSet):
         self.extension = extout
         os.chdir(currentdir)
 
+    def flatten(self,trace_path,extout="_fl",extin=None):
+        """
+        Args:
+           trace_path: trace file to be used in flatten
+           extout: output extension
+           extin: input extension
+
+        """
+        from pyird.image.oned_extract import flatten
+        from pyird.image.trace_function import trace_legendre
+        from pyird.image.mask import trace
+        from pyird.io.iraf_trace import read_trace_file
+        from pyird.spec.rsdmat import multiorder_to_rsd
+
+        currentdir = os.getcwd()
+        os.chdir(str(self.anadir))
+        if self.info:
+            print('flatten: output extension=',extout)
+
+        if extin is None:
+            extin=self.extension
+
+        extin_noexist, extout_noexist = self.check_existence(extin, extout)
+        y0, interp_function, xmin, xmax, coeff = read_trace_file(trace_path)
+        for i, fitsid in enumerate(tqdm.tqdm(extin_noexist)):
+            filen=extin_noexist[i]
+            hdu=pyf.open(filen)[0]
+            im = hdu.data
+            header = hdu.header
+            rawspec, pixcoord = flatten(
+                im, trace_legendre, y0, xmin, xmax, coeff)
+            rsd = multiorder_to_rsd(rawspec, pixcoord)
+            hdux = pyf.PrimaryHDU(rsd, header)
+            hdulist = pyf.HDUList([hdux])
+            hdulist.writeto(extout_noexist[i], overwrite=True)
+            
+        self.fitsdir = self.anadir
+        self.extension = extout
+        os.chdir(currentdir)
+
+        
     def flatfielding1D(self):
         return 
 
