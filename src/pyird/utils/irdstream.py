@@ -9,64 +9,28 @@ import os
 __all__ = ['Stream1D', 'Stream2D']
 
 
-class Stream1D(FitsSet):
-    def __init__(self, streamid, rawdir, anadir, rawtag='IRDA000', extension=''):
-        """initialization
-        Args:
-           streamid: ID for stream
-           rawdir: directory where the raw data are
-           anadir: directory in which the processed file will put
-        """
-        super(Stream1D, self).__init__(rawtag, rawdir, extension=extension)
-        self.streamid = streamid
-        self.anadir = anadir
-        self.unlock = False
-
-    @property
-    def fitsid(self):
-        return self._fitsid
-
-    @fitsid.setter
-    def fitsid(self, fitsid):
-        self._fitsid = fitsid
-        self.rawpath = self.path(string=False, check=True)
-
-    def fitsid_increment(self):
-        for i in range(0, len(self.fitsid)):
-            self.fitsid[i] = self.fitsid[i]+1
-        self.rawpath = self.path(string=False, check=True)
-
-    def fitsid_decrement(self):
-        for i in range(0, len(self.fitsid)):
-            self.fitsid[i] = self.fitsid[i]-1
-        self.rawpath = self.path(string=False, check=True)
-
-    def extpath(self, extension, string=False, check=True):
-        f = self.fitsdir
-        e = self.extension
-        self.fitsdir = self.anadir
-        self.extension = extension
-        path_ = self.path(string, check)
-        self.fitsdir = f
-        self.extension = e
-        return path_
-
-
 class Stream2D(FitsSet):
-    def __init__(self, streamid, rawdir, anadir, rawtag='IRDA000', extension=''):
+    def __init__(self, streamid, rawdir, anadir, fitsid=None, rawtag='IRDA000', extension=''):
         """initialization
         Args:
            streamid: ID for stream
            rawdir: directory where the raw data are
            anadir: directory in which the processed file will put
+           fitsid: fitsid
+
         """
-
-        super(Stream2D, self).__init__(rawtag, rawdir, extension='')
-
+        super(Stream2D, self).__init__(rawtag, rawdir, extension='')        
         self.streamid = streamid
         self.rawdir = rawdir
         self.anadir = anadir
         self.unlock = False
+        self.info=False
+        if fitsid is not None:
+            print("fitsid:",fitsid)
+            self.fitsid=fitsid
+        else:
+            print("No fitsid yet.")
+            
 
     @property
     def fitsid(self):
@@ -103,6 +67,15 @@ class Stream2D(FitsSet):
 
     ############################################################################################
     def extpath(self, extension, string=False, check=True):
+        """decrease fitsid +1
+
+        Args:
+           extension: extension
+        
+        Returns:
+           path array of fits files w/ extension
+
+        """
         f = self.fitsdir
         e = self.extension
         self.fitsdir = self.anadir
@@ -113,7 +86,12 @@ class Stream2D(FitsSet):
         return path_
 
     def extclean(self, extension):
-        # Clean i.e. remove fits files if exists.
+        """Clean i.e. remove fits files if exists.
+        
+        Args:
+            extension: extension of which files to be removed
+
+        """
         import os
         if extension == '':
             print('extclean cannot clean w/o extension fits.')
@@ -125,9 +103,8 @@ class Stream2D(FitsSet):
                 print('rm old '+self.extpath(extension,
                       check=False, string=True)[i])
 
-    def remove_bias(self, rot=None, method='reference', hotpix_img=None, info=False):
-        print('Bias Correction by M. KUZUHARA.')
-        if info:
+    def remove_bias(self, rot=None, method='reference', hotpix_img=None):
+        if self.info:
             print('remove_bias: files=')
             print(self.rawpath)
         if rot == 'r':
@@ -136,114 +113,113 @@ class Stream2D(FitsSet):
         self.fitsdir = self.anadir
         self.extension = '_rb'
 
-    def rm_readnoise(self, maskfits, extin='_rb', extout='_rbo', info=False):
-        print('READ NOISE REDUCTION by H. Kawahara (OEGP).')
-        if info:
-            print('rm_readnoise: fits=')
-            print(maskfits)
+    def clean_pattern(self, trace_path_list, hotpix_mask=None, extout="_cp", extin=None):
+        """
+
+        Args:
+           trace_path_list: path list of trace files
+           hotpix_mask: hot pixel mask
+           extout: output extension
+           extin: input extension
+
+        """
+        from pyird.io.iraf_trace import read_trace_file
+        from pyird.image.pattern_model import median_XY_profile
+        from pyird.image.trace_function import trace_legendre
+        from pyird.image.mask import trace
+        
         currentdir = os.getcwd()
         os.chdir(str(self.anadir))
+        if self.info:
+            print('clean_pattern: output extension=',extout)
 
-        ext_noexist, extf_noexist = self.check_existence(extin, extout)
-        for i, fitsid in enumerate(tqdm.tqdm(ext_noexist)):
-            maskfits.path()[0]
-            # processRN.wrap_kawahara_processRN(filen=ext_noexist[i],filemask=filemask,fitsout=extf_noexist[i])
+        if extin is None:
+            extin=self.extension
+
+        extin_noexist, extout_noexist = self.check_existence(extin, extout)
+        for i, fitsid in enumerate(tqdm.tqdm(extin_noexist)):
+            filen=extin_noexist[i]
+            hdu=pyf.open(filen)[0]
+            im = hdu.data
+            header = hdu.header
+            calim = np.copy(im) # image for calibration
+            y0, interp_function, xmin, xmax, coeff = read_trace_file(trace_path_list)
+            mask = trace(im, trace_legendre, y0, xmin, xmax, coeff)
+            calim[mask] = np.nan
+            if hotpix_mask is not None:
+                calim[hotpix_mask] = np.nan
+            model_im = median_XY_profile(calim,show=False)
+            corrected_im = im-model_im
+            hdu = pyf.PrimaryHDU(corrected_im, header)
+            hdulist = pyf.HDUList([hdu])
+            hdulist.writeto(extout_noexist[i], overwrite=True)
+
         self.fitsdir = self.anadir
         self.extension = extout
-
         os.chdir(currentdir)
 
-    def flatfielding1D(self, apflat, apref, wavref=None, extin='_rb', extout='_rb_f1d', extwout='_rb_f1dw', lower=-1, upper=2, badf='none'):
-        iraf.task(hdsis_ecf='home$scripts/hdsis_ecf.cl')
-        currentdir = os.getcwd()
-        os.chdir(str(self.anadir))
-
-        ####CHECK THESE VALUES##
-        plotyn = 'no'  # plot
-        apflat_path = apflat.path(string=False, check=True)[0].name  # ref_ap
-        apref_path = apref.path(string=False, check=True)[0].name  # ref_ap
-        # IS3
-        lower = str(lower)  # "-1"    #st_x
-        upper = str(upper)  # "2"      #ed_x
-
-        ########################
-        iraf.imred()
-        iraf.eche()
-        # CHECK EXISTENCE for RB
-        ext_noexist, extf_noexist = self.check_existence(extin, extout)
-
-        for i, fitsid in enumerate(tqdm.tqdm(ext_noexist)):
-            iraf.hdsis_ecf(inimg=ext_noexist[i], outimg=extf_noexist[i], plot=plotyn,
-                           st_x=lower, ed_x=upper, flatimg=apflat_path, ref_ap=apref_path, badfix=badf)
-
-        if wavref != None:
-            wavref_path = wavref.path(string=False, check=True)[
-                0].name  # wav ref
-            ext_noexist, extonedw_noexist = self.check_existence(
-                extin, extwout)
-            for i, fitsid in enumerate(tqdm.tqdm(ext_noexist)):
-                iraf.refs(
-                    input=extf_noexist[i], references=wavref_path, sort='mjd', group='mjd')
-                iraf.dispcor(input=extf_noexist[i], output=extonedw_noexist[i])
-
-        os.chdir(currentdir)
-
-    def apscat(self, apref, extin='_rb', extout='_rbs', ulimit=8, llimit=-8):
-        ulimit = str(ulimit)
-        llimit = str(llimit)
-        apref_path = apref.path(string=False, check=True)[0].name  # ref_ap
-
-        currentdir = os.getcwd()
-        os.chdir(str(self.anadir))
-        iraf.imred()
-        iraf.eche()
-        ext_noexist, extf_noexist = self.check_existence(extin, extout)
-        for i, fitsid in enumerate(tqdm.tqdm(ext_noexist)):
-            iraf.apresize(input=ext_noexist[i], ulimit=ulimit, llimit=llimit)
-            iraf.apscatter(input=ext_noexist[i], output=extf_noexist[i], references=apref_path, find='n', recenter='n',
-                           resize='n', edit='n', trace='n', fittrace='n', subtrac='y', smooth='y', fitscat='y', fitsmoo='y')
-
-        os.chdir(currentdir)
-
-    def extract1D(self, apref, wavref=None, extin='_rb', extout='_rb_1d', extwout='_rb_1dw'):
-        """extract 1D specctra using IRAF/apall
-        Args:
-            apref: aperture reference
-            wavref: wavelength reference
+    def flatten(self,trace_path,extout="_fl",extin=None):
         """
+        Args:
+           trace_path: trace file to be used in flatten
+           extout: output extension
+           extin: input extension
+
+        """
+        from pyird.image.oned_extract import flatten
+        from pyird.image.trace_function import trace_legendre
+        from pyird.image.mask import trace
+        from pyird.io.iraf_trace import read_trace_file
+        from pyird.spec.rsdmat import multiorder_to_rsd
+
         currentdir = os.getcwd()
         os.chdir(str(self.anadir))
+        if self.info:
+            print('flatten: output extension=',extout)
 
-        # check database
-        if not (self.anadir/'database').exists():
-            os.mkdir('database')
+        if extin is None:
+            extin=self.extension
 
-        # COPYING ref file
-        apref_path = directory_util.cp(self.anadir, apref, 'ap')
-
-        ext_noexist, extoned_noexist = self.check_existence(extin, extout)
-        iraf.imred()
-        iraf.eche()
-
-        for i, fitsid in enumerate(tqdm.tqdm(ext_noexist)):
-            iraf.apall(input=ext_noexist[i], output=extoned_noexist[i], find='n', recenter='n', resize='n', edit='n',
-                       trace='n', fittrace='n', extract='y', references=apref_path.name, review='n', interactive='n')
-
-        if wavref != None:
-            # CHECKING ecfile in database
-            wavref_path = directory_util.cp(self.anadir, wavref, 'ec')
-
-            ext_noexist, extonedw_noexist = self.check_existence(
-                extin, extwout)
-            for i, fitsid in enumerate(tqdm.tqdm(ext_noexist)):
-                iraf.refs(
-                    input=extoned_noexist[i], references=wavref_path.name, select='match')
-                iraf.dispcor(
-                    input=extoned_noexist[i], output=extonedw_noexist[i], flux='no')
-
+        extin_noexist, extout_noexist = self.check_existence(extin, extout)
+        y0, interp_function, xmin, xmax, coeff = read_trace_file(trace_path)
+        for i, fitsid in enumerate(tqdm.tqdm(extin_noexist)):
+            filen=extin_noexist[i]
+            hdu=pyf.open(filen)[0]
+            im = hdu.data
+            header = hdu.header
+            rawspec, pixcoord = flatten(
+                im, trace_legendre, y0, xmin, xmax, coeff)
+            rsd = multiorder_to_rsd(rawspec, pixcoord)
+            hdux = pyf.PrimaryHDU(rsd, header)
+            hdulist = pyf.HDUList([hdux])
+            hdulist.writeto(extout_noexist[i], overwrite=True)
+            
+        self.fitsdir = self.anadir
+        self.extension = extout
         os.chdir(currentdir)
 
+        
+    def flatfielding1D(self):
+        return 
+
+    def extract1D(self):
+        """extract 1D specctra
+        """
+        return
+    
     def check_existence(self, extin, extout):
+        """check files do not exist or not
+
+        Args:
+           extin: extension of input files
+           extout: extension of output files
+
+        Returns:
+           input file name w/ no exist
+           output file name w/ no exist
+
+        """
+        
         extf = self.extpath(extout, string=False, check=False)
         ext = self.extpath(extin, string=False, check=False)
         extf_noexist = []
@@ -254,7 +230,8 @@ class Stream2D(FitsSet):
                 extf_noexist.append(str(extfi.name))
                 ext_noexist.append(str(ext[i].name))
             else:
-                print(str(extfi.name), str(ext[i].name))
+                if self.info:
+                    print("Ignore ",str(ext[i].name),"->",str(extfi.name))
                 skip = skip+1
 
         if skip > 1:
