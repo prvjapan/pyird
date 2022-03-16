@@ -4,7 +4,16 @@ from pyird.utils import irdstream
 import pathlib
 from pyird.image.bias import bias_subtract_image
 from pyird.image.hotpix import identify_hotpix
+from pyird.image.trace_function import trace_legendre
 import astropy.io.fits as pyf
+
+
+# load ThAr raw image
+datadir = pathlib.Path('/home/kawahara/pyird/data/samples/REACH/')
+anadir = pathlib.Path('/home/kawahara/pyird/data/samples/REACH/')
+thar=irdstream.Stream2D("thar",datadir,anadir,rawtag="IRDBD000") #Hband 6/6
+thar.fitsid=list(range(15480,15530)) #THAR_CEN
+
 
 # hotpixel mask
 datadir = pathlib.Path('/home/kawahara/pyird/data/dark/')
@@ -33,3 +42,4 @@ target.clean_pattern(extin='', extout='_cp', trace_path_list=[
 path_trace_flatten = (pkg_resources.resource_filename(
     'pyird', 'data/samples/aprefB'))
 target.flatten(path_trace_flatten)
+
