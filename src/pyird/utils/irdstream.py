@@ -67,7 +67,7 @@ class Stream2D(FitsSet):
 
     ############################################################################################
     def extpath(self, extension, string=False, check=True):
-        """decrease fitsid +1
+        """path to file with extension
 
         Args:
            extension: extension
@@ -198,6 +198,48 @@ class Stream2D(FitsSet):
         self.extension = extout
         os.chdir(currentdir)
 
+    def immedian(self):
+        """take image median
+
+        Return:
+           median image
+
+        """
+        imall=[]
+        for path in tqdm.tqdm(self.path(string=True, check=True)):
+            imall.append(pyf.open(path)[0].data)
+        imall=np.array(imall)
+        median_image = np.nanmedian(imall,axis=0) #np.nansum(corrected_im_all,axis=0)#
+        return median_image
+        
+    def calibrate_wavlength(self, trace_file_path, maxiter=30, stdlim=0.001):
+        """wavelength calibration usgin Th-Ar
+
+        Args:
+           trace_file_path: path to the trace file
+           maxiter: maximum number of iterations
+           stdlim: When the std of fitting residuals reaches this value, the iteration is terminated.
+
+        Returns:
+           final results of the wavlength solution
+           data of ThAr signals used for fitting
+
+        """
+        from pyird.spec.wavcal import wavcal_thar
+        from pyird.io.iraf_trace import read_trace_file
+        from pyird.image.oned_extract import flatten
+        from pyird.image.trace_function import trace_legendre
+        from pyird.spec.rsdmat import multiorder_to_rsd
+
+        median_image=self.immedian()
+        y0, interp_function, xmin, xmax, coeff = read_trace_file(trace_file_path)
+        rawspec, pixcoord = flatten(
+            median_image, trace_legendre, y0, xmin, xmax, coeff)
+        rsd = multiorder_to_rsd(rawspec, pixcoord)
+        print(np.shape(rsd.T)[0])
+        wavsol, data = wavcal_thar(rsd.T, maxiter=maxiter, stdlim=stdlim)
+        
+        return wavsol, data
         
     def flatfielding1D(self):
         return 
