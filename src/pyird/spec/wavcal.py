@@ -30,15 +30,15 @@ def pdat_to_wavmat(pdat, j, l, npix=2048):
     return mat
 
 
-def fitfunc(XY, Ni, Nx, poly='chebyshev',*params):
+def fitfunc(XY, Ni, Nx, params, poly='chebyshev'):
     """calculate 2d polynomial series.
 
     Args:
         XY: meshgrid of (pixels, orders)
         Ni: order of the fitting function arong each echelle order
         Nx: order of the fitting function with respect to the aperture number
-        poly: 'chebyshev' or 'legendre' for fitting polynomial series
         params: fitting coefficients
+        poly: 'chebyshev' or 'legendre' for fitting polynomial series
 
     Returns:
         wavelength of each pixels (flattened from npix x norder matrix)
