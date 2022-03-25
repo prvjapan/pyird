@@ -2,7 +2,7 @@ import pytest
 import pkg_resources
 from pyird.io.iraf_trace import read_trace_file
 from pyird.image.trace_function import trace_legendre
-from pyird.image.mask import trace
+from pyird.image.mask import trace_from_iraf_trace_file
 import numpy as np
 
 
@@ -11,16 +11,10 @@ def test_read_trace_file():
     y0, interp_function, xmin, xmax, coeff = read_trace_file(path)
     assert np.sum(y0) == 13517.2013
 
-def test_mask():
+def test_mask_from_trace_file():
     im=np.zeros((2048,2048))
     path = (pkg_resources.resource_filename('pyird', 'data/samples/aprefA'))
-    y0, interp_function, xmin, xmax, coeff = read_trace_file(path)
-    unique_interp=np.unique(interp_function)
-    if len(unique_interp)==1 and unique_interp[0]==2:
-        mask = trace(im, trace_legendre, y0, xmin, xmax, coeff)
-    else:
-        print("other interpolation function than legendre is not supported yet.")
-    import matplotlib.pyplot as plt
+    mask=trace_from_iraf_trace_file(im, path)
     im[mask]=1.0
     assert int(np.sum(im))==246366
     
