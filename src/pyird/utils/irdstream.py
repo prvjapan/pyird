@@ -123,10 +123,8 @@ class Stream2D(FitsSet):
            extin: input extension
 
         """
-        from pyird.io.iraf_trace import read_trace_file
         from pyird.image.pattern_model import median_XY_profile
-        from pyird.image.trace_function import trace_legendre
-        from pyird.image.mask import trace
+        from pyird.image.mask import trace_from_iraf_trace_file
         
         currentdir = os.getcwd()
         os.chdir(str(self.anadir))
@@ -143,12 +141,7 @@ class Stream2D(FitsSet):
             im = hdu.data
             header = hdu.header
             calim = np.copy(im) # image for calibration
-            y0, interp_function, xmin, xmax, coeff = read_trace_file(trace_path_list)
-            unique_interp=np.unique(interp_function)
-            if len(unique_interp)==1 and unique_interp[0]==2:
-                mask = trace(im, trace_legendre, y0, xmin, xmax, coeff)
-            else:
-                print("other interpolation function than legendre is not supported yet.")                
+            mask=trace_from_iraf_trace_file(im, trace_path_list)
             calim[mask] = np.nan
             if hotpix_mask is not None:
                 calim[hotpix_mask] = np.nan
