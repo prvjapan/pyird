@@ -2,6 +2,7 @@ import numpy as np
 from pyird.image.channel import image_to_channel_cube, channel_cube_to_image, eopixel_split, eopixel_combine
 from pyird.plot.detector import show_profile
 
+
 def median_XY_profile(calim, rm_nct=True, Ncor=64, margin_npixel=4, sigma=0.1, xscale=32, yscale=64, show=True):
     """a simple readout pattern model.
 
@@ -12,7 +13,7 @@ def median_XY_profile(calim, rm_nct=True, Ncor=64, margin_npixel=4, sigma=0.1, x
         calim: masked image for read pattern calibration
         rm_nct: remove non-common trends of channel using a GP
         Ncor: coarse graing number for rm_nct
-        margin_npixel: # of pixels for detector margin 
+        margin_npixel: # of pixels for detector margin
         sigma: GP diagonal component
         xscale: GP x scale
         yscale: GP y scale
@@ -62,7 +63,8 @@ def median_XY_profile(calim, rm_nct=True, Ncor=64, margin_npixel=4, sigma=0.1, x
             coarsed_array[coarsed_array !=
                           coarsed_array] = np.nanmedian(coarsed_array)
 
-            nctrend_model = GP2D(coarsed_array, RBF, sigma, (xscale, yscale),pshape=np.shape(subarray))
+            nctrend_model = GP2D(coarsed_array, RBF, sigma,
+                                 (xscale, yscale), pshape=np.shape(subarray))
             model_channel_cube[i, :, margin_npixel:-
                                margin_npixel] = model_channel_cube[i, :, margin_npixel:-margin_npixel]+nctrend_model
 

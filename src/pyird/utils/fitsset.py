@@ -79,4 +79,3 @@ class FitsSet(object):
         f.close()
         atlistname = '@'+atlistname
         return atlistname
-

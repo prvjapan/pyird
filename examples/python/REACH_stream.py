@@ -8,8 +8,6 @@ from pyird.image.trace_function import trace_legendre
 import astropy.io.fits as pyf
 
 
-
-
 # hotpixel mask
 datadir = pathlib.Path('/home/kawahara/pyird/data/dark/')
 anadir = pathlib.Path('/home/kawahara/pyird/data/dark/')
@@ -43,10 +41,10 @@ datadir = pathlib.Path('/home/kawahara/pyird/data/samples/REACH/')
 anadir = pathlib.Path('/home/kawahara/pyird/data/samples/REACH/')
 
 #wavelength calibration
-pathA = (pkg_resources.resource_filename('pyird', 'data/samples/aprefA'))
+pathB = (pkg_resources.resource_filename('pyird', 'data/samples/aprefB'))
 thar=irdstream.Stream2D("thar",datadir,anadir,rawtag="IRDBD000",fitsid=list(range(15480,15530))) 
 thar.clean_pattern(extin='', extout='_cp', trace_path_list=[pathC, path_c], hotpix_mask=hotpix_mask)
-wavsol, data=thar.calibrate_wavlength(pathA)
+wavsol, data=thar.calibrate_wavlength(pathB)
 
 
 
