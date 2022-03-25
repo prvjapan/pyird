@@ -144,7 +144,11 @@ class Stream2D(FitsSet):
             header = hdu.header
             calim = np.copy(im) # image for calibration
             y0, interp_function, xmin, xmax, coeff = read_trace_file(trace_path_list)
-            mask = trace(im, trace_legendre, y0, xmin, xmax, coeff)
+            unique_interp=np.unique(interp_function)
+            if len(unique_interp)==1 and unique_interp[0]==2:
+                mask = trace(im, trace_legendre, y0, xmin, xmax, coeff)
+            else:
+                print("other interpolation function than legendre is not supported yet.")                
             calim[mask] = np.nan
             if hotpix_mask is not None:
                 calim[hotpix_mask] = np.nan
