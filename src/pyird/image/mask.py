@@ -14,20 +14,20 @@ def trace_from_iraf_trace_file(im, pathlist):
 
     Note:
        Currently, Only legendre is supported.
-
     """
     from pyird.io.iraf_trace import read_trace_file
     from pyird.image.trace_function import trace_legendre
-    
+
     y0, interp_function, xmin, xmax, coeff = read_trace_file(pathlist)
-    unique_interp=np.unique(interp_function)
-    if len(unique_interp)==1 and unique_interp[0]==2:
+    unique_interp = np.unique(interp_function)
+    if len(unique_interp) == 1 and unique_interp[0] == 2:
         mask = trace(im, trace_legendre, y0, xmin, xmax, coeff)
     else:
-        print("Error: other interpolation function than legendre is not supported yet.")
-        
+        print('Error: other interpolation function than legendre is not supported yet.')
+
     return mask
-    
+
+
 def trace(im, trace_func, y0, xmin, xmax, coeff):
     """make mask for trace parameters for multiorder.
 
