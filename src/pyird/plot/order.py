@@ -30,3 +30,12 @@ def plot_refthar(wavsol, data, norder, npix=2048):
     ax2.set(xlabel='pixel', ylabel='residual [nm]')
     # plt.savefig('wavcal_final.png')
     plt.show()
+
+def plot_crosssection(pixels,flux,peakind):
+    fig=plt.figure(figsize=(15,10))
+    ax=fig.add_subplot(111)
+
+    ax.plot(pixels,flux,alpha=0.5)
+    ax.plot(pixels[peakind],flux[peakind],'x')
+
+    plt.show()
