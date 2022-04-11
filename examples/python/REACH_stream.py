@@ -5,8 +5,21 @@ import pathlib
 from pyird.image.bias import bias_subtract_image
 from pyird.image.hotpix import identify_hotpix
 from pyird.image.trace_function import trace_legendre
+from pyird.image.aptrace import aptrace
 import astropy.io.fits as pyf
 
+# aperture extraction
+datadir = pathlib.Path('/home/kawahara/pyird/data/flat/')
+anadir = pathlib.Path('/home/kawahara/pyird/data/flat/')
+flat_smf66=irdstream.Stream2D("flat_smf66",datadir,anadir)
+flat_smf66.fitsid=list(range(47224,47246,2)) #no light in the speckle fiber
+flat_smf66.fitsid_increment()
+flatmedian=flat_smf66.immedian()
+cutrow = 1000  ## 501 ~ 1549
+nap = 42 ## 42 for H band, 102 for YJ band
+if nap==42:
+    flatmedian = flatmedian[::-1,::-1]
+y0, xmin, xmax, coeff = aptrace(flatmedian,cutrow,nap)
 
 # hotpixel mask
 datadir = pathlib.Path('/home/kawahara/pyird/data/dark/')
@@ -42,9 +55,6 @@ anadir = pathlib.Path('/home/kawahara/pyird/data/samples/REACH/')
 
 #wavelength calibration
 pathB = (pkg_resources.resource_filename('pyird', 'data/samples/aprefB'))
-thar=irdstream.Stream2D("thar",datadir,anadir,rawtag="IRDBD000",fitsid=list(range(15480,15530))) 
+thar=irdstream.Stream2D("thar",datadir,anadir,rawtag="IRDBD000",fitsid=list(range(15480,15530)))
 thar.clean_pattern(extin='', extout='_cp', trace_path_list=[pathC, path_c], hotpix_mask=hotpix_mask)
 wavsol, data=thar.calibrate_wavlength(pathB)
-
-
-

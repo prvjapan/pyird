@@ -32,10 +32,32 @@ def plot_refthar(wavsol, data, norder, npix=2048):
     plt.show()
 
 def plot_crosssection(pixels,flux,peakind):
+    """show an image of flux at any one row extracted on a 2D detector.
+
+    Args:
+        pixels: detector pixels (column direction on detector)
+        flux: flux counts
+        peakind: indexes of detected peaks
+    """
     fig=plt.figure(figsize=(15,10))
     ax=fig.add_subplot(111)
 
     ax.plot(pixels,flux,alpha=0.5)
     ax.plot(pixels[peakind],flux[peakind],'x')
+
+    plt.show()
+
+def plot_tracelines(x,y):
+    """show traced apertures.
+
+    Args:
+        x: position of traced pixels in row direction
+        y: position of traced pixels in column direction
+    """
+    fig=plt.figure()
+    ax=fig.add_subplot(111)
+
+    for i in range(len(x)):
+        ax.plot(x[i],y[i])
 
     plt.show()
