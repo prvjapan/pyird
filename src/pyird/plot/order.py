@@ -39,3 +39,12 @@ def plot_crosssection(pixels,flux,peakind):
     ax.plot(pixels[peakind],flux[peakind],'x')
 
     plt.show()
+
+def plot_tracelines(x,y):
+    fig=plt.figure()
+    ax=fig.add_subplot(111)
+
+    for i in range(len(x)):
+        ax.plot(x[i],y[i])
+
+    plt.show()
