@@ -3,7 +3,6 @@ import pandas as pd
 from scipy.signal import medfilt, find_peaks
 from scipy.optimize import leastsq
 from tqdm import tqdm
-import sys
 
 from pyird.plot.order import plot_crosssection, plot_tracelines
 
@@ -13,6 +12,7 @@ def cross_section(dat,nrow,nap):
     Args:
         dat: flat data
         nrow: row number to be extracted
+        nap: number of total apertures to be traced
 
     Returns:
         masked data and peaks at the cross section
@@ -68,7 +68,7 @@ def set_aperture(dat,cutrow,nap):
     if not cutrow_lim:
         print('Error: %d apertures could not be found.'%(nap))
         print('Please change "cutrow" or "nap" or confirm the orientation of the image.')
-        sys.exit()
+        return
     print('cross-section: row ',cutrow)
     # Plot to confirm the selected aperture
     pixels = np.arange(0,len(onerow_masked))
@@ -207,7 +207,7 @@ def aptrace(dat,cutrow,nap):
     """
     if nap!=42 and nap!=102:
         print('Please set nap = 42 (for H band) or nap = 102 (for YJ band).')
-        sys.exit()
+        return
 
     peakind_cut,row = set_aperture(dat,cutrow,nap)
 

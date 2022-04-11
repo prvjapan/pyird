@@ -16,7 +16,7 @@ flat_smf66.fitsid=list(range(47224,47246,2)) #no light in the speckle fiber
 flat_smf66.fitsid_increment()
 flatmedian=flat_smf66.immedian()
 cutrow = 1000  ## 501 ~ 1549
-nap = 102 ## 42 for H band, 102 for YJ band
+nap = 42 ## 42 for H band, 102 for YJ band
 if nap==42:
     flatmedian = flatmedian[::-1,::-1]
 y0, xmin, xmax, coeff = aptrace(flatmedian,cutrow,nap)
