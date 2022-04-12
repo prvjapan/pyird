@@ -17,7 +17,7 @@ Classes
 
 - fitsset.FitsSet --  sets of fits files 
 - irdstream.Stream2D -- 2D fits stream from raw images
-
+- aperture.TraceAperture -- aperture class for trace
 
 The followings are out dated info.
 

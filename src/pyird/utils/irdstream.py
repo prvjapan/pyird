@@ -2,6 +2,9 @@
 
 from pyird.utils.fitsset import FitsSet
 from pyird.utils import directory_util
+from pyird.image.trace_function import trace_legendre
+from pyird.image.aptrace import aptrace
+from pyird.utils.aperture import TraceAperture
 import astropy.io.fits as pyf
 import numpy as np
 import tqdm
@@ -139,7 +142,7 @@ class Stream2D(FitsSet):
             im = hdu.data
             header = hdu.header
             if i==0:
-                mask = trace_from_iraf_trace_file(im, trace_path_list)
+                mask = trace_from_iraf_trace_file(trace_path_list, mask_shape=np.shape(im))
             calim = np.copy(im)  # image for calibration
             calim[mask] = np.nan
             if hotpix_mask is not None:
@@ -274,3 +277,21 @@ class Stream2D(FitsSet):
             print('Skipped '+str(skip)+' files because they already exists.')
 
         return ext_noexist, extf_noexist
+
+    def aptrace(self,cutrow = 1000,nap=42):
+        """extract aperture of trace from a median image of current fitsset
+
+        Args:
+            cutrow: cutting criterion
+            nap: number of apertures, nap = 42 ## 42 for H band, 102 for YJ band
+
+        Returns:
+            TraceAperture instance
+
+        """
+        flatmedian=self.immedian()
+        if nap==42:
+            flatmedian = flatmedian[::-1,::-1]
+            y0, xmin, xmax, coeff = aptrace(flatmedian,cutrow,nap)
+
+        return TraceAperture(trace_legendre, y0, xmin, xmax, coeff)
