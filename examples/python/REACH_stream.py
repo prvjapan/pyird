@@ -11,11 +11,11 @@ datadir = pathlib.Path('/home/kawahara/pyird/data/flat/')
 anadir = pathlib.Path('/home/kawahara/pyird/data/flat/')
 flat_smf66=irdstream.Stream2D("flat_smf66",datadir,anadir)
 flat_smf66.fitsid=list(range(47224,47246,2)) #no light in the speckle fiber
-flat_smf66.fitsid_increment()
-trace_smf66=flat_smf66.aptrace(cutrow = 1000,nap=42)
+flat_smf66.fitsid_increment() # when you use H-band
+trace_smf66=flat_smf66.aptrace(cutrow = 1000,nap=42) #TraceAperture instance
 
 import matplotlib.pyplot as plt
-plt.imshow(trace_smf66.mask())
+plt.imshow(trace_smf66.mask()) #apeture mask plot
 plt.show()
 
 # hotpixel mask
