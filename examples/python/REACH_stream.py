@@ -21,6 +21,14 @@ if nap==42:
     flatmedian = flatmedian[::-1,::-1]
 y0, xmin, xmax, coeff = aptrace(flatmedian,cutrow,nap)
 
+import matplotlib.pyplot as plt
+from pyird.image.mask import trace
+mask=trace(trace_legendre, y0, xmin, xmax, coeff)
+plt.imshow(mask)
+plt.show()
+
+import sys
+sys.exit()
 
 # hotpixel mask
 datadir = pathlib.Path('/home/kawahara/pyird/data/dark/')
