@@ -19,7 +19,7 @@ def cross_section(dat,nrow,nap):
     """
     onerow = dat[nrow]
     # search peaks
-    heights=np.arange(50,5,-5)*np.median(onerow)
+    heights=np.arange(50,0,-5)*np.median(onerow)
     i = 0
     peakind = []
     while len(peakind)<nap and (i<len(heights)):
@@ -56,12 +56,13 @@ def set_aperture(dat,cutrow,nap):
     cutrow_max=1550
     peakind_cut = []
     cutrow_lim = True
+    prange=False
     while ((len(peakind_cut)!=nap) or prange) and cutrow_lim:
         onerow_masked,peakind_cut = cross_section(dat,cutrow,nap)
         #print('cross-section: row ',cutrow)
-        if nap<50: # h band
+        if nap==42: # h band
             prange = (peakind_cut[-1]>1500) or (peakind_cut[1]>40)
-        elif nap>100: # yj band
+        elif nap>=102: # yj band
             prange = (peakind_cut[0]<250) or (peakind_cut[-2]<2000)
         cutrow_lim = (cutrow>cutrow_min) and (cutrow<cutrow_max)
         cutrow += 1
@@ -205,9 +206,8 @@ def aptrace(dat,cutrow,nap):
     Returns:
         parameters of a polynomial to trace apertures
     """
-    if nap!=42 and nap!=102:
-        print('Please set nap = 42 (for H band) or nap = 102 (for YJ band).')
-        return
+    if nap!=42 and nap!=102 and nap!=104:
+        print('Warning: Please set nap = 42 (for H band) or nap = 102 or 104 (for YJ band).')
 
     peakind_cut,row = set_aperture(dat,cutrow,nap)
 
