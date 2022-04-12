@@ -12,12 +12,12 @@ def test_read_trace_file():
     assert np.sum(y0) == 13517.2013
 
 def test_mask_from_trace_file():
-    im=np.zeros((2048,2048))
     path = (pkg_resources.resource_filename('pyird', 'data/samples/aprefA'))
-    mask=trace_from_iraf_trace_file(im, path)
+    im=np.zeros((2048,2048))
+    mask=trace_from_iraf_trace_file(path)
     im[mask]=1.0
     assert int(np.sum(im))==246366
     
 if __name__ == '__main__':
     test_read_trace_file()
-    test_mask()
+    test_mask_from_trace_file()

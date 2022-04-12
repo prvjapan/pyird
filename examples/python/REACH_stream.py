@@ -21,6 +21,7 @@ if nap==42:
     flatmedian = flatmedian[::-1,::-1]
 y0, xmin, xmax, coeff = aptrace(flatmedian,cutrow,nap)
 
+
 # hotpixel mask
 datadir = pathlib.Path('/home/kawahara/pyird/data/dark/')
 anadir = pathlib.Path('/home/kawahara/pyird/data/dark/')

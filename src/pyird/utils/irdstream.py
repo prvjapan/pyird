@@ -139,7 +139,7 @@ class Stream2D(FitsSet):
             im = hdu.data
             header = hdu.header
             if i==0:
-                mask = trace_from_iraf_trace_file(im, trace_path_list)
+                mask = trace_from_iraf_trace_file(trace_path_list, mask_shape=np.shape(im))
             calim = np.copy(im)  # image for calibration
             calim[mask] = np.nan
             if hotpix_mask is not None:
