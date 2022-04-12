@@ -4,8 +4,6 @@ from pyird.utils import irdstream
 import pathlib
 from pyird.image.bias import bias_subtract_image
 from pyird.image.hotpix import identify_hotpix
-from pyird.image.trace_function import trace_legendre
-from pyird.image.aptrace import aptrace
 import astropy.io.fits as pyf
 
 # aperture extraction
@@ -14,21 +12,11 @@ anadir = pathlib.Path('/home/kawahara/pyird/data/flat/')
 flat_smf66=irdstream.Stream2D("flat_smf66",datadir,anadir)
 flat_smf66.fitsid=list(range(47224,47246,2)) #no light in the speckle fiber
 flat_smf66.fitsid_increment()
-flatmedian=flat_smf66.immedian()
-cutrow = 1000  ## 501 ~ 1549
-nap = 42 ## 42 for H band, 102 for YJ band
-if nap==42:
-    flatmedian = flatmedian[::-1,::-1]
-y0, xmin, xmax, coeff = aptrace(flatmedian,cutrow,nap)
+trace_smf66=flat_smf66.aptrace(cutrow = 1000,nap=42)
 
 import matplotlib.pyplot as plt
-from pyird.image.mask import trace
-mask=trace(trace_legendre, y0, xmin, xmax, coeff)
-plt.imshow(mask)
+plt.imshow(trace_smf66.mask())
 plt.show()
-
-import sys
-sys.exit()
 
 # hotpixel mask
 datadir = pathlib.Path('/home/kawahara/pyird/data/dark/')

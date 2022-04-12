@@ -10,18 +10,18 @@ class TraceAperture(object):
     """aperture instance for trace class
 
     """    
-    def __init__(self, trace_funcion, y0, xmin, xmax, coeff):
+    def __init__(self, trace_function, y0, xmin, xmax, coeff):
         """initialization
         
         Args:
-            trace_funcion:  trace funcion used in interpolation
+            trace_function:  trace function used in interpolation
             y0:  y0
             xmin:  xmin
             xmax:  xmax
             coeff:  polinomial coeff
         
         """
-        self.trace_funcion = trace_funcion
+        self.trace_function = trace_function
         self.y0 = y0
         self.xmin = xmin
         self.xmax = xmax
