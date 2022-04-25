@@ -41,4 +41,3 @@ class TraceAperture(object):
         self.xmin = self.xmin[::2]
         self.xmax = self.xmax[::2]
         self.coeff = self.coeff[::2]
-        return self
