@@ -37,6 +37,12 @@ class TraceAperture(object):
         return trace(self.trace_function, self.y0, self.xmin, self.xmax, self.coeff)
 
     def mmf2(self):
+        """choose apertures for mmf2 (star fiber)
+
+        Returns:
+            updated variables (y0, xmin, xmax, coeff)
+
+        """
         self.y0 = self.y0[::2]
         self.xmin = self.xmin[::2]
         self.xmax = self.xmax[::2]
