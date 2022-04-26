@@ -113,7 +113,7 @@ class Stream2D(FitsSet):
         self.fitsdir = self.anadir
         self.extension = '_rb'
 
-    def clean_pattern(self, trace_path_list, hotpix_mask=None, extout='_cp', extin=None):
+    def clean_pattern(self, trace_path_list=None, hotpix_mask=None, extout='_cp', extin=None):
         """
 
         Args:
@@ -131,6 +131,11 @@ class Stream2D(FitsSet):
         if self.info:
             print('clean_pattern: output extension=', extout)
 
+        if trace_path_list is None:
+            mask = self.trace.mask()
+        else:
+            mask = trace_from_iraf_trace_file(trace_path_list, mask_shape=np.shape(im))
+
         if extin is None:
             extin = self.extension
 
@@ -141,8 +146,6 @@ class Stream2D(FitsSet):
             hdu = pyf.open(filen)[0]
             im = hdu.data
             header = hdu.header
-            if i==0:
-                mask = trace_from_iraf_trace_file(trace_path_list, mask_shape=np.shape(im))
             calim = np.copy(im)  # image for calibration
             calim[mask] = np.nan
             if hotpix_mask is not None:
@@ -157,7 +160,7 @@ class Stream2D(FitsSet):
         self.extension = extout
         os.chdir(currentdir)
 
-    def flatten(self, trace_path, extout='_fl', extin=None):
+    def flatten(self, trace_path=None, extout='_fl', extin=None):
         """
         Args:
            trace_path: trace file to be used in flatten
@@ -176,11 +179,15 @@ class Stream2D(FitsSet):
         if self.info:
             print('flatten: output extension=', extout)
 
+        if trace_path is None:
+            y0, xmin, xmax, coeff = self.trace.y0, self.trace.xmin, self.trace.xmax, self.trace.coeff
+        else:
+            y0, interp_function, xmin, xmax, coeff = read_trace_file(trace_path)
+
         if extin is None:
             extin = self.extension
 
         extin_noexist, extout_noexist = self.check_existence(extin, extout)
-        y0, interp_function, xmin, xmax, coeff = read_trace_file(trace_path)
         for i, fitsid in enumerate(tqdm.tqdm(extin_noexist)):
             filen = extin_noexist[i]
             hdu = pyf.open(filen)[0]
@@ -211,7 +218,7 @@ class Stream2D(FitsSet):
         median_image = np.nanmedian(imall, axis=0)
         return median_image
 
-    def calibrate_wavlength(self, trace_file_path, maxiter=30, stdlim=0.001):
+    def calibrate_wavlength(self, trace_file_path=None, maxiter=30, stdlim=0.001):
         """wavelength calibration usgin Th-Ar.
 
         Args:
@@ -230,8 +237,12 @@ class Stream2D(FitsSet):
         from pyird.spec.rsdmat import multiorder_to_rsd
 
         median_image = self.immedian()
-        y0, interp_function, xmin, xmax, coeff = read_trace_file(
-            trace_file_path)
+
+        if trace_file_path is None:
+            y0, xmin, xmax, coeff = self.trace.y0, self.trace.xmin, self.trace.xmax, self.trace.coeff
+        else:
+            y0, interp_function, xmin, xmax, coeff = read_trace_file(trace_file_path)
+
         rawspec, pixcoord = flatten(
             median_image, trace_legendre, y0, xmin, xmax, coeff)
         rsd = multiorder_to_rsd(rawspec, pixcoord)
