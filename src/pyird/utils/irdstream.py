@@ -218,23 +218,25 @@ class Stream2D(FitsSet):
         median_image = np.nanmedian(imall, axis=0)
         return median_image
 
-    def calibrate_wavlength(self, trace_file_path=None, maxiter=30, stdlim=0.001):
+    def calibrate_wavlength(self, trace_file_path=None, master='thar_master.fits' ,maxiter=30, stdlim=0.001, npix=2048):
         """wavelength calibration usgin Th-Ar.
 
         Args:
            trace_file_path: path to the trace file
+           master: master file for the wavelength calibrated ThAr file
            maxiter: maximum number of iterations
            stdlim: When the std of fitting residuals reaches this value, the iteration is terminated.
+           npix: number of pixels
 
-        Returns:
-           final results of the wavlength solution
-           data of ThAr signals used for fitting
         """
         from pyird.spec.wavcal import wavcal_thar
         from pyird.io.iraf_trace import read_trace_file
         from pyird.image.oned_extract import flatten
         from pyird.image.trace_function import trace_legendre
         from pyird.spec.rsdmat import multiorder_to_rsd
+
+        currentdir = os.getcwd()
+        os.chdir(str(self.anadir))
 
         median_image = self.immedian()
 
@@ -243,13 +245,24 @@ class Stream2D(FitsSet):
         else:
             y0, interp_function, xmin, xmax, coeff = read_trace_file(trace_file_path)
 
-        rawspec, pixcoord = flatten(
-            median_image, trace_legendre, y0, xmin, xmax, coeff)
-        rsd = multiorder_to_rsd(rawspec, pixcoord)
-        print(np.shape(rsd.T)[0])
-        wavsol, data = wavcal_thar(rsd.T, maxiter=maxiter, stdlim=stdlim)
+        master_path = master
+        if not os.path.exists(master_path):
+            filen = self.path()[0] #header of the first file
+            hdu = pyf.open(filen)[0]
+            im = hdu.data
+            header = hdu.header
+            nord = len(y0)
+            rawspec, pixcoord = flatten(
+                median_image, trace_legendre, y0, xmin, xmax, coeff)
+            rsd = multiorder_to_rsd(rawspec, pixcoord)
+            print(np.shape(rsd.T)[0])
+            wavsol, data = wavcal_thar(rsd.T, maxiter=maxiter, stdlim=stdlim)
+            wavsol_2d = wavsol.reshape((npix,nord))
+            hdux = pyf.PrimaryHDU(wavsol_2d, header)
+            hdulist = pyf.HDUList([hdux])
+            hdulist.writeto(master_path, overwrite=True)
 
-        return wavsol, data
+        os.chdir(currentdir)
 
     def flatfielding1D(self):
         return
@@ -306,3 +319,40 @@ class Stream2D(FitsSet):
             y0, xmin, xmax, coeff = aptrace(flatmedian,cutrow,nap)
 
         return TraceAperture(trace_legendre, y0, xmin, xmax, coeff)
+
+    def dispcor(self, input_ext, prefix, master='thar_master.fits',master_path=None):
+        """dispersion correct and resample spectra
+
+        Args:
+            input_ext: extension of input files
+            prefix: prefix for output files
+            master: master file for the wavelength calibrated ThAr file
+            master_path: path of the directory containing the master ThAr file
+
+        """
+        import pandas as pd
+
+        if master_path==None:
+            master_path = self.anadir.joinpath('..','thar').resolve()/master
+
+        inputs = self.extpath(input_ext,string=False, check=True)
+        for j,input in enumerate(inputs):
+            hdu = pyf.open(input)[0]
+            spec_m12 = hdu.data
+            spec_m2 = spec_m12[:,::2] # choose mmf2 (star fiber)
+
+            hdu = pyf.open(master_path)[0]
+            reference = hdu.data
+
+            wspec = pd.DataFrame([])
+            for i in range(len(reference[0])):
+                wav = reference[:,i]
+                order = np.ones(len(wav))
+                order[:] = i+1
+                data_order = [wav,order,spec_m2[:,i]]
+                df_order = pd.DataFrame(data_order).T
+                wspec = pd.concat([wspec,df_order])
+
+            id = self.fitsid[j]
+            save_path = self.anadir/('%s%d_m2.dat'%(prefix,id)) ##for mmf2
+            wspec.to_csv(save_path,header=False,index=False,sep=' ')

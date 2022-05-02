@@ -54,5 +54,7 @@ thar=irdstream.Stream2D("thar",datadir,anadir,rawtag="IRDAD000",fitsid=list(rang
 thar.trace = trace_mmf
 trace_mmf.mmf2() # choose mmf2 (star fiber)
 thar.clean_pattern(extin='', extout='_cp', hotpix_mask=hotpix_mask)
-wavsol, data=thar.calibrate_wavlength()
-#wavsol_2d = wavsol.reshape((2048,21))
+thar.calibrate_wavlength()
+
+# assign reference spectra & resample
+target.dispcor('_fl','w')
