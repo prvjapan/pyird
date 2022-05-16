@@ -9,6 +9,7 @@ import astropy.io.fits as pyf
 # path
 basedir = pathlib.Path('/Users/yuikasagi/IRD/PhDwork/pyird/data/20210317/')
 
+### FOR CALIBRATION ###
 # aperture extraction
 datadir = basedir/'flat/'
 anadir = basedir/'flat/'
@@ -31,20 +32,6 @@ for data in dark.rawpath:
 im_subbias = bias_subtract_image(im)
 hotpix_mask, obj = identify_hotpix(im_subbias)
 
-# Load data
-datadir = basedir/'target/'
-anadir = basedir/'target/'
-target = irdstream.Stream2D(
-    'targets', datadir, anadir, fitsid=[41511])
-target.info = True  # show detailed info
-target.trace = trace_mmf
-
-# clean pattern
-target.clean_pattern(extin='', extout='_cp', hotpix_mask=hotpix_mask)
-
-# flatten
-target.flatten()
-
 # load ThAr raw image
 datadir = basedir/'thar'
 anadir = basedir/'thar'
@@ -56,5 +43,36 @@ trace_mmf.mmf2() # choose mmf2 (star fiber)
 thar.clean_pattern(extin='', extout='_cp', hotpix_mask=hotpix_mask)
 thar.calibrate_wavlength()
 
+### TARGET ###
+# Load data
+datadir = basedir/'target/'
+anadir = basedir/'target/'
+target = irdstream.Stream2D(
+    'targets', datadir, anadir, fitsid=[41511])
+target.info = True  # show detailed info
+target.trace = trace_mmf
+# clean pattern
+target.clean_pattern(extin='', extout='_cp', hotpix_mask=hotpix_mask)
+# flatten
+target.flatten()
 # assign reference spectra & resample
-target.dispcor('_fl','w')
+target.dispcor()
+
+### FLAT (for blaze function) ###
+flat_mmf.trace = trace_mmf
+flat_mmf.clean_pattern(extin='', extout='_cp', hotpix_mask=hotpix_mask)
+flat_mmf.flatten(imcomb=True)
+flat_mmf.dispcor(imcomb=True)
+
+# combine & normalize
+target.normalize1D(flatid=flat_mmf.streamid)
+
+"""### mmfmmf (test) ###
+datadir = basedir/'mmfmmf/'
+anadir = basedir/'mmfmmf/'
+mmfmmf=irdstream.Stream2D("mmfmmf",datadir,anadir,rawtag="IRDAD000",fitsid=list(range(14733,14833)))
+mmfmmf.trace = trace_mmf
+mmfmmf.clean_pattern(extin='', extout='_cp', hotpix_mask=hotpix_mask)
+mmfmmf.flatten(imcomb=True)
+mmfmmf.dispcor(imcomb=True)
+"""

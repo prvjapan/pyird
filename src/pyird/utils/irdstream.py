@@ -160,12 +160,13 @@ class Stream2D(FitsSet):
         self.extension = extout
         os.chdir(currentdir)
 
-    def flatten(self, trace_path=None, extout='_fl', extin=None):
+    def flatten(self, trace_path=None, extout='_fl', extin=None, imcomb=False):
         """
         Args:
            trace_path: trace file to be used in flatten
            extout: output extension
            extin: input extension
+           imcomb: flatten a combined image
 
         """
         from pyird.image.oned_extract import flatten
@@ -187,19 +188,30 @@ class Stream2D(FitsSet):
         if extin is None:
             extin = self.extension
 
-        extin_noexist, extout_noexist = self.check_existence(extin, extout)
-        for i, fitsid in enumerate(tqdm.tqdm(extin_noexist)):
-            filen = extin_noexist[i]
-            hdu = pyf.open(filen)[0]
-            im = hdu.data
+        if not imcomb:
+            extin_noexist, extout_noexist = self.check_existence(extin, extout)
+            for i, fitsid in enumerate(tqdm.tqdm(extin_noexist)):
+                filen = extin_noexist[i]
+                hdu = pyf.open(filen)[0]
+                im = hdu.data
+                header = hdu.header
+                rawspec, pixcoord = flatten(
+                    im, trace_legendre, y0, xmin, xmax, coeff)
+                rsd = multiorder_to_rsd(rawspec, pixcoord)
+                hdux = pyf.PrimaryHDU(rsd, header)
+                hdulist = pyf.HDUList([hdux])
+                hdulist.writeto(extout_noexist[i], overwrite=True)
+        else:
+            median_image=self.immedian()
+            hdu = pyf.open(self.path()[0])[0]
             header = hdu.header
             rawspec, pixcoord = flatten(
-                im, trace_legendre, y0, xmin, xmax, coeff)
+                median_image, trace_legendre, y0, xmin, xmax, coeff)
             rsd = multiorder_to_rsd(rawspec, pixcoord)
             hdux = pyf.PrimaryHDU(rsd, header)
             hdulist = pyf.HDUList([hdux])
-            hdulist.writeto(extout_noexist[i], overwrite=True)
-
+            save_path = self.anadir/('%s_mmf12.fits'%(self.streamid))
+            hdulist.writeto(save_path, overwrite=True)
         self.fitsdir = self.anadir
         self.extension = extout
         os.chdir(currentdir)
@@ -320,7 +332,7 @@ class Stream2D(FitsSet):
 
         return TraceAperture(trace_legendre, y0, xmin, xmax, coeff)
 
-    def dispcor(self, input_ext, prefix, master='thar_master.fits',master_path=None):
+    def dispcor(self, input_ext='_fl', prefix='w', master='thar_master.fits',master_path=None,imcomb=False):
         """dispersion correct and resample spectra
 
         Args:
@@ -330,20 +342,8 @@ class Stream2D(FitsSet):
             master_path: path of the directory containing the master ThAr file
 
         """
-        import pandas as pd
-
-        if master_path==None:
-            master_path = self.anadir.joinpath('..','thar').resolve()/master
-
-        inputs = self.extpath(input_ext,string=False, check=True)
-        for j,input in enumerate(inputs):
-            hdu = pyf.open(input)[0]
-            spec_m12 = hdu.data
-            spec_m2 = spec_m12[:,::2] # choose mmf2 (star fiber)
-
-            hdu = pyf.open(master_path)[0]
-            reference = hdu.data
-
+        def mkwspec(spec_m2,reference,save_path):
+            import pandas as pd
             wspec = pd.DataFrame([])
             for i in range(len(reference[0])):
                 wav = reference[:,i]
@@ -352,7 +352,41 @@ class Stream2D(FitsSet):
                 data_order = [wav,order,spec_m2[:,i]]
                 df_order = pd.DataFrame(data_order).T
                 wspec = pd.concat([wspec,df_order])
-
-            id = self.fitsid[j]
-            save_path = self.anadir/('%s%d_m2.dat'%(prefix,id)) ##for mmf2
             wspec.to_csv(save_path,header=False,index=False,sep=' ')
+
+        if master_path==None:
+            master_path = self.anadir.joinpath('..','thar').resolve()/master
+
+        if not imcomb:
+            inputs = self.extpath(input_ext,string=False, check=True)
+            for j,input in enumerate(inputs):
+                hdu = pyf.open(input)[0]
+                spec_m12 = hdu.data
+                spec_m2 = spec_m12#[:,::2] # choose mmf2 (star fiber)
+
+                hdu = pyf.open(master_path)[0]
+                reference = hdu.data
+
+                id = self.fitsid[j]
+                save_path = self.anadir/('%s%d_m2.dat'%(prefix,id)) ##for mmf2
+                mkwspec(spec_m2,reference,save_path)
+        else:
+            hdu = pyf.open(self.anadir/('%s_mmf12.fits'%(self.streamid)))[0]
+            spec_m12 = hdu.data
+            spec_m2 = spec_m12#[:,::2] # choose mmf2 (star fiber)
+
+            hdu = pyf.open(master_path)[0]
+            reference = hdu.data
+
+            save_path = self.anadir/('%s%s_m2.dat'%(prefix,self.streamid))
+            mkwspec(spec_m2,reference,save_path)
+
+    def normalize1D(self,flatid='flat'):
+        from pyird.spec.continuum import comb_norm
+        for id in self.fitsid:
+            wfile = self.anadir/('w%d_m2.dat'%(id))
+            flatfile = self.anadir.joinpath('..','flat').resolve()/('w%s_m2.dat'%(flatid))
+            df_interp = comb_norm(wfile,flatfile)
+            df_save = df_interp[['wav','nflux']]
+            save_path = self.anadir/('ncw%d_m2.dat'%(id))
+            df_save.to_csv(save_path,header=False,index=False,sep=' ')
