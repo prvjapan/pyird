@@ -7,7 +7,7 @@ from pyird.image.hotpix import identify_hotpix
 import astropy.io.fits as pyf
 
 # path
-basedir = pathlib.Path('/Users/yuikasagi/IRD/PhDwork/pyird/data/20210317/')
+basedir = pathlib.Path('~/pyird/data/20210317/').expanduser()
 
 ### FOR CALIBRATION ###
 # aperture extraction
