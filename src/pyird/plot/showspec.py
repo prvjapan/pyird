@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-def show_wspec(df_wspec,**kwargs):
+def show_wavcal_spectrum(df_wspec,**kwargs):
     """show the wavelength calibrated spectrum.
 
     Args:

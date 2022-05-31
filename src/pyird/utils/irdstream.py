@@ -342,7 +342,7 @@ class Stream2D(FitsSet):
             master_path: path of the directory containing the master ThAr file
 
         """
-        from pyird.plot.showspec import show_wspec
+        from pyird.plot.showspec import show_wavcal_spectrum
         def mkwspec(spec_m2,reference,save_path):
             import pandas as pd
             wspec = pd.DataFrame([],columns=['wav','order','flux'])
@@ -375,7 +375,7 @@ class Stream2D(FitsSet):
                 if self.info:
                     print('dispcor: output spectrum= %s%d_m2.dat'%(prefix,id))
                 #plot
-                show_wspec(wspec,alpha=0.5)
+                show_wavcal_spectrum(wspec,alpha=0.5)
         else:
             hdu = pyf.open(self.anadir/('%s_mmf12.fits'%(self.streamid)))[0]
             spec_m12 = hdu.data
@@ -389,7 +389,7 @@ class Stream2D(FitsSet):
             if self.info:
                 print('dispcor: output spectrum= %s%s_m2.dat'%(prefix,self.streamid))
             #plot
-            show_wspec(wspec,alpha=0.5)
+            show_wavcal_spectrum(wspec,alpha=0.5)
 
     def normalize1D(self,flatid='flat'):
         """combine orders and normalize spectrum
@@ -399,7 +399,7 @@ class Stream2D(FitsSet):
 
         """
         from pyird.spec.continuum import comb_norm
-        from pyird.plot.showspec import show_wspec
+        from pyird.plot.showspec import show_wavcal_spectrum
         for id in self.fitsid:
             wfile = self.anadir/('w%d_m2.dat'%(id))
             flatfile = self.anadir.joinpath('..','flat').resolve()/('w%s_m2.dat'%(flatid))
@@ -410,4 +410,4 @@ class Stream2D(FitsSet):
             if self.info:
                 print('normalize1D: output normalized 1D spectrum= ncw%d_m2.dat'%(id))
             #plot
-            show_wspec(df_save,alpha=0.5)
+            show_wavcal_spectrum(df_save,alpha=0.5)
