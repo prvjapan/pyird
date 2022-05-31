@@ -61,8 +61,9 @@ target.dispcor()
 ### FLAT (for blaze function) ###
 flat_mmf.trace = trace_mmf
 flat_mmf.clean_pattern(extin='', extout='_cp', hotpix_mask=hotpix_mask)
-flat_mmf.flatten(imcomb=True)
-flat_mmf.dispcor(imcomb=True)
+flat_mmf.imcomb = True # median combine
+flat_mmf.flatten()
+flat_mmf.dispcor()
 
 # combine & normalize
 target.normalize1D(flatid=flat_mmf.streamid)
@@ -73,6 +74,7 @@ anadir = basedir/'mmfmmf/'
 mmfmmf=irdstream.Stream2D("mmfmmf",datadir,anadir,rawtag="IRDAD000",fitsid=list(range(14733,14833)))
 mmfmmf.trace = trace_mmf
 mmfmmf.clean_pattern(extin='', extout='_cp', hotpix_mask=hotpix_mask)
-mmfmmf.flatten(imcomb=True)
-mmfmmf.dispcor(imcomb=True)
+mmfmmf.imcomb = True
+mmfmmf.flatten()
+mmfmmf.dispcor()
 """

@@ -28,6 +28,7 @@ class Stream2D(FitsSet):
         self.anadir = anadir
         self.unlock = False
         self.info = False
+        self.imcomb = False
         if fitsid is not None:
             print('fitsid:', fitsid)
             self.fitsid = fitsid
@@ -160,13 +161,12 @@ class Stream2D(FitsSet):
         self.extension = extout
         os.chdir(currentdir)
 
-    def flatten(self, trace_path=None, extout='_fl', extin=None, imcomb=False):
+    def flatten(self, trace_path=None, extout='_fl', extin=None):
         """
         Args:
            trace_path: trace file to be used in flatten
            extout: output extension
            extin: input extension
-           imcomb: flatten a combined image
 
         """
         from pyird.image.oned_extract import flatten
@@ -188,7 +188,7 @@ class Stream2D(FitsSet):
         if extin is None:
             extin = self.extension
 
-        if not imcomb:
+        if not self.imcomb:
             extin_noexist, extout_noexist = self.check_existence(extin, extout)
             for i, fitsid in enumerate(tqdm.tqdm(extin_noexist)):
                 filen = extin_noexist[i]
@@ -332,7 +332,7 @@ class Stream2D(FitsSet):
 
         return TraceAperture(trace_legendre, y0, xmin, xmax, coeff)
 
-    def dispcor(self, input_ext='_fl', prefix='w', master='thar_master.fits',master_path=None,imcomb=False):
+    def dispcor(self, input_ext='_fl', prefix='w', master='thar_master.fits',master_path=None):
         """dispersion correct and resample spectra
 
         Args:
@@ -342,22 +342,24 @@ class Stream2D(FitsSet):
             master_path: path of the directory containing the master ThAr file
 
         """
+        from pyird.plot.showspec import show_wavcal_spectrum
         def mkwspec(spec_m2,reference,save_path):
             import pandas as pd
-            wspec = pd.DataFrame([])
+            wspec = pd.DataFrame([],columns=['wav','order','flux'])
             for i in range(len(reference[0])):
                 wav = reference[:,i]
                 order = np.ones(len(wav))
                 order[:] = i+1
                 data_order = [wav,order,spec_m2[:,i]]
-                df_order = pd.DataFrame(data_order).T
+                df_order = pd.DataFrame(data_order,index=['wav','order','flux']).T
                 wspec = pd.concat([wspec,df_order])
             wspec.to_csv(save_path,header=False,index=False,sep=' ')
+            return wspec
 
         if master_path==None:
             master_path = self.anadir.joinpath('..','thar').resolve()/master
 
-        if not imcomb:
+        if not self.imcomb:
             inputs = self.extpath(input_ext,string=False, check=True)
             for j,input in enumerate(inputs):
                 hdu = pyf.open(input)[0]
@@ -369,7 +371,11 @@ class Stream2D(FitsSet):
 
                 id = self.fitsid[j]
                 save_path = self.anadir/('%s%d_m2.dat'%(prefix,id)) ##for mmf2
-                mkwspec(spec_m2,reference,save_path)
+                wspec = mkwspec(spec_m2,reference,save_path)
+                if self.info:
+                    print('dispcor: output spectrum= %s%d_m2.dat'%(prefix,id))
+                #plot
+                show_wavcal_spectrum(wspec,alpha=0.5)
         else:
             hdu = pyf.open(self.anadir/('%s_mmf12.fits'%(self.streamid)))[0]
             spec_m12 = hdu.data
@@ -379,10 +385,21 @@ class Stream2D(FitsSet):
             reference = hdu.data
 
             save_path = self.anadir/('%s%s_m2.dat'%(prefix,self.streamid))
-            mkwspec(spec_m2,reference,save_path)
+            wspec = mkwspec(spec_m2,reference,save_path)
+            if self.info:
+                print('dispcor: output spectrum= %s%s_m2.dat'%(prefix,self.streamid))
+            #plot
+            show_wavcal_spectrum(wspec,alpha=0.5)
 
     def normalize1D(self,flatid='flat'):
+        """combine orders and normalize spectrum
+
+        Args:
+            flatid: streamid for flat data
+
+        """
         from pyird.spec.continuum import comb_norm
+        from pyird.plot.showspec import show_wavcal_spectrum
         for id in self.fitsid:
             wfile = self.anadir/('w%d_m2.dat'%(id))
             flatfile = self.anadir.joinpath('..','flat').resolve()/('w%s_m2.dat'%(flatid))
@@ -390,3 +407,7 @@ class Stream2D(FitsSet):
             df_save = df_interp[['wav','nflux']]
             save_path = self.anadir/('ncw%d_m2.dat'%(id))
             df_save.to_csv(save_path,header=False,index=False,sep=' ')
+            if self.info:
+                print('normalize1D: output normalized 1D spectrum= ncw%d_m2.dat'%(id))
+            #plot
+            show_wavcal_spectrum(df_save,alpha=0.5)
