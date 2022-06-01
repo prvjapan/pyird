@@ -15,25 +15,13 @@ Core Pipelines
 Classes
 ------------------
 
-- fitsset.FitsSet --  sets of fits files 
+- fitsset.FitsSet --  sets of fits files
 - irdstream.Stream2D -- 2D fits stream from raw images
 - aperture.TraceAperture -- aperture class for trace
-
-The followings are out dated info.
 
 Aperture
 ------------------------------
 
-For n=51 or 52 (YJ) and n=21 (H)
-Mask 104 (YJ) 
+Mask: n=42 (H) apertures extracted from FLAT for aperture mask.
 
-
-Help tool for ECIDENTIFY
---------------------------
-
-- calref.py
-
-s option: The number of the orders varies depending on environment. s option gives an offset that defines the order numbering. Try it if you couldn't find good match. In particular, for SMF/YJ, try s = 1.
-
-xorder 4
-yorder 3
+Star: `aperture.TraceAperture.mmf2()` sets n=21 (H) apertures of star fiber.
