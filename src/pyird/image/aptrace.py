@@ -39,13 +39,14 @@ def cross_section(dat,nrow,nap):
     onerow_masked[~maskind] = np.nan
     return onerow_masked, peakind_cut
 
-def set_aperture(dat,cutrow,nap):
+def set_aperture(dat,cutrow,nap,plot=True):
     """search aperture
 
     Args:
         dat: flat data
         cutrow: row number used to set aperture
         nap: number of total apertures to be traced
+        plot: show figure of selected apertures
 
     Returns:
         peak position in the cross section at cutrow
@@ -71,9 +72,10 @@ def set_aperture(dat,cutrow,nap):
         print('Please change "cutrow" or "nap" or confirm the orientation of the image.')
         return
     print('cross-section: row ',cutrow)
-    # Plot to confirm the selected aperture
-    pixels = np.arange(0,len(onerow_masked))
-    plot_crosssection(pixels,onerow_masked,peakind_cut)
+    if plot==True:
+        # Plot to confirm the selected aperture
+        pixels = np.arange(0,len(onerow_masked))
+        plot_crosssection(pixels,onerow_masked,peakind_cut)
     return peakind_cut, cutrow
 
 def trace_pix(dat,cutrow,peakind,npix=2048):
@@ -195,13 +197,14 @@ def fit_ord(x, y0, data):
     p1, cov = leastsq(errfunc, coeff, args=(x, y0, data))
     return p1
 
-def aptrace(dat,cutrow,nap):
+def aptrace(dat,cutrow,nap,plot=True):
     """trace apertures by a polynomial function.
 
     Args:
         dat: flat data
         cutrow: row number used to set aperture
         nap: number of total apertures to be traced
+        plot: show figure of traced apertures
 
     Returns:
         parameters of a polynomial to trace apertures
@@ -209,7 +212,7 @@ def aptrace(dat,cutrow,nap):
     if nap!=42 and nap!=102 and nap!=104:
         print('Warning: Please set nap = 42 (for H band) or nap = 102 or 104 (for YJ band).')
 
-    peakind_cut,row = set_aperture(dat,cutrow,nap)
+    peakind_cut,row = set_aperture(dat,cutrow,nap,plot=plot)
 
     # Trace each peak
     x, y, y0 = [], [], []
@@ -218,7 +221,8 @@ def aptrace(dat,cutrow,nap):
         x.append(list(x_ord))
         y.append(list(y_ord))
         y0.append(y0_ord)
-    plot_tracelines(x,y)
+    if plot==True:
+        plot_tracelines(x,y)
 
     # Fit each aperture
     coeff=[]
