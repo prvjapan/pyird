@@ -13,7 +13,7 @@ def test_aptrace():
         dat_test[:,x-2:x+2] = 1000
 
     cutrow = 1000
-    y0, xmin, xmax, coeff = aptrace(dat_test,cutrow,nap)
+    y0, xmin, xmax, coeff = aptrace(dat_test,cutrow,nap,plot=False)
     assert np.sum(y0) == 20960
 
 if __name__ == '__main__':
