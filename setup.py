@@ -13,7 +13,7 @@ META_PATH = os.path.join('src', 'pyird', '__init__.py')
 CLASSIFIERS = [
     'Programming Language :: Python',
 ]
-INSTALL_REQUIRES = ['numpy', 'tqdm', 'scipy', 'astroquery', 'sep']
+INSTALL_REQUIRES = ['numpy', 'tqdm', 'scipy', 'astroquery', 'sep', 'gpkron', 'pandas']
 
 # END PROJECT SPECIFIC
 
@@ -44,7 +44,7 @@ if __name__ == '__main__':
             ),
             'write_to_template': '__version__ = "{version}"\n',
         },
-        version='0.0.1',
+        version='0.1.0',
         author=find_meta('author'),
         author_email=find_meta('email'),
         maintainer=find_meta('author'),

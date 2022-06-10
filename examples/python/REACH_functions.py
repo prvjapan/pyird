@@ -19,7 +19,7 @@ import astropy.io.fits as pyf
 datadir = pathlib.Path('/home/kawahara/pyird/data/dark/')
 anadir = pathlib.Path('/home/kawahara/pyird/data/dark/')
 dark = irdstream.Stream2D('targets', datadir, anadir)
-dark.fitsid = [41018]
+dark.fitsid = [41019]
 for data in dark.rawpath:
     im = pyf.open(str(data))[0].data
 im_subbias = bias_subtract_image(im)
@@ -29,9 +29,8 @@ hotpix_mask, obj = identify_hotpix(im_subbias)
 # Load data
 datadir = pathlib.Path('/home/kawahara/pyird/data/samples/REACH/')
 anadir = pathlib.Path('/home/kawahara/pyird/data/samples/REACH/')
-target = irdstream.Stream2D('targets', datadir, anadir)
+target = irdstream.Stream2D('targets', datadir, anadir, fitsid=[47077])
 # target.fitsid=[47103]
-target.fitsid = [47077]
 
 # Load an image
 for datapath in target.rawpath:

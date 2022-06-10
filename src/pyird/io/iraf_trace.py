@@ -12,7 +12,7 @@ def finalize_trace(interp_function, xmin, xmax):
 def read_trace_file(filelist):
     """
     Args:
-       trace files list
+       filelist: trace files list
 
     Returns:
         y0, interp_function, xmin, xmax, coeff

@@ -1,6 +1,6 @@
 Get Started
 =======================
-	  
+
 - **fitssets**: The annoying thing about parsing is that you have to do the same operation on multiple fits files. In pyird, a set of fits is defined as a fitsset (a set of fits). In pyird, a set of fits is defined as a fitsset, and a single fit is also defined as a set of fits.
 In pyird, a set of fits is defined by a fitsset (a set of fits). For example, bias, readout, unidimensionalization, wavelength assignment, etc. are one-way processes, and each time they are performed, iraf emits a large number of new fits files. This is the reason why stream is defined separately from the fits set. Basically, it is a one-way process, so if a process has been done once and saved in a directory, it will be skipped even if the same instruction is given again.
 There are two types of streams: one for two-dimensional data (the endpoint is one-dimensional), and one for one-dimensional data.
@@ -10,30 +10,30 @@ There are two types of streams: one for two-dimensional data (the endpoint is on
  Example of stream definition (42306,42308,.... Assigning the set of even (=YJ) fits to stream)
 
 .. code:: python
-	  
+
 	  targets=irdstream.Stream2D("targets",datadir,anadir)
 	  targets.fitsid=list(range(42306,42324,2))
 
-	  
+
 When we make all the above odd (YJ+1=H)
 
 .. code:: python
-	  
+
 	  targets.fitsid_increment()
 
 Stream's current location path
 
 .. code:: python
-	  
+
 	  targets.path()
 	  >[PosixPath('/media/kawahara/kingyo/IRD_TWINS/data/IRDA00042306.fits'), PosixPath('/media/kawahara/kingyo/IRD_TWINS/data/IRDA 00042308.fits'), PosixPath('/media/kawahara/kingyo/IRD_TWINS/data/IRDA00042310.fits'), PosixPath('/media/kawahara/kingyo/IRD_TWINS/ data/IRDA00042312.fits'), PosixPath('/media/kawahara/kingyo/IRD_TWINS/data/IRDA00042314.fits'), PosixPath('/media/kawahara/kingyo/ IRD_TWINS/data/IRDA00042316.fits'), PosixPath('/media/kawahara/kingyo/IRD_TWINS/data/IRDA00042318.fits'), PosixPath('/media/kawahara /kingyo/IRD_TWINS/data/IRDA00042320.fits'), PosixPath('/media/kawahara/kingyo/IRD_TWINS/data/IRDA00042322.fits')]
-	  
+
 
 Since this is the starting point of the stream, the path of the fits set in the data directory is returned.
 If we print the path again after the bias removal process, we get
 
 .. code:: python
-   
+
 	  targets.remove_bias("r")
 	  targets.path()
 	  >[PosixPath('/media/kawahara/kingyo/IRD_TWINS/ana/H/IRDA00042306_rb.fits'), PosixPath('/media/kawahara/kingyo/IRD_TWINS/ana/H/IRDA 00042308_rb.fits'), PosixPath('/media/kawahara/kingyo/IRD_TWINS/ana/H/IRDA00042310_rb.fits'), PosixPath('/media/kawahara/kingyo/IRD_ TWINS/ana/H/IRDA00042312_rb.fits'), PosixPath('/media/kawahara/kingyo/IRD_TWINS/ana/H/IRDA00042314_rb.fits'), PosixPath('/media/ kawahara/kingyo/IRD_TWINS/ana/H/IRDA00042316_rb.fits'), PosixPath('/media/kawahara/kingyo/IRD_TWINS/ana/H/IRDA00042318_rb.fits'), PosixPath('/media/kawahara/kingyo/IRD_TWINS/ana/H/IRDA00042320_rb.fits'), PosixPath('/media/kawahara/kingyo/IRD_TWINS/ana/H/IRDA 00042322_rb.fits')]
@@ -42,7 +42,7 @@ If we print the path again after the bias removal process, we get
 The path of the bias-removed fits is returned. Note that the path has been moved to the analysis directory, which is pathlib object by default. Extract the current location data (index=2,3) of Stream.
 
 .. code:: python
-	  
+
 	  target.data([2,3])
 
 
@@ -54,10 +54,20 @@ pyird/samples/IRD_TWINS/irdreductH.py
 for an example of H.
 
 .. code:: sh
-   
+
 	  python irdreductH.py
-	  
+
 Try it! The data set is `here <http://secondearths.sakura.ne.jp/obs/binary/IRD_TWINS.tar.gz>`_ (about 1GB)
+
+And,
+pyird/examples/python/IRD_stream.py
+for another example of H.
+
+.. code:: sh
+
+	  python IRD_stream.py
+
+Please change the fits IDs when you try (or ask Kasagi for the data set).
 
 If you are a developer, please cut the feature/hogehoge from the develop branch and pull request when you merge it into develop. (Kawahara will also operate in this way after 4/7)
 
@@ -71,24 +81,23 @@ Example of what to prepare
 Example: remove bias in stream ("r" is rotated for H, not needed for YJ)
 
 .. code:: python
-	  
+
 	  targets.remove_bias("r")
 
 Example: image combine stream, output is a set of fits.
 
 .. code:: python
-	  
+
 	  combined_flat=flat_mmf.imcombine("combined_flat")
 
 Example: remove read noise from stream.
 
 .. code:: python
-	  
+
 	  targets.rm_readnoise(maskfits)
 
 Example: Define a set of fits (single file)
 
 .. code:: python
-	  
-	  combined_flat=fitsset.FitsSet("combined_flat_rb",
 
+	  combined_flat=fitsset.FitsSet("combined_flat_rb",
