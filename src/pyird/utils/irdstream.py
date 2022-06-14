@@ -135,7 +135,7 @@ class Stream2D(FitsSet):
         if trace_path_list is None:
             mask = self.trace.mask()
         else:
-            mask = trace_from_iraf_trace_file(trace_path_list, mask_shape=np.shape(im))
+            mask = trace_from_iraf_trace_file(trace_path_list)
 
         if extin is None:
             extin = self.extension
