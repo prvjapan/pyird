@@ -177,7 +177,7 @@ def wavcal_thar(dat, Ni=5, Nx=4, maxiter=10, stdlim=0.005):
                     continue
                 pchanlocal_dat = np.where(dat[i, :] == max(
                     dat[i, :][pchanlocal_med]))[0][0]
-                channel_tmp = pchanlocal_dat+1
+                channel_tmp = pchanlocal_dat
                 data = [i+1-offset, channel_tmp, wav[k]]
                 df_tmp = pd.DataFrame([data], columns=pdat1.columns)
                 pdat1 = pd.concat([pdat1, df_tmp], ignore_index=True)
@@ -217,7 +217,7 @@ def wavcal_thar(dat, Ni=5, Nx=4, maxiter=10, stdlim=0.005):
             if np.nanmax(med[ind_low:ind_upp]) > np.nanpercentile(med[med>0], 80):
                 pix_med = np.where(med == np.nanmax(med[ind_low:ind_upp]))[0]
                 pix_dat = np.where(dat[i, :] == max(dat[i, pix_med]))[0][0]
-                pix_tmp = pix_dat + 1
+                pix_tmp = pix_dat
                 wav = ref
                 data = [i+1-offset, pix_tmp, wav]
                 df_tmp = pd.DataFrame([data], columns=pdat2.columns)
