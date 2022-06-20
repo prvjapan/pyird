@@ -18,7 +18,13 @@ def flatten(im, trace_func, y0, xmin, xmax, coeff):
        raw multiorder spectra
        multiorder pixel coordinate
     """
-    rotim = np.copy(im[::-1, ::-1])
+
+    if len(y0)==21: #h band
+        rotim = np.copy(im[::-1, ::-1])
+        end = 2
+    elif len(y0)==51: # yj band
+        rotim = np.copy(im)
+        end = 1
 
     x = []
     for i in range(len(y0)):
@@ -34,7 +40,7 @@ def flatten(im, trace_func, y0, xmin, xmax, coeff):
         eachpixcoord = []
         for j, ix in enumerate(x[i]):
             iys = np.max([0, tl_tmp[j]-width])
-            iye = np.min([ny, tl_tmp[j]+width+2])
+            iye = np.min([ny, tl_tmp[j]+width+end])  #do not change!: to avoid flux extracting
             eachspec.append(np.sum(rotim[ix, iys:iye]))
             eachpixcoord.append(ix)
         spec.append(eachspec)

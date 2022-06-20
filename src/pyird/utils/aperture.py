@@ -26,6 +26,7 @@ class TraceAperture(object):
         self.xmin = xmin
         self.xmax = xmax
         self.coeff = coeff
+        self.mmf = 'mmf12'
 
     def mask(self):
         """mask image
@@ -47,3 +48,17 @@ class TraceAperture(object):
         self.xmin = self.xmin[::2]
         self.xmax = self.xmax[::2]
         self.coeff = self.coeff[::2]
+        self.mmf = 'm2'
+
+    def mmf1(self):
+        """choose apertures for mmf1 (comb fiber)
+
+        Returns:
+            updated variables (y0, xmin, xmax, coeff)
+
+        """
+        self.y0 = self.y0[1::2]
+        self.xmin = self.xmin[1::2]
+        self.xmax = self.xmax[1::2]
+        self.coeff = self.coeff[1::2]
+        self.mmf = 'm1'

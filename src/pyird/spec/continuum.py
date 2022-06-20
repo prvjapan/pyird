@@ -47,28 +47,35 @@ def continuum_oneord(wdata,flat,order):
     flux_tmp = wdata_tmp['flux'].values
     flat_tmp = flat[(flat['order']==order)]
     ffl_tmp = flat_tmp['flux'].values
+    cutind = np.zeros(len(flat_tmp),dtype=bool)
+    cutind[10:-60] = True # mask pixels at both ends of the order
     useind = (~np.isnan(ffl_tmp)) & (~np.isnan(flux_tmp))
-    continuum = fit_continuum(wav_tmp[useind],ffl_tmp[useind],order=35,nsigma=[3,3],maxniter=3)
+    # CHECK: fit order, clipping sigma
+    continuum = fit_continuum(wav_tmp[useind & cutind],ffl_tmp[useind & cutind],order=23,nsigma=[2,3],maxniter=3)
+    continuum = np.interp(wav_tmp[useind],wav_tmp[useind & cutind],continuum)
     return wav_tmp, flux_tmp, useind, continuum
 
-def make_blaze(wdata,flat,std_order=11):
+def make_blaze(wdata,flat,std_order=None):
     """extract blaze function for target based on FLAT
 
     Args:
         wdata: the wavelength calibrated target spectrum
         flat: the wavelength calibrated FLAT
-        std_order: standard order of reference for scaling FLAT to blaze function
+        std_order: Once an order number is set, the blaze functions are standardized based on that order
 
     Return:
         the blaze function created by scaling FLAT by a constant
     """
-    wav_tmp, flux_tmp, useind, continuum = continuum_oneord(wdata,flat,std_order)
     def f(scale):
         res = flux_tmp[useind] - continuum*scale
         res_clipped = sigma_clip(res,sigma_lower=1,sigma_upper=2,maxiters=3)
         std = np.std(res_clipped)
         return std
-    scale = optimize.brent(f)
+    if not std_order is None:
+        wav_tmp, flux_tmp, useind, continuum = continuum_oneord(wdata,flat,std_order)
+        scale = optimize.brent(f)
+    else:
+        scale = 1
 
     orders = wdata['order'].unique()
     df_continuum = pd.DataFrame([])
@@ -79,7 +86,7 @@ def make_blaze(wdata,flat,std_order=11):
         data = np.array([wav_tmp[useind],order_tmp,flux_tmp[useind],continuum*scale]).T
         df_tmp = pd.DataFrame(data,columns=['wav','order','flux','continuum'])
         df_continuum = pd.concat([df_continuum,df_tmp],ignore_index=True)
-
+    df_continuum['nflux'] = df_continuum['flux']/df_continuum['continuum']
     return df_continuum
 
 def normalize(df_continuum):
@@ -138,7 +145,7 @@ def comb_norm(wfile,flatfile):
     flat = pd.read_csv(flatfile,header=None,delim_whitespace=True,names=['wav','order','flux'])
     df_continuum = make_blaze(wdata,flat)
     df_interp = normalize(df_continuum)
-    return df_interp
+    return df_continuum, df_interp
 
 if __name__ == '__main__':
     wfile = '/Users/yuikasagi/IRD/PhDwork/pyird/data/20210317/target/w41511_m2.dat'
