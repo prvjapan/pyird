@@ -32,6 +32,10 @@ class Stream2D(FitsSet):
         if fitsid is not None:
             print('fitsid:', fitsid)
             self.fitsid = fitsid
+            if (rawtag=='IRDA000' and fitsid[0]%2==0) or (rawtag=='IRDBD000'):
+                self.band = 'y'
+            else:
+                self.band = 'h'
         else:
             print('No fitsid yet.')
 
@@ -49,6 +53,7 @@ class Stream2D(FitsSet):
         for i in range(0, len(self.fitsid)):
             self.fitsid[i] = self.fitsid[i]+1
         self.rawpath = self.path(string=False, check=True)
+        self.band = 'h'
 
     def fitsid_decrement(self):
         """Decrease fits id +1."""
@@ -177,16 +182,20 @@ class Stream2D(FitsSet):
 
         currentdir = os.getcwd()
         os.chdir(str(self.anadir))
-        if self.info:
-            print('flatten: output extension=', extout)
 
         if trace_path is None:
             y0, xmin, xmax, coeff = self.trace.y0, self.trace.xmin, self.trace.xmax, self.trace.coeff
+            mmf = self.trace.mmf
         else:
             y0, interp_function, xmin, xmax, coeff = read_trace_file(trace_path)
 
         if extin is None:
             extin = self.extension
+
+        extout = extout + '_' + mmf
+
+        if self.info:
+            print('flatten: output extension=', extout)
 
         if not self.imcomb:
             extin_noexist, extout_noexist = self.check_existence(extin, extout)
@@ -210,7 +219,7 @@ class Stream2D(FitsSet):
             rsd = multiorder_to_rsd(rawspec, pixcoord)
             hdux = pyf.PrimaryHDU(rsd, header)
             hdulist = pyf.HDUList([hdux])
-            save_path = self.anadir/('%s_mmf12.fits'%(self.streamid))
+            save_path = self.anadir/('%s_%s_%s.fits'%(self.streamid,self.band,mmf))
             hdulist.writeto(save_path, overwrite=True)
         self.fitsdir = self.anadir
         self.extension = extout
@@ -230,12 +239,11 @@ class Stream2D(FitsSet):
         median_image = np.nanmedian(imall, axis=0)
         return median_image
 
-    def calibrate_wavlength(self, trace_file_path=None, master='thar_master.fits' ,maxiter=30, stdlim=0.001, npix=2048):
+    def calibrate_wavelength(self, trace_file_path=None, maxiter=30, stdlim=0.001, npix=2048):
         """wavelength calibration usgin Th-Ar.
 
         Args:
            trace_file_path: path to the trace file
-           master: master file for the wavelength calibrated ThAr file
            maxiter: maximum number of iterations
            stdlim: When the std of fitting residuals reaches this value, the iteration is terminated.
            npix: number of pixels
@@ -254,10 +262,11 @@ class Stream2D(FitsSet):
 
         if trace_file_path is None:
             y0, xmin, xmax, coeff = self.trace.y0, self.trace.xmin, self.trace.xmax, self.trace.coeff
+            mmf = self.trace.mmf
         else:
             y0, interp_function, xmin, xmax, coeff = read_trace_file(trace_file_path)
 
-        master_path = master
+        master_path = 'thar_%s_%s.fits'%(self.band,mmf)
         if not os.path.exists(master_path):
             filen = self.path()[0] #header of the first file
             hdu = pyf.open(filen)[0]
@@ -326,13 +335,13 @@ class Stream2D(FitsSet):
 
         """
         flatmedian=self.immedian()
-        if nap==42:
+        if nap==42 or nap==21:
             flatmedian = flatmedian[::-1,::-1]
-            y0, xmin, xmax, coeff = aptrace(flatmedian,cutrow,nap)
+        y0, xmin, xmax, coeff = aptrace(flatmedian,cutrow,nap)
 
         return TraceAperture(trace_legendre, y0, xmin, xmax, coeff)
 
-    def dispcor(self, input_ext='_fl', prefix='w', master='thar_master.fits',master_path=None):
+    def dispcor(self, input_ext='_fl', prefix='w', master_path=None):
         """dispersion correct and resample spectra
 
         Args:
@@ -353,11 +362,14 @@ class Stream2D(FitsSet):
                 data_order = [wav,order,spec_m2[:,i]]
                 df_order = pd.DataFrame(data_order,index=['wav','order','flux']).T
                 wspec = pd.concat([wspec,df_order])
+            wspec = wspec.fillna(0)
             wspec.to_csv(save_path,header=False,index=False,sep=' ')
             return wspec
 
         if master_path==None:
-            master_path = self.anadir.joinpath('..','thar').resolve()/master
+            master_path = self.anadir.joinpath('..','thar').resolve()/('thar_%s_%s.fits'%(self.band,self.trace.mmf))
+
+        input_ext = input_ext + '_' + self.trace.mmf
 
         if not self.imcomb:
             inputs = self.extpath(input_ext,string=False, check=True)
@@ -370,44 +382,49 @@ class Stream2D(FitsSet):
                 reference = hdu.data
 
                 id = self.fitsid[j]
-                save_path = self.anadir/('%s%d_m2.dat'%(prefix,id)) ##for mmf2
+                save_path = self.anadir/('%s%d_%s.dat'%(prefix,id,self.trace.mmf)) ##e.g. w41511_m2.dat
                 wspec = mkwspec(spec_m2,reference,save_path)
                 if self.info:
-                    print('dispcor: output spectrum= %s%d_m2.dat'%(prefix,id))
+                    print('dispcor: output spectrum= %s%d_%s.dat'%(prefix,id,self.trace.mmf))
                 #plot
                 show_wavcal_spectrum(wspec,alpha=0.5)
         else:
-            hdu = pyf.open(self.anadir/('%s_mmf12.fits'%(self.streamid)))[0]
+            hdu = pyf.open(self.anadir/('%s_%s_%s.fits'%(self.streamid,self.band,self.trace.mmf)))[0]
             spec_m12 = hdu.data
             spec_m2 = spec_m12#[:,::2] # choose mmf2 (star fiber)
 
             hdu = pyf.open(master_path)[0]
             reference = hdu.data
 
-            save_path = self.anadir/('%s%s_m2.dat'%(prefix,self.streamid))
+            save_path = self.anadir/('%s%s_%s_%s.dat'%(prefix,self.streamid,self.band,self.trace.mmf))
             wspec = mkwspec(spec_m2,reference,save_path)
             if self.info:
-                print('dispcor: output spectrum= %s%s_m2.dat'%(prefix,self.streamid))
+                print('dispcor: output spectrum= %s%s_%s_%s.dat'%(prefix,self.streamid,self.band,self.trace.mmf))
             #plot
             show_wavcal_spectrum(wspec,alpha=0.5)
 
-    def normalize1D(self,flatid='flat'):
+    def normalize1D(self,flatid='flat',master_ext='h'):
         """combine orders and normalize spectrum
 
         Args:
             flatid: streamid for flat data
+            master_ext: h or y (band)
 
         """
         from pyird.spec.continuum import comb_norm
         from pyird.plot.showspec import show_wavcal_spectrum
         for id in self.fitsid:
-            wfile = self.anadir/('w%d_m2.dat'%(id))
-            flatfile = self.anadir.joinpath('..','flat').resolve()/('w%s_m2.dat'%(flatid))
-            df_interp = comb_norm(wfile,flatfile)
-            df_save = df_interp[['wav','nflux']]
-            save_path = self.anadir/('ncw%d_m2.dat'%(id))
-            df_save.to_csv(save_path,header=False,index=False,sep=' ')
+            wfile = self.anadir/('w%d_%s.dat'%(id,self.trace.mmf))#('wmmfmmf_%s_%s.dat'%(self.band,self.trace.mmf))#
+            flatfile = self.anadir.joinpath('..','flat').resolve()/('w%s_%s_%s.dat'%(flatid,self.band,self.trace.mmf))
+            df_continuum, df_interp = comb_norm(wfile,flatfile)
+            df_continuum_save = df_continuum[['wav','order','nflux']]
+            df_interp_save = df_interp[['wav','nflux']]
+            nwsave_path = self.anadir/('nw%d_%s.dat'%(id,self.trace.mmf))
+            ncwsave_path = self.anadir/('ncw%d_%s.dat'%(id,self.trace.mmf))
+            df_continuum_save.to_csv(nwsave_path,header=False,index=False,sep=' ')
+            df_interp_save.to_csv(ncwsave_path,header=False,index=False,sep=' ')
             if self.info:
-                print('normalize1D: output normalized 1D spectrum= ncw%d_m2.dat'%(id))
+                print('normalize1D: output normalized 1D spectrum= nw and ncw%d_%s.dat'%(id,self.trace.mmf))
             #plot
-            show_wavcal_spectrum(df_save,alpha=0.5)
+            show_wavcal_spectrum(df_continuum_save,alpha=0.5)
+            show_wavcal_spectrum(df_interp_save,alpha=0.5)
