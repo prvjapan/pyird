@@ -40,7 +40,7 @@ def flatten(im, trace_func, y0, xmin, xmax, coeff):
         eachpixcoord = []
         for j, ix in enumerate(x[i]):
             iys = np.max([0, tl_tmp[j]-width])
-            iye = np.min([ny, tl_tmp[j]+width+end])  #do not change!: to avoid flux extracting
+            iye = np.min([ny, tl_tmp[j]+width+end])  #do not change!: to avoid flux extraction failure
             eachspec.append(np.sum(rotim[ix, iys:iye]))
             eachpixcoord.append(ix)
         spec.append(eachspec)

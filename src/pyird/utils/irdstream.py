@@ -219,7 +219,7 @@ class Stream2D(FitsSet):
             rsd = multiorder_to_rsd(rawspec, pixcoord)
             hdux = pyf.PrimaryHDU(rsd, header)
             hdulist = pyf.HDUList([hdux])
-            save_path = self.anadir/('%s_mmf12_%s.fits'%(self.streamid,self.band))
+            save_path = self.anadir/('%s_%s_%s.fits'%(self.streamid,self.band,mmf))
             hdulist.writeto(save_path, overwrite=True)
         self.fitsdir = self.anadir
         self.extension = extout
@@ -389,7 +389,7 @@ class Stream2D(FitsSet):
                 #plot
                 show_wavcal_spectrum(wspec,alpha=0.5)
         else:
-            hdu = pyf.open(self.anadir/('%s_mmf12_%s.fits'%(self.streamid,self.band)))[0]
+            hdu = pyf.open(self.anadir/('%s_%s_%s.fits'%(self.streamid,self.band,self.trace.mmf)))[0]
             spec_m12 = hdu.data
             spec_m2 = spec_m12#[:,::2] # choose mmf2 (star fiber)
 
