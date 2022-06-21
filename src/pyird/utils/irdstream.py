@@ -239,7 +239,7 @@ class Stream2D(FitsSet):
         median_image = np.nanmedian(imall, axis=0)
         return median_image
 
-    def calibrate_wavlength(self, trace_file_path=None, maxiter=30, stdlim=0.001, npix=2048):
+    def calibrate_wavelength(self, trace_file_path=None, maxiter=30, stdlim=0.001, npix=2048):
         """wavelength calibration usgin Th-Ar.
 
         Args:

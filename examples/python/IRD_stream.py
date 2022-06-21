@@ -59,7 +59,7 @@ elif flat.band=='y':
 thar=irdstream.Stream2D("thar",datadir,anadir,rawtag=rawtag,fitsid=list(range(14632,14732)))
 thar.trace = trace_mmf
 thar.clean_pattern(extin='', extout='_cp', hotpix_mask=hotpix_mask)
-thar.calibrate_wavlength()
+thar.calibrate_wavelength()
 
 ### TARGET ###
 # Load data
