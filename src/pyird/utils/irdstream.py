@@ -201,7 +201,7 @@ class Stream2D(FitsSet):
         if not self.imcomb:
             extin_noexist, extout_noexist = self.check_existence(extin, extout)
             for i, fitsid in enumerate(tqdm.tqdm(extin_noexist)):
-                filen = self.rawdir/extin_noexist[i]
+                filen = self.anadir/extin_noexist[i]
                 hdu = pyf.open(filen)[0]
                 im = hdu.data
                 header = hdu.header
