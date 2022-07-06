@@ -148,7 +148,7 @@ class Stream2D(FitsSet):
         extin_noexist, extout_noexist = self.check_existence(extin, extout)
 
         for i, fitsid in enumerate(tqdm.tqdm(extin_noexist)):
-            filen = extin_noexist[i]
+            filen = self.rawdir/extin_noexist[i]
             hdu = pyf.open(filen)[0]
             im = hdu.data
             header = hdu.header
@@ -166,12 +166,13 @@ class Stream2D(FitsSet):
         self.extension = extout
         os.chdir(currentdir)
 
-    def flatten(self, trace_path=None, extout='_fl', extin=None):
+    def flatten(self, trace_path=None, extout='_fl', extin=None, mask=None):
         """
         Args:
            trace_path: trace file to be used in flatten
            extout: output extension
            extin: input extension
+           mask: save masked spectrum (e.g. for hotpixel mask)
 
         """
         from pyird.image.oned_extract import flatten
@@ -200,7 +201,7 @@ class Stream2D(FitsSet):
         if not self.imcomb:
             extin_noexist, extout_noexist = self.check_existence(extin, extout)
             for i, fitsid in enumerate(tqdm.tqdm(extin_noexist)):
-                filen = extin_noexist[i]
+                filen = self.anadir/extin_noexist[i]
                 hdu = pyf.open(filen)[0]
                 im = hdu.data
                 header = hdu.header
@@ -211,16 +212,19 @@ class Stream2D(FitsSet):
                 hdulist = pyf.HDUList([hdux])
                 hdulist.writeto(extout_noexist[i], overwrite=True)
         else:
-            median_image=self.immedian()
-            hdu = pyf.open(self.path()[0])[0]
-            header = hdu.header
-            rawspec, pixcoord = flatten(
-                median_image, trace_legendre, y0, xmin, xmax, coeff)
-            rsd = multiorder_to_rsd(rawspec, pixcoord)
-            hdux = pyf.PrimaryHDU(rsd, header)
-            hdulist = pyf.HDUList([hdux])
             save_path = self.anadir/('%s_%s_%s.fits'%(self.streamid,self.band,mmf))
-            hdulist.writeto(save_path, overwrite=True)
+            if not os.path.exists(save_path):
+                median_image=self.immedian()
+                if not mask is None:
+                    median_image=median_image*mask
+                hdu = pyf.open(self.path()[0])[0]
+                header = hdu.header
+                rawspec, pixcoord = flatten(
+                    median_image, trace_legendre, y0, xmin, xmax, coeff)
+                rsd = multiorder_to_rsd(rawspec, pixcoord)
+                hdux = pyf.PrimaryHDU(rsd, header)
+                hdulist = pyf.HDUList([hdux])
+                hdulist.writeto(save_path, overwrite=True)
         self.fitsdir = self.anadir
         self.extension = extout
         os.chdir(currentdir)
@@ -348,7 +352,7 @@ class Stream2D(FitsSet):
             input_ext: extension of input files
             prefix: prefix for output files
             master: master file for the wavelength calibrated ThAr file
-            master_path: path of the directory containing the master ThAr file
+            master_path: path to the directory containing the master ThAr file
 
         """
         from pyird.plot.showspec import show_wavcal_spectrum
@@ -368,6 +372,8 @@ class Stream2D(FitsSet):
 
         if master_path==None:
             master_path = self.anadir.joinpath('..','thar').resolve()/('thar_%s_%s.fits'%(self.band,self.trace.mmf))
+        elif not str(master_path).endswith('.fits'):
+            master_path = master_path/('thar_%s_%s.fits'%(self.band,self.trace.mmf))
 
         input_ext = input_ext + '_' + self.trace.mmf
 
@@ -403,19 +409,24 @@ class Stream2D(FitsSet):
             #plot
             show_wavcal_spectrum(wspec,alpha=0.5)
 
-    def normalize1D(self,flatid='flat',master_ext='h'):
+    def normalize1D(self,flatid='flat',master_path=None):
         """combine orders and normalize spectrum
 
         Args:
             flatid: streamid for flat data
-            master_ext: h or y (band)
+            master_path: path to the directory containing the calibrated flat file
 
         """
         from pyird.spec.continuum import comb_norm
         from pyird.plot.showspec import show_wavcal_spectrum
+
+        if master_path==None:
+            flatfile = self.anadir.joinpath('..','flat').resolve()/('w%s_%s_%s.dat'%(flatid,self.band,self.trace.mmf))
+        elif not str(master_path).endswith('.dat'):
+            flatfile = master_path/('w%s_%s_%s.dat'%(flatid,self.band,self.trace.mmf))
+
         for id in self.fitsid:
             wfile = self.anadir/('w%d_%s.dat'%(id,self.trace.mmf))#('wmmfmmf_%s_%s.dat'%(self.band,self.trace.mmf))#
-            flatfile = self.anadir.joinpath('..','flat').resolve()/('w%s_%s_%s.dat'%(flatid,self.band,self.trace.mmf))
             df_continuum, df_interp = comb_norm(wfile,flatfile)
             df_continuum_save = df_continuum[['wav','order','nflux']]
             df_interp_save = df_interp[['wav','nflux']]

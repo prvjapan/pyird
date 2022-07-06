@@ -76,7 +76,7 @@ target.clean_pattern(extin='', extout='_cp', hotpix_mask=hotpix_mask)
 # flatten
 target.flatten()
 # assign reference spectra & resample
-target.dispcor()
+target.dispcor(master_path=thar.anadir)
 
 ### FLAT (for blaze function) ###
 flat.trace = trace_mmf
@@ -84,12 +84,14 @@ if flat.band == 'h':
     flat.clean_pattern(extin='', extout='_cp', hotpix_mask=hotpix_mask)
 flat.imcomb = True # median combine
 flat.flatten()
-flat.dispcor()
+flat.dispcor(master_path=thar.anadir)
 
 # combine & normalize
-target.normalize1D(flatid=flat.streamid)
+target.normalize1D(flatid=flat.streamid,master_path=flat.anadir)
 
-"""### mmfmmf (test) ###
+"""
+### FOR RV MEASUREMENTS ###
+### mmfmmf (test) ###
 datadir = basedir/'mmfmmf/'
 anadir = basedir/'mmfmmf/'
 mmfmmf=irdstream.Stream2D("mmfmmf",datadir,anadir,rawtag=rawtag,fitsid=list(range(15106,15206)))
@@ -97,15 +99,16 @@ mmfmmf.trace = trace_mmf
 mmfmmf.clean_pattern(extin='', extout='_cp')#, hotpix_mask=hotpix_mask)
 mmfmmf.imcomb = True
 mmfmmf.flatten()
-mmfmmf.dispcor()
-mmfmmf.normalize1D()
+mmfmmf.dispcor(master_path=thar.anadir)
+mmfmmf.normalize1D(master_path=flat.anadir)
 
 ### hotpix (test) ###
 dark.trace = trace_mmf
-dark.flatten()
+dark.imcomb = True
+dark.flatten(mask=hotpix_mask)
 #dark.dispcor()
 import pandas as pd
-input = basedir/'dark/IRDA00046425_fl_m2.fits' ## check!!!
+input = basedir/'reduc/dark_h_m2.fits' ## check!!!
 hdu = pyf.open(input)[0]
 spec_m2 = hdu.data
 wspec = pd.DataFrame([],columns=['wav','order','flux'])
@@ -117,7 +120,7 @@ for i in range(len(spec_m2[0])):
     df_order = pd.DataFrame(data_order,index=['wav','order','flux']).T
     wspec = pd.concat([wspec,df_order])
 wspec = wspec.fillna(0)
-save_path = basedir/'dark/w46425_m2.dat'
+save_path = basedir/'reduc/hotpix_h_m2.dat'
 wspec.to_csv(save_path,header=False,index=False,sep=' ')
 
 #dark.normalize1D()
