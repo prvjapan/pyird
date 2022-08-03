@@ -17,8 +17,10 @@ def test_wavcal():
              [4.13355786e-02,  8.28862001e-06, -4.62958089e-09,  8.39980739e-13],\
              [5.08278747e-04, -1.25877266e-07,  7.84194051e-11, -1.51053784e-14]]
 
+    w = np.ones(X.shape)
+
     data_in = fitfunc((X,Y),Ni,Nx,params=p_in).reshape(npix,l-j)
-    p_out = fit_wav_solution((X,Y),data_in,Ni,Nx)
+    p_out = fit_wav_solution((X,Y),data_in,w,Ni,Nx)
     p_relerr = (p_out/p_in) - 1
     #data_out = fitfunc((X,Y),Ni,Nx,p_out).reshape(npix,l-j)
     assert np.max(p_relerr) < 1e-8

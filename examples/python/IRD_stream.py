@@ -22,7 +22,7 @@ flat.band='h' #'h' or 'y'
 print(flat.band,' band')
 if flat.band=='h':
     flat.fitsid_increment() # when you use H-band
-    trace_mmf=flat.aptrace(cutrow = 1500,nap=42) #TraceAperture instance
+    trace_mmf=flat.aptrace(cutrow = 800,nap=42) #TraceAperture instance
 elif flat.band=='y':
     trace_mmf=flat.aptrace(cutrow = 1000,nap=102) #TraceAperture instance
 
