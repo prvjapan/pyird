@@ -9,11 +9,14 @@ import astropy.io.fits as pyf
 import numpy as np
 import tqdm
 import os
+
+import pkg_resources
+
 __all__ = ['Stream1D', 'Stream2D']
 
 
 class Stream2D(FitsSet):
-    def __init__(self, streamid, rawdir, anadir, fitsid=None, rawtag='IRDA000', extension=''):
+    def __init__(self, streamid, rawdir, anadir, fitsid=None, rawtag='IRDA000', extension='', inst='IRD'):
         """initialization
         Args:
            streamid: ID for stream
@@ -29,6 +32,7 @@ class Stream2D(FitsSet):
         self.unlock = False
         self.info = False
         self.imcomb = False
+        self.inst = inst
         if fitsid is not None:
             print('fitsid:', fitsid)
             self.fitsid = fitsid
@@ -206,7 +210,7 @@ class Stream2D(FitsSet):
                 im = hdu.data
                 header = hdu.header
                 rawspec, pixcoord = flatten(
-                    im, trace_legendre, y0, xmin, xmax, coeff)
+                    im, trace_legendre, y0, xmin, xmax, coeff, self.inst)
                 rsd = multiorder_to_rsd(rawspec, pixcoord)
                 hdux = pyf.PrimaryHDU(rsd, header)
                 hdulist = pyf.HDUList([hdux])
@@ -220,7 +224,7 @@ class Stream2D(FitsSet):
                 hdu = pyf.open(self.path()[0])[0]
                 header = hdu.header
                 rawspec, pixcoord = flatten(
-                    median_image, trace_legendre, y0, xmin, xmax, coeff)
+                    median_image, trace_legendre, y0, xmin, xmax, coeff, self.inst)
                 rsd = multiorder_to_rsd(rawspec, pixcoord)
                 hdux = pyf.PrimaryHDU(rsd, header)
                 hdulist = pyf.HDUList([hdux])
@@ -259,6 +263,23 @@ class Stream2D(FitsSet):
         from pyird.image.trace_function import trace_legendre
         from pyird.spec.rsdmat import multiorder_to_rsd
 
+        def make_weight(): #REVIEW: there may be other appropreate weights
+            path = (pkg_resources.resource_filename('pyird', 'data/IP_fwhms_h.dat'))
+            fwhms = np.loadtxt(path)
+            calc_wtmp = lambda fwhm: 1/(fwhm)
+            w = []
+            for order in range(len(fwhms)):
+                w_ord = []
+                for part in range(len(fwhms[0])):
+                    if part != len(fwhms[0])-1:
+                        w_tmp = [calc_wtmp(fwhms[order][part])]*108
+                    else:
+                        w_tmp = [calc_wtmp(fwhms[order][part])]*104
+                    w_ord.extend(w_tmp)
+                w.append(w_ord)
+            w = np.array(w).T
+            return w
+
         currentdir = os.getcwd()
         os.chdir(str(self.anadir))
 
@@ -281,7 +302,13 @@ class Stream2D(FitsSet):
                 median_image, trace_legendre, y0, xmin, xmax, coeff)
             rsd = multiorder_to_rsd(rawspec, pixcoord)
             print(np.shape(rsd.T)[0])
-            wavsol, data = wavcal_thar(rsd.T, maxiter=maxiter, stdlim=stdlim)
+            ## set weights
+            if self.band=='h':
+                #w = make_weight()
+                w = np.ones(rsd.shape) #XXX!!
+            else: #TODO: for y band
+                w = np.ones(rsd.shape)
+            wavsol, data = wavcal_thar(rsd.T, w, maxiter=maxiter, stdlim=stdlim)
             wavsol_2d = wavsol.reshape((npix,nord))
             hdux = pyf.PrimaryHDU(wavsol_2d, header)
             hdulist = pyf.HDUList([hdux])
@@ -338,12 +365,14 @@ class Stream2D(FitsSet):
             TraceAperture instance
 
         """
+        inst = self.inst
+
         flatmedian=self.immedian()
         if nap==42 or nap==21:
             flatmedian = flatmedian[::-1,::-1]
         y0, xmin, xmax, coeff = aptrace(flatmedian,cutrow,nap)
 
-        return TraceAperture(trace_legendre, y0, xmin, xmax, coeff)
+        return TraceAperture(trace_legendre, y0, xmin, xmax, coeff, inst)
 
     def dispcor(self, input_ext='_fl', prefix='w', master_path=None):
         """dispersion correct and resample spectra

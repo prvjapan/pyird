@@ -55,13 +55,14 @@ def fitfunc(XY, Ni, Nx, params, poly='chebyshev'):
     return f.ravel()
 
 
-def errfunc(p, XY, data, Ni, Nx):
+def errfunc(p, XY, data, W, Ni, Nx):
     """calculate error function.
 
     Args:
         p: fitting coefficients
         XY: meshgrid of (pixels, orders)
         data: fitted data
+        W: matrix of weights
         Ni: order of the fitting function arong each echelle order
         Nx: order of the fitting function with respect to the aperture number
 
@@ -72,15 +73,17 @@ def errfunc(p, XY, data, Ni, Nx):
     data_on = data.ravel()[ind_data]
     model = fitfunc(XY, Ni, Nx, p)
     model_on = model[ind_data]
-    return data_on - model_on
+    W_on = W.ravel()[ind_data]
+    return (data_on - model_on)*W_on
 
 
-def fit_wav_solution(XY, data, Ni, Nx):
+def fit_wav_solution(XY, data, W, Ni, Nx):
     """optimize the fitting by using least-square method.
 
     Args:
         XY: meshgrid of (pixels, orders)
         data: fitted data
+        W: matrix of weights
         Ni: order of the fitting function arong each echelle order
         Nx: order of the fitting function with respect to the aperture number
 
@@ -88,10 +91,9 @@ def fit_wav_solution(XY, data, Ni, Nx):
         best fit parameters (coefficients of 2d legendre series)
     """
     p0 = np.ones(Ni*Nx)
-    p1, cov = leastsq(errfunc, p0, args=(XY, data, Ni, Nx))
+    p1, cov = leastsq(errfunc, p0, args=(XY, data, W, Ni, Nx))
     p1 = p1.reshape(Ni, Nx)
     return p1
-
 
 def sigmaclip(data, wavsol, N=3):
     """clipping outliers.
@@ -118,11 +120,12 @@ def sigmaclip(data, wavsol, N=3):
             n += 1
     return residuals, drop_ind
 
-def wavcal_thar(dat, Ni=5, Nx=4, maxiter=10, stdlim=0.005):
+def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, stdlim=0.005):
     """wavelegth calibration for ThAr spectrum.
 
     Args:
         dat: ThAr spectrum (norder x npix matrix)
+        W: matrix of weights
         Ni: order of the fitting function arong each echelle order
         Nx: order of the fitting function with respect to the aperture number
         maxiter: maximum number of iterations
@@ -148,6 +151,10 @@ def wavcal_thar(dat, Ni=5, Nx=4, maxiter=10, stdlim=0.005):
         norder = np.shape(dat)[0]
         orders = np.arange(158, 107, -1)
         print('YJ band')
+
+    if W.shape != dat.T.shape:
+        print('Error: weights does not match data.')
+        return
 
     pdat0 = pd.read_csv(chanfile, delimiter=',')
     j = 0
@@ -185,7 +192,7 @@ def wavcal_thar(dat, Ni=5, Nx=4, maxiter=10, stdlim=0.005):
     data1 = pdat_to_wavmat(pdat1,j,l)
 
     # wavlength solution (rough estimation)
-    p1 = fit_wav_solution((X, Y), data1, Ni, Nx)
+    p1 = fit_wav_solution((X, Y), data1, W, Ni, Nx)
     wavsol1 = fitfunc((X, Y), Ni, Nx, p1)
     wavsol1_2d = wavsol1.reshape(npix, l-j)
 
@@ -214,7 +221,7 @@ def wavcal_thar(dat, Ni=5, Nx=4, maxiter=10, stdlim=0.005):
         for ref in wavref_order:
             ind = np.searchsorted(wavsol1_order, ref)
             ind_low, ind_upp = max(ind - waround, 0), min(ind+waround+1, npix)
-            if np.nanmax(med[ind_low:ind_upp]) > np.nanpercentile(med[med>0], 80):
+            if np.nanmax(med[ind_low:ind_upp]) > np.nanpercentile(med[med>0], 80): #CHECK!!
                 pix_med = np.where(med == np.nanmax(med[ind_low:ind_upp]))[0]
                 pix_dat = np.where(dat[i, :] == max(dat[i, pix_med]))[0][0]
                 pix_tmp = pix_dat
@@ -249,7 +256,7 @@ def wavcal_thar(dat, Ni=5, Nx=4, maxiter=10, stdlim=0.005):
         pdat2 = pdat2[~pdat2.duplicated(keep=False, subset='CHANNEL')]
         pdat2 = pdat2.reset_index(drop=True)
         data2 = pdat_to_wavmat(pdat2,j,l)
-        p2 = fit_wav_solution((X, Y), data2, Ni, Nx)
+        p2 = fit_wav_solution((X, Y), data2, W, Ni, Nx)
         wavsol2 = fitfunc((X, Y), Ni, Nx, p2)
         wavsol2_2d = wavsol2.reshape(npix, l-j)
         residuals, drop_ind = sigmaclip(data2.T, wavsol2_2d.T,N=1.5)

@@ -6,56 +6,88 @@ from pyird.image.bias import bias_subtract_image
 from pyird.image.hotpix import identify_hotpix
 import astropy.io.fits as pyf
 
-# base directory
-basedir = pathlib.Path('~/pyird/data/REACH/').expanduser()
-print (basedir)
+# path
+basedir = pathlib.Path('~/pyird/data/20211110_REACH/').expanduser()
 
+### For REACH ###
+inst = 'REACH'
+
+### FOR CALIBRATION ###
 # aperture extraction
-datadir = basedir/pathlib.Path('flat')
-anadir = basedir/pathlib.Path('flat')
-flat_smf66=irdstream.Stream2D("flat_smf66",datadir,anadir)
-flat_smf66.fitsid=list(range(47224,47246,2)) #no light in the speckle fiber
-flat_smf66.fitsid_increment() # when you use H-band
-trace_smf66=flat_smf66.aptrace(cutrow = 1000,nap=42) #TraceAperture instance
+datadir = basedir/'flat/'
+anadir = basedir/'flat/'
+flat=irdstream.Stream2D("flat",datadir,anadir,inst=inst)
+flat.fitsid=list(range(53235,53334,2)) #no light in the speckle fiber
+################################
+### SELECT H band or YJ band ###
+################################
+flat.band='h' #'h' or 'y'
+print(flat.band,' band')
+if flat.band=='h':
+    #flat.fitsid_increment() # when you use H-band
+    trace_smf=flat.aptrace(cutrow = 800,nap=42) #TraceAperture instance
+elif flat.band=='y':
+    trace_smf=flat.aptrace(cutrow = 1000,nap=102) #TraceAperture instance
 
 import matplotlib.pyplot as plt
-plt.imshow(trace_smf66.mask()) #apeture mask plot
+plt.imshow(trace_smf.mask()) #apeture mask plot
 plt.show()
 
 # hotpixel mask
-datadir = basedir/pathlib.Path('dark')
-anadir = basedir/pathlib.Path('dark')
-dark = irdstream.Stream2D('targets', datadir, anadir)
-dark.fitsid = [41018]
+datadir = basedir/'dark/'
+anadir = basedir/'dark/'
+dark = irdstream.Stream2D('dark', datadir, anadir,fitsid=[47269],inst=inst)
+#if flat.band=='h':
+#    dark.fitsid_increment() # when you use H-band
 for data in dark.rawpath:
     im = pyf.open(str(data))[0].data
 im_subbias = bias_subtract_image(im)
 hotpix_mask, obj = identify_hotpix(im_subbias)
 
-# Load data
-datadir = basedir/pathlib.Path('samples')#/pathlib.Path('REACH')
-anadir = basedir/pathlib.Path('samples')#/pathlib.Path('REACH')
-target = irdstream.Stream2D(
-    'targets', datadir, anadir, fitsid=[47078, 47080, 47082]) # YJ band?
-target.info = True  # show detailed info
-
-# clean pattern
-pathC = (pkg_resources.resource_filename('pyird', 'data/samples/aprefC'))
-path_c = (pkg_resources.resource_filename('pyird', 'data/samples/apref_c'))
-target.clean_pattern(extin='', extout='_cp', trace_path_list=[
-                     pathC, path_c], hotpix_mask=hotpix_mask)
-
-# flatten
-path_trace_flatten = (pkg_resources.resource_filename(
-    'pyird', 'data/samples/aprefB'))
-target.flatten(path_trace_flatten)
+###########################
+### SELECT mmf2 or mmf1 ###
+###########################
+trace_smf.mmf2() #mmf2 (star fiber)
+#trace_smf.mmf1() #mmf1 (comb fiber)
 
 # load ThAr raw image
-datadir = basedir/pathlib.Path('samples')#/pathlib.Path('REACH')
-anadir = basedir/pathlib.Path('samples')#/pathlib.Path('REACH')
+datadir = basedir/'thar'
+anadir = basedir/'thar'
+if flat.band=='h':
+    rawtag='IRDAD000'
+elif flat.band=='y':
+    rawtag='IRDBD000'
 
 #wavelength calibration
-pathB = (pkg_resources.resource_filename('pyird', 'data/samples/aprefB'))
-thar=irdstream.Stream2D("thar",datadir,anadir,rawtag="IRDBD000",fitsid=list(range(15480,15530)))
-thar.clean_pattern(extin='', extout='_cp', trace_path_list=[pathC, path_c], hotpix_mask=hotpix_mask)
-thar.calibrate_wavlength(pathB)
+thar=irdstream.Stream2D("thar",datadir,anadir,fitsid=list(range(53347,53410,2)),inst=inst) #range(53411,53460,2), rawtag=rawtag,
+thar.trace = trace_smf
+thar.clean_pattern(extin='', extout='_cp', hotpix_mask=hotpix_mask)
+thar.calibrate_wavelength()
+
+### TARGET ###
+# Load data
+datadir = basedir/'target/'
+anadir = basedir/'target/'
+target = irdstream.Stream2D(
+    'targets', datadir, anadir, fitsid=[53205],inst=inst)
+#if flat.band=='h':
+#    target.fitsid_increment() # when you use H-band
+target.info = True  # show detailed info
+target.trace = trace_smf
+# clean pattern
+target.clean_pattern(extin='', extout='_cp', hotpix_mask=hotpix_mask)
+# flatten
+target.flatten()
+# assign reference spectra & resample
+target.dispcor(master_path=thar.anadir)
+
+### FLAT (for blaze function) ###
+flat.trace = trace_smf
+if flat.band == 'h':
+    flat.clean_pattern(extin='', extout='_cp', hotpix_mask=hotpix_mask)
+flat.imcomb = True # median combine
+flat.flatten()
+flat.dispcor(master_path=thar.anadir)
+
+# combine & normalize
+target.normalize1D(flatid=flat.streamid,master_path=flat.anadir)
