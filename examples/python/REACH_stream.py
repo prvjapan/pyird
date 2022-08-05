@@ -47,8 +47,8 @@ hotpix_mask, obj = identify_hotpix(im_subbias)
 ###########################
 ### SELECT mmf2 or mmf1 ###
 ###########################
-#trace_smf.mmf2() #mmf2 (star fiber)
-trace_smf.mmf1() #mmf1 (comb fiber)
+trace_smf.mmf2() #mmf2 (star fiber)
+#trace_smf.mmf1() #mmf1 (comb fiber)
 
 # load ThAr raw image
 datadir = basedir/'thar'
@@ -59,7 +59,7 @@ elif flat.band=='y':
     rawtag='IRDBD000'
 
 #wavelength calibration
-thar=irdstream.Stream2D("thar",datadir,anadir,fitsid=list(range(53411,53460,2)),inst=inst) #rawtag=rawtag,
+thar=irdstream.Stream2D("thar",datadir,anadir,fitsid=list(range(53347,53410,2)),inst=inst) #range(53411,53460,2), rawtag=rawtag,
 thar.trace = trace_smf
 thar.clean_pattern(extin='', extout='_cp', hotpix_mask=hotpix_mask)
 thar.calibrate_wavelength()
