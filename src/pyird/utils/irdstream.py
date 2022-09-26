@@ -212,7 +212,7 @@ class Stream2D(FitsSet):
                     im, trace_legendre, y0, xmin, xmax, coeff, self.inst)
                 rsd = multiorder_to_rsd(rawspec, pixcoord)
                 if not hotpix_mask is None:
-                    rsd = self.corr_hotpix(hotpix_mask, rsd, y0, xmin, xmax, coeff)
+                    rsd = self.apply_hotpixel_mask(hotpix_mask, rsd, y0, xmin, xmax, coeff)
                 hdux = pyf.PrimaryHDU(rsd, header)
                 hdulist = pyf.HDUList([hdux])
                 hdulist.writeto(extout_noexist[i], overwrite=True)
@@ -238,7 +238,7 @@ class Stream2D(FitsSet):
         self.extension = extout
         os.chdir(currentdir)
 
-    def corr_hotpix(self,hotpix_mask, rsd, y0, xmin, xmax, coeff):
+    def apply_hotpixel_mask(self,hotpix_mask, rsd, y0, xmin, xmax, coeff):
         """ correct hotpixel.
 
         Args:
