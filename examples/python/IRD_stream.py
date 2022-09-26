@@ -74,9 +74,9 @@ target.trace = trace_mmf
 # clean pattern
 target.clean_pattern(extin='', extout='_cp', hotpix_mask=hotpix_mask)
 # flatten
-target.flatten()
+target.flatten(hotpix_mask=hotpix_mask)
 # assign reference spectra & resample
-target.dispcor(master_path=thar.anadir)
+target.dispcor(extin='_hp',master_path=thar.anadir)
 
 ### FLAT (for blaze function) ###
 flat.trace = trace_mmf

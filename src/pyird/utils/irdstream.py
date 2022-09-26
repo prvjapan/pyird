@@ -170,13 +170,13 @@ class Stream2D(FitsSet):
         self.extension = extout
         os.chdir(currentdir)
 
-    def flatten(self, trace_path=None, extout='_fl', extin=None, mask=None):
+    def flatten(self, trace_path=None, extout='_fl', extin=None, hotpix_mask=None):
         """
         Args:
            trace_path: trace file to be used in flatten
            extout: output extension
            extin: input extension
-           mask: save masked spectrum (e.g. for hotpixel mask)
+           hotpix_mask: hotpix masked spectrum ('extout' to be automatically '_hp')
 
         """
         from pyird.image.oned_extract import flatten
@@ -198,9 +198,8 @@ class Stream2D(FitsSet):
             extin = self.extension
 
         extout = extout + '_' + mmf
-
-        if self.info:
-            print('flatten: output extension=', extout)
+        if not hotpix_mask is None:
+            extout = '_hp_' + mmf
 
         if not self.imcomb:
             extin_noexist, extout_noexist = self.check_existence(extin, extout)
@@ -212,6 +211,8 @@ class Stream2D(FitsSet):
                 rawspec, pixcoord = flatten(
                     im, trace_legendre, y0, xmin, xmax, coeff, self.inst)
                 rsd = multiorder_to_rsd(rawspec, pixcoord)
+                if not hotpix_mask is None:
+                    rsd = self.apply_hotpixel_mask(hotpix_mask, rsd, y0, xmin, xmax, coeff)
                 hdux = pyf.PrimaryHDU(rsd, header)
                 hdulist = pyf.HDUList([hdux])
                 hdulist.writeto(extout_noexist[i], overwrite=True)
@@ -219,8 +220,8 @@ class Stream2D(FitsSet):
             save_path = self.anadir/('%s_%s_%s.fits'%(self.streamid,self.band,mmf))
             if not os.path.exists(save_path):
                 median_image=self.immedian()
-                if not mask is None:
-                    median_image=median_image*mask
+                #if not hotpix_mask is None:
+                #    median_image=median_image*hotpix_mask
                 hdu = pyf.open(self.path()[0])[0]
                 header = hdu.header
                 rawspec, pixcoord = flatten(
@@ -229,9 +230,64 @@ class Stream2D(FitsSet):
                 hdux = pyf.PrimaryHDU(rsd, header)
                 hdulist = pyf.HDUList([hdux])
                 hdulist.writeto(save_path, overwrite=True)
+
+        if self.info:
+            print('flatten (+ hotpix mask): output extension=', extout)
+
         self.fitsdir = self.anadir
         self.extension = extout
         os.chdir(currentdir)
+
+    def apply_hotpixel_mask(self,hotpix_mask, rsd, y0, xmin, xmax, coeff):
+        """ correct hotpixel.
+
+        Args:
+            hotpix_mask: mask made from dark
+            rsd: extracted spectrum to be masked
+            y0, xmin, xmax, coeff: trace infomation
+
+        Returns:
+            masked and interpolated spectrum
+
+        """
+        from scipy.interpolate import InterpolatedUnivariateSpline as IUS
+        from pyird.image.oned_extract import flatten
+        from pyird.image.trace_function import trace_legendre
+        from pyird.spec.rsdmat import multiorder_to_rsd
+
+        save_path = self.anadir/('hotpix_%s_%s.fits'%(self.band,self.trace.mmf))
+        try:
+            hdu = pyf.open(save_path)[0]
+            hotpix1D = hdu.data
+        except:
+            mask = hotpix_mask.astype(int)
+            rawspec, pixcoord = flatten(mask, trace_legendre, y0, xmin, xmax, coeff)
+            hotpix1D = multiorder_to_rsd(rawspec, pixcoord)
+            hdux = pyf.PrimaryHDU(hotpix1D)
+            hdulist = pyf.HDUList([hdux])
+            hdulist.writeto(save_path, overwrite=True)
+
+        flux = rsd
+        pixels = np.array([np.arange(0,flux.shape[0],1)]*flux.shape[1]).T
+        mask_ind = hotpix1D>0
+        flux_new = []
+        for j in range(flux.shape[1]):
+            mask_ord = mask_ind[:,j]
+            mask_edge = np.ones(len(flux[:,j]),dtype=bool)
+            mask_edge[xmin[j]:xmax[j]+1] = False
+            pix_masked = pixels[:,j][~(mask_ord | mask_edge)]
+            flux_masked = flux[:,j][~(mask_ord | mask_edge)]
+
+            ### raplace bad pixels based on spline interpolation ###
+            spline_func = IUS(pix_masked, flux_masked)
+
+            interp_flux = spline_func(pixels[:,j])
+            flux_tmp = flux[:,j].copy()
+            flux_tmp[mask_ord | mask_edge] = interp_flux[mask_ord | mask_edge]
+            flux_tmp[mask_edge] = np.nan
+            flux_new.append(flux_tmp)
+        flux_new = np.array(flux_new).T
+        return flux_new
 
     def immedian(self):
         """take image median.
@@ -374,11 +430,11 @@ class Stream2D(FitsSet):
 
         return TraceAperture(trace_legendre, y0, xmin, xmax, coeff, inst)
 
-    def dispcor(self, input_ext='_fl', prefix='w', master_path=None):
+    def dispcor(self, extin='_fl', prefix='w', master_path=None):
         """dispersion correct and resample spectra
 
         Args:
-            input_ext: extension of input files
+            extin: extension of input files
             prefix: prefix for output files
             master: master file for the wavelength calibrated ThAr file
             master_path: path to the directory containing the master ThAr file
@@ -404,10 +460,10 @@ class Stream2D(FitsSet):
         elif not str(master_path).endswith('.fits'):
             master_path = master_path/('thar_%s_%s.fits'%(self.band,self.trace.mmf))
 
-        input_ext = input_ext + '_' + self.trace.mmf
+        extin = extin + '_' + self.trace.mmf
 
         if not self.imcomb:
-            inputs = self.extpath(input_ext,string=False, check=True)
+            inputs = self.extpath(extin,string=False, check=True)
             for j,input in enumerate(inputs):
                 hdu = pyf.open(input)[0]
                 spec_m12 = hdu.data
