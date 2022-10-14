@@ -28,7 +28,7 @@ def trace_from_iraf_trace_file(pathlist, mask_shape=None):
     return mask
 
 
-def trace(trace_func, y0, xmin, xmax, coeff, mask_shape=None):
+def trace(trace_func, y0, xmin, xmax, coeff, mask_shape=None, inst='IRD'):
     """make mask for trace parameters for multiorder.
 
     Args:
@@ -39,30 +39,43 @@ def trace(trace_func, y0, xmin, xmax, coeff, mask_shape=None):
        xmax: xmax
        coeff: coefficients
        mask_shape: (optional) shape of mask, c.f. np.shape(image)
+       inst: IRD or REACH
 
     Returns:
        mask image (same shape as im)
 
-    Examples:        
+    Examples:
         >>> from pyird.image.trace_function import trace_legendre
         >>> mask=trace(im, trace_legendre, y0, xmin, xmax, coeff)
     """
     if mask_shape is None:
         mask_shape=(2048,2048)
-        
+
     x = []
     for i in range(len(y0)):
         x.append(list(range(xmin[i], xmax[i]+1)))
     tl = trace_func(x, y0, xmin, xmax, coeff)
 #    mask = np.zeros_like(im, dtype=bool)
     mask = np.zeros(mask_shape, dtype=bool)
-    width = 2
+    if len(y0)==21 or len(y0)==42: #h band
+        width_str = 3
+        if inst=='REACH':
+            width_end = 3
+        elif inst=='IRD':
+            width_end = 4
+    else: #if len(y0)==51 or len(y0)==102: # yj band
+        if inst=='REACH':
+            width_str = 4
+            width_end = 5
+        elif inst=='IRD':
+            width_str = 5
+            width_end = 6
     nx, ny = mask_shape
     for i in tqdm.tqdm(range(len(y0))):
         tl_tmp = np.array(tl[i], dtype=int)
         for j, ix in enumerate(x[i]):
-            iys = np.max([0, tl_tmp[j]-width])
-            iye = np.min([ny, tl_tmp[j]+width+2])
+            iys = np.max([0, tl_tmp[j]-width_str])
+            iye = np.min([ny, tl_tmp[j]+width_end])
             mask[ix, iys:iye] = True
     return mask[::-1, ::-1]
 

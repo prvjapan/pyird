@@ -21,10 +21,12 @@ def cross_section(dat,nrow,nap):
     # search peaks
     heights=np.arange(50,0,-5)*np.median(onerow)
     i = 0
+    diffstd = 100
     peakind = []
-    while len(peakind)<nap and (i<len(heights)):
+    while (len(peakind)<nap or (diffstd>10)) and (i<len(heights)):
         height = heights[i]
         peakind,_ = find_peaks(onerow,height=height,distance=5)
+        diffstd = np.std(np.diff(peakind)[::2])
         i += 1
     # mask bad pixels
     maskind = np.ones(len(onerow),dtype=bool)

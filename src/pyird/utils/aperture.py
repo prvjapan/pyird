@@ -10,7 +10,7 @@ class TraceAperture(object):
     """aperture instance for trace class
 
     """
-    def __init__(self, trace_function, y0, xmin, xmax, coeff):
+    def __init__(self, trace_function, y0, xmin, xmax, coeff, inst):
         """initialization
 
         Args:
@@ -26,6 +26,8 @@ class TraceAperture(object):
         self.xmin = xmin
         self.xmax = xmax
         self.coeff = coeff
+        self.mmf = 'mmf12'
+        self.inst = inst
 
     def mask(self):
         """mask image
@@ -34,7 +36,7 @@ class TraceAperture(object):
             mask image
 
         """
-        return trace(self.trace_function, self.y0, self.xmin, self.xmax, self.coeff)
+        return trace(self.trace_function, self.y0, self.xmin, self.xmax, self.coeff, inst=self.inst)
 
     def mmf2(self):
         """choose apertures for mmf2 (star fiber)
@@ -47,3 +49,17 @@ class TraceAperture(object):
         self.xmin = self.xmin[::2]
         self.xmax = self.xmax[::2]
         self.coeff = self.coeff[::2]
+        self.mmf = 'm2'
+
+    def mmf1(self):
+        """choose apertures for mmf1 (comb fiber)
+
+        Returns:
+            updated variables (y0, xmin, xmax, coeff)
+
+        """
+        self.y0 = self.y0[1::2]
+        self.xmin = self.xmin[1::2]
+        self.xmax = self.xmax[1::2]
+        self.coeff = self.coeff[1::2]
+        self.mmf = 'm1'

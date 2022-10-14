@@ -2,7 +2,7 @@ import tqdm
 import numpy as np
 
 
-def flatten(im, trace_func, y0, xmin, xmax, coeff):
+def flatten(im, trace_func, y0, xmin, xmax, coeff, inst='IRD'):
     """make mask for trace parameters for multiorder.
 
     Args:
@@ -18,13 +18,27 @@ def flatten(im, trace_func, y0, xmin, xmax, coeff):
        raw multiorder spectra
        multiorder pixel coordinate
     """
-    rotim = np.copy(im[::-1, ::-1])
+
+    if len(y0)==21: #h band
+        rotim = np.copy(im[::-1, ::-1])
+        width_str = 3
+        if inst=='REACH':
+            width_end = 3
+        elif inst=='IRD':
+            width_end = 4
+    elif len(y0)==51: # yj band
+        rotim = np.copy(im)
+        if inst=='REACH':
+            width_str = 4
+            width_end = 5
+        elif inst=='IRD':
+            width_str = 5
+            width_end = 6
 
     x = []
     for i in range(len(y0)):
         x.append(list(range(xmin[i], xmax[i]+1)))
     tl = trace_func(x, y0, xmin, xmax, coeff)
-    width = 2
     nx, ny = np.shape(im)
     spec = []
     pixcoord = []
@@ -33,8 +47,8 @@ def flatten(im, trace_func, y0, xmin, xmax, coeff):
         eachspec = []
         eachpixcoord = []
         for j, ix in enumerate(x[i]):
-            iys = np.max([0, tl_tmp[j]-width])
-            iye = np.min([ny, tl_tmp[j]+width+2])
+            iys = np.max([0, tl_tmp[j]-width_str])
+            iye = np.min([ny, tl_tmp[j]+width_end])
             eachspec.append(np.sum(rotim[ix, iys:iye]))
             eachpixcoord.append(ix)
         spec.append(eachspec)
