@@ -220,8 +220,8 @@ class Stream2D(FitsSet):
             save_path = self.anadir/('%s_%s_%s.fits'%(self.streamid,self.band,mmf))
             if not os.path.exists(save_path):
                 median_image=self.immedian()
-                #if not hotpix_mask is None:
-                #    median_image=median_image*hotpix_mask
+                if not hotpix_mask is None:
+                    median_image=median_image*hotpix_mask
                 hdu = pyf.open(self.path()[0])[0]
                 header = hdu.header
                 rawspec, pixcoord = flatten(
@@ -355,7 +355,7 @@ class Stream2D(FitsSet):
             header = hdu.header
             nord = len(y0)
             rawspec, pixcoord = flatten(
-                median_image, trace_legendre, y0, xmin, xmax, coeff)
+                median_image, trace_legendre, y0, xmin, xmax, coeff, inst=self.inst)
             rsd = multiorder_to_rsd(rawspec, pixcoord)
             print(np.shape(rsd.T)[0])
             ## set weights
@@ -510,16 +510,26 @@ class Stream2D(FitsSet):
         elif not str(master_path).endswith('.dat'):
             flatfile = master_path/('w%s_%s_%s.dat'%(flatid,self.band,self.trace.mmf))
 
-        for id in self.fitsid:
-            wfile = self.anadir/('w%d_%s.dat'%(id,self.trace.mmf))#('wmmfmmf_%s_%s.dat'%(self.band,self.trace.mmf))#
+        if self.imcomb:
+            fits_range = self.fitsid[:1]
+        else:
+            fits_range = self.fitsid
+
+        for id in fits_range:
+            if self.imcomb:
+                wfile = self.anadir/('wmmfmmf_%s_%s.dat'%(self.band,self.trace.mmf))
+                nwsave_path = self.anadir/('nwmmfmmf_%s_%s.dat'%(self.band,self.trace.mmf))
+                ncwsave_path = self.anadir/('ncwmmfmmf_%s_%s.dat'%(self.band,self.trace.mmf))
+            else:
+                wfile = self.anadir/('w%d_%s.dat'%(id,self.trace.mmf))
+                nwsave_path = self.anadir/('nw%d_%s.dat'%(id,self.trace.mmf))
+                ncwsave_path = self.anadir/('ncw%d_%s.dat'%(id,self.trace.mmf))
             df_continuum, df_interp = comb_norm(wfile,flatfile)
             df_continuum_save = df_continuum[['wav','order','nflux']]
             df_interp_save = df_interp[['wav','nflux']]
-            nwsave_path = self.anadir/('nw%d_%s.dat'%(id,self.trace.mmf))
-            ncwsave_path = self.anadir/('ncw%d_%s.dat'%(id,self.trace.mmf))
             df_continuum_save.to_csv(nwsave_path,header=False,index=False,sep=' ')
             df_interp_save.to_csv(ncwsave_path,header=False,index=False,sep=' ')
-            if self.info:
+            if self.info and ~self.imcomb:
                 print('normalize1D: output normalized 1D spectrum= nw and ncw%d_%s.dat'%(id,self.trace.mmf))
             #plot
             show_wavcal_spectrum(df_continuum_save,alpha=0.5)
