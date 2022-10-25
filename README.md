@@ -1,4 +1,5 @@
-# PYIRD
+PYIRD
+===========
 
 Free from messy directory and file management of IRD analysis.
 Currently under heavily construction. Use develop branch for dev.
