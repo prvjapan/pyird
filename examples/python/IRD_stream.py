@@ -14,7 +14,7 @@ basedir = pathlib.Path('~/pyird/data/20210317/').expanduser()
 datadir = basedir/'flat/'
 anadir = basedir/'flat/'
 flat=irdstream.Stream2D("flat",datadir,anadir)
-flat.fitsid=list(range(41704,41804,2))
+flat.fitsid=list(range(41704,41804,2)) ##FLAT_COMB
 ################################
 ### SELECT H band or YJ band ###
 ################################
@@ -33,7 +33,7 @@ plt.show()
 # hotpixel mask
 datadir = basedir/'dark/'
 anadir = basedir/'dark/'
-dark = irdstream.Stream2D('dark', datadir, anadir,fitsid=[41504])
+dark = irdstream.Stream2D('dark', datadir, anadir,fitsid=[43814])
 if flat.band=='h':
     dark.fitsid_increment() # when you use H-band
 for data in dark.rawpath:
@@ -74,9 +74,9 @@ target.trace = trace_mmf
 # clean pattern
 target.clean_pattern(extin='', extout='_cp', hotpix_mask=hotpix_mask)
 # flatten
-target.flatten(hotpix_mask=hotpix_mask)
+target.flatten()#hotpix_mask=hotpix_mask)
 # assign reference spectra & resample
-target.dispcor(extin='_hp',master_path=thar.anadir)
+target.dispcor(master_path=thar.anadir)#,extin='_hp')
 
 ### FLAT (for blaze function) ###
 flat.trace = trace_mmf
@@ -93,35 +93,21 @@ target.normalize1D(flatid=flat.streamid,master_path=flat.anadir)
 ### FOR RV MEASUREMENTS ###
 ### mmfmmf (test) ###
 datadir = basedir/'mmfmmf/'
-anadir = basedir/'mmfmmf/'
-mmfmmf=irdstream.Stream2D("mmfmmf",datadir,anadir,rawtag=rawtag,fitsid=list(range(15106,15206)))
+anadir = basedir/'reduc_rv/'
+mmfmmf=irdstream.Stream2D("mmfmmf",datadir,anadir,fitsid=list(range(14734,14832)),rawtag=rawtag)
 mmfmmf.trace = trace_mmf
-mmfmmf.clean_pattern(extin='', extout='_cp')#, hotpix_mask=hotpix_mask)
+mmfmmf.clean_pattern(extin='', extout='_cp', hotpix_mask=hotpix_mask)
 mmfmmf.imcomb = True
 mmfmmf.flatten()
 mmfmmf.dispcor(master_path=thar.anadir)
 mmfmmf.normalize1D(master_path=flat.anadir)
 
 ### hotpix (test) ###
+from pyird.image.hotpix import hotpix_fits_to_dat
 dark.trace = trace_mmf
 dark.imcomb = True
-dark.flatten(mask=hotpix_mask)
-#dark.dispcor()
-import pandas as pd
-input = basedir/'reduc/dark_h_m2.fits' ## check!!!
-hdu = pyf.open(input)[0]
-spec_m2 = hdu.data
-wspec = pd.DataFrame([],columns=['wav','order','flux'])
-for i in range(len(spec_m2[0])):
-    wav = range(1,2049)#reference[:,i]
-    order = np.ones(len(wav))
-    order[:] = i+1
-    data_order = [wav,order,spec_m2[:,i]]
-    df_order = pd.DataFrame(data_order,index=['wav','order','flux']).T
-    wspec = pd.concat([wspec,df_order])
-wspec = wspec.fillna(0)
-save_path = basedir/'reduc/hotpix_h_m2.dat'
-wspec.to_csv(save_path,header=False,index=False,sep=' ')
-
-#dark.normalize1D()
+dark.flatten(hotpix_mask=hotpix_mask)
+file = dark.anadir/('%s_%s_%s.fits'%(dark.streamid,dark.band,dark.trace.mmf))
+save_path = dark.anadir/('%s_%s_%s.dat'%(dark.streamid,dark.band,dark.trace.mmf))
+hotpix_fits_to_dat(file,save_path)
 """

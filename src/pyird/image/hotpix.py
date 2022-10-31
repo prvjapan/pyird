@@ -1,4 +1,6 @@
 import numpy as np
+import pandas as pd
+import astropy.io.fits as pyf
 
 
 def identify_hotpix(im, threshold=10.0):
@@ -27,6 +29,30 @@ def identify_hotpix(im, threshold=10.0):
 
     return hotpix_mask, obj
 
+def hotpix_fits_to_dat(fitsfile,save_path):
+    """Convert .fits to .dat so that it can be used in the RV pipeline.
+
+    Args:
+       fitsfile: .fits file of hot pixel mask
+       save_path: save path for .dat file
+
+    Returns:
+        hot pixel mask in .dat file {pixels, orders, intensity}
+    """
+    hdu = pyf.open(fitsfile)
+    data = hdu[0].data
+    wspec = pd.DataFrame([],columns=['wav','order','flux'])
+    for i in range(len(data[0,:])):
+        pixel = range(1,2049)
+        order = np.ones(len(pixel))
+        order[:] = i+1
+        flux_ord = data[:,i]
+        data_order = [pixel,order,flux_ord]
+        df_order = pd.DataFrame(data_order,index=['wav','order','flux']).T
+        wspec = pd.concat([wspec,df_order])
+    wspec = wspec.fillna(0)
+    wspec.to_csv(save_path,header=False,index=False,sep=' ')
+    return
 
 if __name__ == '__main__':
     import numpy as np
