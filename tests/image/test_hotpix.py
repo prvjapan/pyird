@@ -16,7 +16,7 @@ def test_identify_hotpix_sigclip():
     darkfile = basedir / 'data/dark/IRDA00041018.fits'
     im = pyf.open(str(darkfile))[0].data
     hotpix_mask = identify_hotpix_sigclip(im)
-    assert np.sum(hotpix_mask_s.ravel())==16556
+    assert np.sum(hotpix_mask.ravel())==16556
 
 if __name__ == '__main__':
     test_identify_hotpix()
