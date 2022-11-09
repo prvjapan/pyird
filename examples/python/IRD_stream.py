@@ -3,7 +3,7 @@ import numpy as np
 from pyird.utils import irdstream
 import pathlib
 from pyird.image.bias import bias_subtract_image
-from pyird.image.hotpix import identify_hotpix
+from pyird.image.hotpix import identify_hotpix_sigclip
 import astropy.io.fits as pyf
 
 # path
@@ -30,16 +30,15 @@ import matplotlib.pyplot as plt
 plt.imshow(trace_mmf.mask()) #apeture mask plot
 plt.show()
 
-# hotpixel mask
+# hotpixel mask: See pyird/io/read_hotpix.py for reading fixed mask (Optional)
 datadir = basedir/'dark/'
 anadir = basedir/'dark/'
-dark = irdstream.Stream2D('dark', datadir, anadir,fitsid=[43814])
+dark = irdstream.Stream2D('dark', datadir, anadir,fitsid=[41504]) # Multiple file is ok
 if flat.band=='h':
     dark.fitsid_increment() # when you use H-band
-for data in dark.rawpath:
-    im = pyf.open(str(data))[0].data
-im_subbias = bias_subtract_image(im)
-hotpix_mask, obj = identify_hotpix(im_subbias)
+median_image = dark.immedian()
+im_subbias = bias_subtract_image(median_image)
+hotpix_mask = identify_hotpix_sigclip(im_subbias)
 
 ###########################
 ### SELECT mmf2 or mmf1 ###

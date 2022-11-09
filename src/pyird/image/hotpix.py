@@ -54,6 +54,45 @@ def hotpix_fits_to_dat(fitsfile,save_path):
     wspec.to_csv(save_path,header=False,index=False,sep=' ')
     return
 
+def identify_hotpix_sigclip(im,sigma=4,maxiters=5,frac=0.005):
+    """Identification of hotpixels using sigma clip.
+
+    Args:
+       im: image
+       sigma: maximum value of sigma exploration range
+       maxiters: maximum value of iterations
+       frac: mask percentage target value (empirically 0.5%)
+
+    Returns:
+       hotpix_mask: hot pixel mask
+    """
+    from astropy.stats import SigmaClip
+    import itertools
+    import functools
+
+    def sigmaclip(im,*params):
+        sigma, count = params[0][0], params[0][1]
+        sigclip = SigmaClip(sigma=sigma,maxiters=count)
+        filtered_data = sigclip(im)
+        hotpix_mask = filtered_data.mask
+        frac_masked = len(im[hotpix_mask].ravel())/len(im.ravel())
+        return hotpix_mask,frac_masked
+
+    ## search for best parameters
+    sigmas = np.arange(1,sigma+1,1)
+    iters = np.arange(1,maxiters+1,1)
+    si_list = list(itertools.product(sigmas,iters))
+    results = list(map(functools.partial(sigmaclip,im),si_list))
+    results = np.array(results,dtype='object')
+    ## hotpix mask
+    ind_frac = np.argmin(np.abs(results[:,1]-frac))
+    si_use = si_list[ind_frac]
+    hotpix_mask,frac_masked = sigmaclip(im,si_use)
+    print('hotpix mask = %.2f percent'%(frac_masked*100))
+
+    return hotpix_mask
+
+
 if __name__ == '__main__':
     import numpy as np
     from pyird.image.bias import bias_subtract_image
