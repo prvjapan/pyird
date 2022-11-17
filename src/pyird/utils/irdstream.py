@@ -184,7 +184,6 @@ class Stream2D(FitsSet):
         from pyird.image.mask import trace
         from pyird.io.iraf_trace import read_trace_file
         from pyird.spec.rsdmat import multiorder_to_rsd
-        from pyird.image.hotpix import apply_hotpixel_mask
 
         currentdir = os.getcwd()
         os.chdir(str(self.anadir))
@@ -209,12 +208,11 @@ class Stream2D(FitsSet):
                 hdu = pyf.open(filen)[0]
                 im = hdu.data
                 header = hdu.header
-                rawspec, pixcoord, _, _, _, _ = flatten(
+                rawspec, pixcoord = flatten(
                     im, trace_legendre, y0, xmin, xmax, coeff, self.inst)
                 rsd = multiorder_to_rsd(rawspec, pixcoord)
                 if not hotpix_mask is None:
-                    save_path = self.anadir/('hotpix_%s_%s.fits'%(self.band,self.trace.mmf))
-                    rsd = apply_hotpixel_mask(hotpix_mask, rsd, y0, xmin, xmax, coeff, save_path=save_path)
+                    rsd = self.apply_hotpixel_mask(hotpix_mask, rsd, y0, xmin, xmax, coeff)
                 hdux = pyf.PrimaryHDU(rsd, header)
                 hdulist = pyf.HDUList([hdux])
                 hdulist.writeto(extout_noexist[i], overwrite=True)
@@ -226,7 +224,7 @@ class Stream2D(FitsSet):
                     median_image=median_image*hotpix_mask
                 hdu = pyf.open(self.path()[0])[0]
                 header = hdu.header
-                rawspec, pixcoord, _, _, _, _ = flatten(
+                rawspec, pixcoord = flatten(
                     median_image, trace_legendre, y0, xmin, xmax, coeff, self.inst)
                 rsd = multiorder_to_rsd(rawspec, pixcoord)
                 hdux = pyf.PrimaryHDU(rsd, header)
@@ -240,79 +238,56 @@ class Stream2D(FitsSet):
         self.extension = extout
         os.chdir(currentdir)
 
-    def flatten_check(self, trace_path=None, extin=None, wavcal_path=None, hotpix_mask=None):
-        """
+    def apply_hotpixel_mask(self,hotpix_mask, rsd, y0, xmin, xmax, coeff):
+        """ correct hotpixel.
+
         Args:
-           trace_path: trace file to be used in flatten
-           extin: input extension
-            wavcal_path: path to master file of the wavelength calibration
-           hotpix_mask: hotpix mask
+            hotpix_mask: mask made from dark
+            rsd: extracted spectrum to be masked
+            y0, xmin, xmax, coeff: trace infomation
+
+        Returns:
+            masked and interpolated spectrum
+
         """
+        from scipy.interpolate import InterpolatedUnivariateSpline as IUS
         from pyird.image.oned_extract import flatten
         from pyird.image.trace_function import trace_legendre
-        from pyird.io.iraf_trace import read_trace_file
         from pyird.spec.rsdmat import multiorder_to_rsd
-        from pyird.image.hotpix import apply_hotpixel_mask
 
-        def im_to_rsd(im, hotpix_mask=None,wavcal_path=None):
-            rawspec, pixcoord, rotim, tl, iys_plot, iye_plot = flatten(
-                im, trace_legendre, y0, xmin, xmax, coeff, self.inst)
-            mask_shape = (2048,2048)
-            mask = np.zeros(mask_shape)
-            for i in range(len(y0)):
-                mask[i,xmin[i]:xmax[i]+1] = tl[i]
-            rsd = multiorder_to_rsd(rawspec, pixcoord)
-            if not hotpix_mask is None:
-                rsd = apply_hotpixel_mask(hotpix_mask, rsd, y0, xmin, xmax, coeff)
-            if not wavcal_path is None:
-                hdu = pyf.open(wavcal_path)
-                wav = hdu[0].data
-                hdu.close()
-            else:
-                wav = []
-            return rsd,wav,mask,pixcoord,rotim,iys_plot,iye_plot
+        save_path = self.anadir/('hotpix_%s_%s.fits'%(self.band,self.trace.mmf))
+        try:
+            hdu = pyf.open(save_path)[0]
+            hotpix1D = hdu.data
+        except:
+            mask = hotpix_mask.astype(int)
+            rawspec, pixcoord = flatten(mask, trace_legendre, y0, xmin, xmax, coeff)
+            hotpix1D = multiorder_to_rsd(rawspec, pixcoord)
+            hdux = pyf.PrimaryHDU(hotpix1D)
+            hdulist = pyf.HDUList([hdux])
+            hdulist.writeto(save_path, overwrite=True)
 
-        currentdir = os.getcwd()
-        os.chdir(str(self.anadir))
+        flux = rsd
+        pixels = np.array([np.arange(0,flux.shape[0],1)]*flux.shape[1]).T
+        mask_ind = hotpix1D>0
+        flux_new = []
+        for j in range(flux.shape[1]):
+            mask_ord = mask_ind[:,j]
+            mask_edge = np.ones(len(flux[:,j]),dtype=bool)
+            mask_edge[xmin[j]:xmax[j]+1] = False
+            pix_masked = pixels[:,j][~(mask_ord | mask_edge)]
+            flux_masked = flux[:,j][~(mask_ord | mask_edge)]
 
-        global y0, xmin, xmax, coeff
-        if trace_path is None:
-            y0, xmin, xmax, coeff = self.trace.y0, self.trace.xmin, self.trace.xmax, self.trace.coeff
-            mmf = self.trace.mmf
-        else:
-            y0, interp_function, xmin, xmax, coeff = read_trace_file(trace_path)
+            ### raplace bad pixels based on spline interpolation ###
+            spline_func = IUS(pix_masked, flux_masked)
 
-        if extin is None:
-            extin = self.extension
-
-        if not self.imcomb:
-            print(self.extpath(extin, string=False, check=False))
-            #extin_noexist, extout_noexist = [str(self.extpath(extin, string=False, check=False)[0].name)], [str(self.extpath(extout, string=False, check=False)[0].name)]#self.check_existence(extin, extout)
-            for i, fitsid in enumerate(self.fitsid):
-                filen = self.anadir/self.extpath(extin)[i].name #extin_noexist[i]
-                print(filen)
-                hdu = pyf.open(filen)
-                im = hdu[0].data
-                #header = hdu.header
-                hdu.close()
-                rsd,wav,mask,pixcoord,rotim,iys_plot,iye_plot = im_to_rsd(im,hotpix_mask=hotpix_mask,wavcal_path=wavcal_path)
-        else:
-            median_image=self.immedian()
-            imall = []
-            rsdall = []
-            for i, fitsid in enumerate(self.fitsid):
-                filen = self.anadir/self.extpath(extin)[i].name
-                hdu = pyf.open(filen)
-                im = hdu[0].data
-                imall.append(im)
-                hdu.close()
-            imall = np.array(imall)
-            median_image = np.nanmedian(imall, axis=0)
-            rsd,wav,mask,pixcoord,rotim,iys_plot,iye_plot = im_to_rsd(median_image,hotpix_mask=hotpix_mask,wavcal_path=wavcal_path)
-
-        self.fitsdir = self.anadir
-        os.chdir(currentdir)
-        return rsd,wav,mask,pixcoord,rotim,iys_plot,iye_plot#,xmin,xmax
+            interp_flux = spline_func(pixels[:,j])
+            flux_tmp = flux[:,j].copy()
+            flux_tmp[mask_ord | mask_edge] = interp_flux[mask_ord | mask_edge]
+            flux_tmp[mask_edge] = np.nan
+            flux_new.append(flux_tmp)
+        flux_new = np.array(flux_new).T
+        return flux_new
 
     def immedian(self):
         """take image median.
@@ -379,7 +354,7 @@ class Stream2D(FitsSet):
             im = hdu.data
             header = hdu.header
             nord = len(y0)
-            rawspec, pixcoord, _, _, _, _ = flatten(
+            rawspec, pixcoord = flatten(
                 median_image, trace_legendre, y0, xmin, xmax, coeff, inst=self.inst)
             rsd = multiorder_to_rsd(rawspec, pixcoord)
             print(np.shape(rsd.T)[0])

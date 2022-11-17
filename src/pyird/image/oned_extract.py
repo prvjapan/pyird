@@ -42,24 +42,18 @@ def flatten(im, trace_func, y0, xmin, xmax, coeff, inst='IRD'):
     nx, ny = np.shape(im)
     spec = []
     pixcoord = []
-    iys_all,iye_all = [], []
     for i in tqdm.tqdm(range(len(y0))):
         tl_tmp = np.array(tl[i], dtype=int)
         eachspec = []
         eachpixcoord = []
-        iys_tmp,iye_tmp = [], []
         for j, ix in enumerate(x[i]):
             iys = np.max([0, tl_tmp[j]-width_str])
             iye = np.min([ny, tl_tmp[j]+width_end])
             eachspec.append(np.sum(rotim[ix, iys:iye]))
             eachpixcoord.append(ix)
-            iys_tmp.append(iys)
-            iye_tmp.append(iye)
         spec.append(eachspec)
         pixcoord.append(eachpixcoord)
-        iys_all.append(iys_tmp)
-        iye_all.append(iye_tmp)
-    return spec, pixcoord, rotim, tl, iys_all, iye_all
+    return spec, pixcoord
 
 
 if __name__ == '__main__':
