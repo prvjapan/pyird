@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-from pyird.image.hotpix import apply_hotpixel_mask
 
 def show_wavcal_spectrum(df_wspec,**kwargs):
     """show the wavelength calibrated spectrum.
