@@ -14,9 +14,10 @@ import matplotlib
 matplotlib.use('tkagg')
 
 class image_1Dand2D(ttk.Frame):
-    def __init__(self, master, order):
+    def __init__(self, master, order, band):
         super().__init__(master)
         self.order = order
+        self.band = band
 
         #self.next_botton()
 
@@ -42,6 +43,12 @@ class image_1Dand2D(ttk.Frame):
         self.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         return canvas
 
+    def title_spec_to_image(self):
+        self.winfo_toplevel().title("%s band, Order %d; Press any key anywhere in the spectrum panel!"%(self.band,self.order))
+
+    def title_emission_position(self):
+        self.winfo_toplevel().title("%s band, Order %d; Red 'x's are emission like signal, Blue 'x's are bad pixel."%(self.band,self.order))
+
     def show_spec_to_image(self,rsd,wav,mask,pixcoord,rotim,iys_plot,iye_plot,wavcal_path=None,hotpix_mask=None,**kwargs):
         """figures of 1d spectrum and 2d detector image
 
@@ -62,16 +69,16 @@ class image_1Dand2D(ttk.Frame):
         ax1=fig.add_subplot(211)
 
         ## 1D spectrum
+        rsd_ord = np.nan_to_num(rsd[:,self.order-1],0)
         if wavcal_path is None: # x axis will be 'pixels'
-            #ax.plot(rsd[:,self.order-1])
-            ax1.plot(np.nan_to_num(rsd[:,self.order-1],0))
+            ax1.plot(rsd_ord)
             text=ax1.text(0,0, "", va="bottom", ha="left")
             ax1.set(xlabel='pixel')
         else:
-            wav_tmp = wav[:,self.order-1]
-            ax1.plot(wav_tmp,np.nan_to_num(rsd[:,self.order-1],0))
-            text=ax1.text(min(wav[:,self.order-1]),0, "", va="bottom", ha="left")
-            ax1.set(xlabel='wavelength [nm]',xlim=(min(wav[:,self.order-1]),max(wav[:,self.order-1])))
+            wav_ord = wav[:,self.order-1]
+            ax1.plot(wav_ord,rsd_ord)
+            text=ax1.text(min(wav_ord),0, "", va="bottom", ha="left")
+            ax1.set(xlabel='wavelength [nm]',xlim=(min(wav_ord),max(wav_ord)))
 
         ## 2D detector image
         ax2=fig.add_subplot(212)
@@ -109,13 +116,18 @@ class image_1Dand2D(ttk.Frame):
         ## plot 'x' when a key is pressed
         def onkey(event):
             xi = event.xdata
+            cmap = plt.cm.get_cmap("Set1",9)
+            color = cmap(int(xi*1e2)%9)
+            rsd_ord = np.nan_to_num(rsd[:,self.order-1],0)
             if wavcal_path is not None:
-                wav_tmp = wav[:,self.order-1]
-                xi = np.where(np.abs(wav_tmp-float(xi))==min(np.abs(wav_tmp-float(xi))))[0][0] #'searchsorted' doesn't work
+                wav_ord = wav[:,self.order-1]
+                xi = np.where(np.abs(wav_ord-float(xi))==min(np.abs(wav_ord-float(xi))))[0][0] #'searchsorted' doesn't work
                 tx = 'key=%s, xdata=%.3f, order=%d, wavcal=%s, pix=%.1f' % (event.key, event.xdata,self.order,bool(wavcal_path),int(xi))
+                ax1.scatter(wav_ord[xi],rsd_ord[xi],color=color,marker='x',s=5,lw=12)
             else:
                 tx = 'key=%s, xdata=%.3f, order=%d, wavcal=%s' % (event.key, event.xdata,self.order,bool(wavcal_path))
-            ax2.plot(int(xi),mask[self.order-1][int(xi)],'rx',markersize=10)
+                ax1.scatter(int(xi),rsd_ord[xi],color=color,marker='x',s=5,lw=12)
+            ax2.scatter(int(xi),mask[self.order-1][int(xi)],color=color,marker='x',s=5,lw=12)
             text.set_text(tx)
             canvas.draw()
 
@@ -124,6 +136,7 @@ class image_1Dand2D(ttk.Frame):
         ax1.set(ylabel='flux')#,ylim=(-0.01,100))
 
         canvas = self.draw_canvas(fig)
+        self.title_spec_to_image()
 
     def show_emission_position(self,stream2D,rsd,wav,mask,pixcoord,rotim,iys_plot,iye_plot,wavcal_path=None,hotpix_mask=None,fit=True,**kwargs):
         """detect emissions on the spectrum and detector image of an arbitral aperture.
@@ -247,3 +260,4 @@ class image_1Dand2D(ttk.Frame):
         ax2.set(ylabel='flux')
 
         canvas = self.draw_canvas(fig)
+        self.title_emission_position()

@@ -106,8 +106,7 @@ for order in orders:
     print(order)
     ## draw window
     root = tk.Tk()
-    root.title("Order %d"%(order))
-    window = image_1Dand2D(root,order=order)
+    window = image_1Dand2D(root,order=order,band=flat.band)
     window.show_spec_to_image(rsd,wav,mask,pixcoord,rotim,iys_plot,iye_plot,wavcal_path=wavcal_path,hotpix_mask=hotpix_mask,**params)
 root.mainloop()
 
@@ -115,8 +114,7 @@ root.mainloop()
 for order in orders:
     ## draw window
     root2 = tk.Tk()
-    root2.title("Order %d"%(order))
-    window2 = image_1Dand2D(root2,order=order)
+    window2 = image_1Dand2D(root2,order=order,band=flat.band)
     window2.show_emission_position(target,rsd,wav,mask,pixcoord,rotim,iys_plot,iye_plot,wavcal_path=wavcal_path,hotpix_mask=hotpix_mask,**params)
 root2.mainloop()
 """
