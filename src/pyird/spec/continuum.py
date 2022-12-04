@@ -116,6 +116,10 @@ def normalize(df_continuum):
             df_interp = pd.concat([df_interp,df_form[add_ind][df_interp.columns]])
             continue
         else:
+            ind_nzflux_form = np.where(df_form.flux!=0)[0]
+            ind_nzflux_latt = np.where(df_latt.flux!=0)[0]
+            df_form = df_form[min(ind_nzflux_form)+2:max(ind_nzflux_form)-9] #+2/-10 pix around the edge of an order (flux=0)
+            df_latt = df_latt[min(ind_nzflux_latt)+2:max(ind_nzflux_latt)-9]
             add_ind = (df_form['wav']>df_interp['wav'].values[-1]) & (df_form['wav']<wav_head)
             df_interp = pd.concat([df_interp,df_form[add_ind][df_interp.columns]])
         df_head = df_latt[df_latt['wav']<=wav_tail]
