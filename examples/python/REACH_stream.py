@@ -28,12 +28,13 @@ if flat.band=='h':
     trace_smf=flat.aptrace(cutrow = 800,nap=42) #TraceAperture instance
 elif flat.band=='y':
     trace_smf=flat.aptrace(cutrow = 1000,nap=102) #TraceAperture instance
+trace_mask = trace_smf.mask()
 
 import matplotlib.pyplot as plt
 plt.imshow(trace_smf.mask()) #apeture mask plot
 plt.show()
 
-# hotpixel mask: See pyird/io/read_hotpix.py for reading fixed mask (Optional) 
+# hotpixel mask: See pyird/io/read_hotpix.py for reading fixed mask (Optional)
 datadir = basedir/'dark/'
 anadir = basedir/'dark/'
 dark = irdstream.Stream2D('dark', datadir, anadir,fitsid=[47269],inst=inst)
@@ -62,7 +63,7 @@ elif flat.band=='y':
 #wavelength calibration
 thar=irdstream.Stream2D("thar",datadir,anadir,fitsid=list(range(53347,53410,2)),inst=inst)
 thar.trace = trace_smf
-thar.clean_pattern(extin='', extout='_cp', hotpix_mask=hotpix_mask)
+thar.clean_pattern(trace_mask=trace_mask,extin='', extout='_cp', hotpix_mask=hotpix_mask)
 thar.calibrate_wavelength()
 
 ### TARGET ###
@@ -76,7 +77,7 @@ if flat.band=='h':
 target.info = True  # show detailed info
 target.trace = trace_smf
 # clean pattern
-target.clean_pattern(extin='', extout='_cp', hotpix_mask=hotpix_mask)
+target.clean_pattern(trace_mask=trace_mask,extin='', extout='_cp', hotpix_mask=hotpix_mask)
 # flatten
 target.flatten(hotpix_mask=hotpix_mask)
 # assign reference spectra & resample
@@ -85,7 +86,7 @@ target.dispcor(master_path=thar.anadir,extin='_hp')
 ### FLAT (for blaze function) ###
 flat.trace = trace_smf
 if flat.band == 'h':
-    flat.clean_pattern(extin='', extout='_cp', hotpix_mask=hotpix_mask)
+    flat.clean_pattern(trace_mask=trace_mask,extin='', extout='_cp', hotpix_mask=hotpix_mask)
 flat.imcomb = True # median combine
 flat.flatten()
 flat.dispcor(master_path=thar.anadir)

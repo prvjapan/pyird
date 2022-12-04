@@ -123,28 +123,26 @@ class Stream2D(FitsSet):
         self.fitsdir = self.anadir
         self.extension = '_rb'
 
-    def clean_pattern(self, trace_path_list=None, hotpix_mask=None, extout='_cp', extin=None):
+    def clean_pattern(self, trace_mask=None, hotpix_mask=None, extout='_cp', extin=None):
         """
 
         Args:
-           trace_path_list: path list of trace files
+           trace_mask: trace mask (from iraf, use image.mask.trace_from_iraf_trace_file)
            hotpix_mask: hot pixel mask
            extout: output extension
            extin: input extension
 
         """
         from pyird.image.pattern_model import median_XY_profile
-        from pyird.image.mask import trace_from_iraf_trace_file
+        #from pyird.image.mask import trace_from_iraf_trace_file
 
         currentdir = os.getcwd()
         os.chdir(str(self.anadir))
         if self.info:
             print('clean_pattern: output extension=', extout)
 
-        if trace_path_list is None:
-            mask = self.trace.mask()
-        else:
-            mask = trace_from_iraf_trace_file(trace_path_list)
+        if trace_mask is None:
+            trace_mask = self.trace.mask()
 
         if extin is None:
             extin = self.extension
@@ -157,7 +155,7 @@ class Stream2D(FitsSet):
             im = hdu.data
             header = hdu.header
             calim = np.copy(im)  # image for calibration
-            calim[mask] = np.nan
+            calim[trace_mask] = np.nan
             if hotpix_mask is not None:
                 calim[hotpix_mask] = np.nan
             model_im = median_XY_profile(calim, show=False)
