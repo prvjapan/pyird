@@ -23,7 +23,7 @@ copyright = '2021-2022, Yui Kasagi, Hajime Kawahara, Kento Masuda, Masayuki Kuzu
 author = 'Yui Kasagi, Hajime Kawahara, Kento Masuda, Masayuki Kuzuhara'
 
 # The full version, including alpha/beta/rc tags
-release = '0.2.2'
+release = '0.3'
 
 
 # -- General configuration ---------------------------------------------------
