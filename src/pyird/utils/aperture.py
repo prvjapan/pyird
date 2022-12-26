@@ -28,6 +28,7 @@ class TraceAperture(object):
         self.coeff = coeff
         self.mmf = 'mmf12'
         self.inst = inst
+        self.info = False
 
     def mask(self):
         """mask image
@@ -36,6 +37,8 @@ class TraceAperture(object):
             mask image
 
         """
+        if self.info:
+            print('trace_mask used: ',self.mmf)
         return trace(self.trace_function, self.y0, self.xmin, self.xmax, self.coeff, inst=self.inst)
 
     def mmf2(self):
