@@ -276,14 +276,24 @@ order.
 -  By fitting 2D gaussian to the emissions on the detector, the emission
    like signal and hotpixels are distinguished automatically.
 
-*!!! caution !!! If you run in jupyter notebook, add
-``%matplolib notebook`` and comment out ``root.mainloop()``*
+Show positions of emissions on a detector image
+---------------------------------------------------
 
-## show positions of emissions on a detector image
-%matplotlib notebook
-for order in orders:
-    ## draw window
-    root2 = tk.Tk()
-    window2 = image_1Dand2D(root2,order=order,band=flat.band)
-    window2.show_emission_position(target,rsd,wav,mask,pixcoord,rotim,iys_plot,iye_plot,wavcal_path=wavcal_path,hotpix_mask=hotpix_mask,**params)
-#root2.mainloop()
+.. code:: python
+   
+	  %matplotlib notebook
+
+	  for order in orders:
+	  ## draw window
+	      root2 = tk.Tk()
+	      window2 = image_1Dand2D(root2,order=order,band=flat.band)
+	      window2.show_emission_position(target,rsd,wav,mask,pixcoord,rotim,iys_plot,
+	      iye_plot,wavcal_path=wavcal_path,hotpix_mask=hotpix_mask,**params)
+	      #root2.mainloop()
+
+
+
+- !!! caution !!! 
+
+If you run in jupyter notebook, add ``%matplolib notebook`` and comment out ``root.mainloop()``
+	     
