@@ -24,7 +24,7 @@ flat.fitsid=list(range(53235,53334,2)) #no light in the speckle fiber
 flat.band='h' #'h' or 'y'
 print(flat.band,' band')
 if flat.band=='h':
-    flat.fitsid_increment() # when you use H-band
+    #flat.fitsid_increment() # when you use H-band
     trace_smf=flat.aptrace(cutrow = 800,nap=42) #TraceAperture instance
 elif flat.band=='y':
     trace_smf=flat.aptrace(cutrow = 1000,nap=102) #TraceAperture instance
@@ -38,8 +38,8 @@ plt.show()
 datadir = basedir/'dark/'
 anadir = basedir/'dark/'
 dark = irdstream.Stream2D('dark', datadir, anadir,fitsid=[47269],inst=inst)
-if flat.band=='h':
-    dark.fitsid_increment() # when you use H-band
+#if flat.band=='h':
+#    dark.fitsid_increment() # when you use H-band
 median_image = dark.immedian()
 for data in dark.rawpath:
     im = pyf.open(str(data))[0].data
@@ -72,8 +72,8 @@ datadir = basedir/'target/'
 anadir = basedir/'target/'
 target = irdstream.Stream2D(
     'targets', datadir, anadir, fitsid=[53205],inst=inst)
-if flat.band=='h':
-    target.fitsid_increment() # when you use H-band
+#if flat.band=='h':
+#    target.fitsid_increment() # when you use H-band
 target.info = True  # show detailed info
 target.trace = trace_smf
 # clean pattern
