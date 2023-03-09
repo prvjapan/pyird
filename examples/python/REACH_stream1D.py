@@ -1,7 +1,7 @@
 from pyird.utils import irdstream
 import pathlib
 
-basedir = pathlib.Path('~/IRD/PhDwork/pyird/data/20211110_REACH/').expanduser()
+basedir = pathlib.Path('~/pyird/data/20211110_REACH/').expanduser()
 
 datadir=basedir/'reduc'
 anadir=basedir/'reduc'
