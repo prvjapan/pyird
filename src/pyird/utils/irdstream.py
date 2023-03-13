@@ -35,6 +35,7 @@ class Stream2D(FitsSet):
         self.info = False
         self.imcomb = False
         self.inst = inst
+        self.tocsvargs = {'header':False,'index':False,'sep':' '}
         if fitsid is not None:
             print('fitsid:', fitsid)
             self.fitsid = fitsid
@@ -476,7 +477,7 @@ class Stream2D(FitsSet):
                 df_order = pd.DataFrame(data_order,index=['wav','order','flux']).T
                 wspec = pd.concat([wspec,df_order])
             wspec = wspec.fillna(0)
-            wspec.to_csv(save_path,header=False,index=False,sep=' ')
+            wspec.to_csv(save_path,**self.tocsvargs)
             return wspec
 
         if master_path==None:
@@ -551,12 +552,12 @@ class Stream2D(FitsSet):
             df_continuum, df_interp = comb_norm(wfile,flatfile)
             df_continuum_save = df_continuum[['wav','order','nflux']]
             df_interp_save = df_interp[['wav','nflux']]
-            df_continuum_save.to_csv(nwsave_path,header=False,index=False,sep=' ')
-            df_interp_save.to_csv(ncwsave_path,header=False,index=False,sep=' ')
+            df_continuum_save.to_csv(nwsave_path,**self.tocsvargs)
+            df_interp_save.to_csv(ncwsave_path,**self.tocsvargs)
             if i==0:
                 nflatsave_path = self.anadir/('nwflat_%s_%s.dat'%(self.band,self.trace.mmf))
                 df_continuum_nflat = df_continuum[['wav','order','nflat']]
-                df_continuum_nflat.to_csv(nflatsave_path,header=False,index=False,sep=' ')
+                df_continuum_nflat.to_csv(nflatsave_path,**self.tocsvargs)
             if self.info and ~self.imcomb:
                 print('normalize1D: output normalized 1D spectrum= nw%d_%s.dat'%(id,self.trace.mmf))
             #plot
@@ -580,6 +581,8 @@ class Stream1D(DatSet):
         self.unlock = False
         self.info = False
         self.inst = inst
+        self.readargs = {'header':None,'delim_whitespace':True,'names':['wav','order','flux']}
+        self.tocsvargs = {'header':False,'index':False,'sep':' '}
         if fitsid is not None:
             print('fitsid:', fitsid)
             self.fitsid = fitsid
@@ -589,7 +592,6 @@ class Stream1D(DatSet):
                 self.band = 'h'
         else:
             print('No fitsid yet.')
-        self.args = {'header':None,'delim_whitespace':True,'names':['wav','order','flux']}
 
     @property
     def fitsid(self):
@@ -640,7 +642,7 @@ class Stream1D(DatSet):
         """
         specall,suffixes = [],[]
         for i,path in enumerate(tqdm.tqdm(self.path(string=True, check=True))):
-            data = pd.read_csv(path,**self.args)
+            data = pd.read_csv(path,**self.readargs)
             suffix = 'flux_%d'%(i)
             suffixes.append(suffix)
             data = data.rename(columns={'flux':suffix})
@@ -656,7 +658,7 @@ class Stream1D(DatSet):
         """
         from pyird.utils.remove_fringe import remove_fringe_order
         flatpath = self.flatpath(string=True,check=True)
-        df_flat = pd.read_csv(flatpath,**self.args)
+        df_flat = pd.read_csv(flatpath,**self.readargs)
 
         df_targetmed = self.specmedian()
 
@@ -668,6 +670,6 @@ class Stream1D(DatSet):
         df_targetmed['flux_rmfringe'] = rmfringe_all
         save_path = self.anadir/('rfnw%s_%s_%s%s.dat'%(self.streamid,self.date,self.band,self.extension))
         df_targetmed_save = df_targetmed[['wav','order','flux_rmfringe']]
-        df_targetmed_save.to_csv(save_path,header=False,index=False,sep=' ')
+        df_targetmed_save.to_csv(save_path,**self.tocsvargs)
         if self.info:
             print('removing fringe: output = rfnw%s_%s_%s%s.dat'%(self.streamid,self.date,self.band,self.extension))
