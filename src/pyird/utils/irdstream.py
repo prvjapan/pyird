@@ -1,12 +1,14 @@
 """File stream for IRD analysis."""
 
 from pyird.utils.fitsset import FitsSet
+from pyird.utils.datset import DatSet
 from pyird.utils import directory_util
 from pyird.image.trace_function import trace_legendre
 from pyird.image.aptrace import aptrace
 from pyird.utils.aperture import TraceAperture
 import astropy.io.fits as pyf
 import numpy as np
+import pandas as pd
 import tqdm
 import os
 
@@ -33,6 +35,7 @@ class Stream2D(FitsSet):
         self.info = False
         self.imcomb = False
         self.inst = inst
+        self.tocsvargs = {'header':False,'index':False,'sep':' '}
         if fitsid is not None:
             print('fitsid:', fitsid)
             self.fitsid = fitsid
@@ -465,7 +468,6 @@ class Stream2D(FitsSet):
         """
         from pyird.plot.showspec import show_wavcal_spectrum
         def mkwspec(spec_m2,reference,save_path):
-            import pandas as pd
             wspec = pd.DataFrame([],columns=['wav','order','flux'])
             for i in range(len(reference[0])):
                 wav = reference[:,i]
@@ -475,7 +477,7 @@ class Stream2D(FitsSet):
                 df_order = pd.DataFrame(data_order,index=['wav','order','flux']).T
                 wspec = pd.concat([wspec,df_order])
             wspec = wspec.fillna(0)
-            wspec.to_csv(save_path,header=False,index=False,sep=' ')
+            wspec.to_csv(save_path,**self.tocsvargs)
             return wspec
 
         if master_path==None:
@@ -538,7 +540,7 @@ class Stream2D(FitsSet):
         else:
             fits_range = self.fitsid
 
-        for id in fits_range:
+        for i,id in enumerate(fits_range):
             if self.imcomb:
                 wfile = self.anadir/('wmmfmmf_%s_%s.dat'%(self.band,self.trace.mmf))
                 nwsave_path = self.anadir/('nwmmfmmf_%s_%s.dat'%(self.band,self.trace.mmf))
@@ -550,10 +552,124 @@ class Stream2D(FitsSet):
             df_continuum, df_interp = comb_norm(wfile,flatfile)
             df_continuum_save = df_continuum[['wav','order','nflux']]
             df_interp_save = df_interp[['wav','nflux']]
-            df_continuum_save.to_csv(nwsave_path,header=False,index=False,sep=' ')
-            df_interp_save.to_csv(ncwsave_path,header=False,index=False,sep=' ')
+            df_continuum_save.to_csv(nwsave_path,**self.tocsvargs)
+            df_interp_save.to_csv(ncwsave_path,**self.tocsvargs)
+            if i==0:
+                nflatsave_path = self.anadir/('nwflat_%s_%s.dat'%(self.band,self.trace.mmf))
+                df_continuum_nflat = df_continuum[['wav','order','nflat']]
+                df_continuum_nflat.to_csv(nflatsave_path,**self.tocsvargs)
             if self.info and ~self.imcomb:
-                print('normalize1D: output normalized 1D spectrum= nw and ncw%d_%s.dat'%(id,self.trace.mmf))
+                print('normalize1D: output normalized 1D spectrum= nw%d_%s.dat'%(id,self.trace.mmf))
             #plot
             show_wavcal_spectrum(df_continuum_save,alpha=0.5)
             show_wavcal_spectrum(df_interp_save,alpha=0.5)
+
+class Stream1D(DatSet):
+    def __init__(self, streamid, rawdir, anadir, fitsid=None, prefix='', extension='', inst='IRD'):
+        """initialization
+        Args:
+           streamid: ID for stream
+           rawdir: directory where the raw data are
+           anadir: directory in which the processed file will put
+           fitsid: fitsid
+
+        """
+        super(Stream1D, self).__init__(rawdir, prefix=prefix, extension=extension)
+        self.streamid = streamid
+        self.rawdir = rawdir
+        self.anadir = anadir
+        self.unlock = False
+        self.info = False
+        self.inst = inst
+        self.readargs = {'header':None,'delim_whitespace':True,'names':['wav','order','flux']}
+        self.tocsvargs = {'header':False,'index':False,'sep':' '}
+        if fitsid is not None:
+            print('fitsid:', fitsid)
+            self.fitsid = fitsid
+            if (fitsid[0]%2==0):
+                self.band = 'y'
+            else:
+                self.band = 'h'
+        else:
+            print('No fitsid yet.')
+
+    @property
+    def fitsid(self):
+        return self._fitsid
+
+    @fitsid.setter
+    def fitsid(self, fitsid):
+        self._fitsid = fitsid
+        self.rawpath = self.path(string=False, check=True)
+
+    def fitsid_increment(self):
+        """Increase fits id +1."""
+        for i in range(0, len(self.fitsid)):
+            self.fitsid[i] = self.fitsid[i]+1
+        self.rawpath = self.path(string=False, check=True)
+        self.band = 'h'
+
+    def fitsid_decrement(self):
+        """Decrease fits id +1."""
+        for i in range(0, len(self.fitsid)):
+            self.fitsid[i] = self.fitsid[i]-1
+        self.rawpath = self.path(string=False, check=True)
+
+    ############################################################################################
+    def extpath(self, extension, string=False, check=True):
+        """path to file with extension.
+
+        Args:
+           extension: extension
+
+        Returns:
+           path array of fits files w/ extension
+        """
+        f = self.dir
+        e = self.extension
+        self.dir = self.anadir
+        self.extension = extension
+        path_ = self.path(string, check)
+        self.dir = f
+        self.extension = e
+        return path_
+
+    def specmedian(self):
+        """take spectrum median.
+
+        Return:
+           dataframe including median spectrum
+        """
+        specall,suffixes = [],[]
+        for i,path in enumerate(tqdm.tqdm(self.path(string=True, check=True))):
+            data = pd.read_csv(path,**self.readargs)
+            suffix = 'flux_%d'%(i)
+            suffixes.append(suffix)
+            data = data.rename(columns={'flux':suffix})
+            if i==0:
+                df_merge = data
+            else:
+                df_merge = pd.merge(df_merge,data,on=['wav','order'])
+        df_merge['flux_median'] = df_merge[suffixes].median(axis=1)
+        return df_merge
+
+    def remove_fringe(self):
+        """removing periodic noise (fringe) in REACH spectrum
+        """
+        from pyird.utils.remove_fringe import remove_fringe_order
+        flatpath = self.flatpath(string=True,check=True)
+        df_flat = pd.read_csv(flatpath,**self.readargs)
+
+        df_targetmed = self.specmedian()
+
+        orders = df_targetmed['order'].unique()
+        rmfringe_all = []
+        for order in tqdm.tqdm(orders):
+            flux_rmfringe = remove_fringe_order(df_flat,df_targetmed,order,mask=True)
+            rmfringe_all.extend(flux_rmfringe.values)
+        df_targetmed['flux_rmfringe'] = rmfringe_all
+        save_path = self.anadir/('rfnw%s_%s_%s%s.dat'%(self.streamid,self.date,self.band,self.extension))
+        df_targetmed_save = df_targetmed[['wav','order','flux_rmfringe']]
+        df_targetmed_save.to_csv(save_path,**self.tocsvargs)
+        if self.info:
+            print('removing fringe: output = rfnw%s_%s_%s%s.dat'%(self.streamid,self.date,self.band,self.extension))

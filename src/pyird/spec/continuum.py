@@ -53,7 +53,7 @@ def continuum_oneord(wdata,flat,order):
     # CHECK: fit order, clipping sigma
     continuum = fit_continuum(wav_tmp[useind & cutind],ffl_tmp[useind & cutind],order=23,nsigma=[2,3],maxniter=3)
     continuum = np.interp(wav_tmp[useind],wav_tmp[useind & cutind],continuum)
-    return wav_tmp, flux_tmp, useind, continuum
+    return wav_tmp, flux_tmp, ffl_tmp, useind, continuum
 
 def make_blaze(wdata,flat,std_order=None):
     """extract blaze function for target based on FLAT
@@ -72,7 +72,7 @@ def make_blaze(wdata,flat,std_order=None):
         std = np.std(res_clipped)
         return std
     if not std_order is None:
-        wav_tmp, flux_tmp, useind, continuum = continuum_oneord(wdata,flat,std_order)
+        wav_tmp, flux_tmp, ffl_tmp, useind, continuum = continuum_oneord(wdata,flat,std_order)
         scale = optimize.brent(f)
     else:
         scale = 1
@@ -80,13 +80,14 @@ def make_blaze(wdata,flat,std_order=None):
     orders = wdata['order'].unique()
     df_continuum = pd.DataFrame([])
     for order in orders:
-        wav_tmp, flux_tmp, useind, continuum = continuum_oneord(wdata,flat,order)
+        wav_tmp, flux_tmp, ffl_tmp, useind, continuum = continuum_oneord(wdata,flat,order)
         order_tmp = np.ones(len(continuum))
         order_tmp[:] = order
-        data = np.array([wav_tmp[useind],order_tmp,flux_tmp[useind],continuum*scale]).T
-        df_tmp = pd.DataFrame(data,columns=['wav','order','flux','continuum'])
+        data = np.array([wav_tmp[useind],order_tmp,flux_tmp[useind],ffl_tmp[useind],continuum*scale]).T
+        df_tmp = pd.DataFrame(data,columns=['wav','order','flux','flat','continuum'])
         df_continuum = pd.concat([df_continuum,df_tmp],ignore_index=True)
     df_continuum['nflux'] = df_continuum['flux']/df_continuum['continuum']
+    df_continuum['nflat'] = df_continuum['flat']/df_continuum['continuum']
     return df_continuum
 
 def normalize(df_continuum):
