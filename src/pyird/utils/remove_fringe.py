@@ -99,7 +99,7 @@ def remove_fringe_order(df_flat,df_target,order,mask=True):
             freqs_ori_use.append(freq)
     if len(freqs_ori_use)>0:
         flux_target_fit,offset_target = mk_model(ls_ori,freqs_ori_use,wav_target)
-        flux_rmfringe = flux_target-(flux_target_fit-offset_target)
+        flux_rmfringe = flux_target/flux_target_fit
 
         #ls_rmfringe,frequency_rmfringe,power_rmfringe,_,_,freqs_rmfringe = ls_periodogram(wav_target,flux_rmfringe)
         return flux_rmfringe
