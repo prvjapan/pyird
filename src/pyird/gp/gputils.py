@@ -1,6 +1,6 @@
 import numpy as np
 
-def calc_coarsed_array(array, Ncor):
+def calc_coarsed_array(array, Ncor, cube=False):
     """coarsed array."""
     each = (array-np.median(array))
     mask = np.abs(each) > 5.0*np.std(each)
@@ -8,7 +8,10 @@ def calc_coarsed_array(array, Ncor):
     marray[mask] = None
     stacked_array = []
     for j in range(0, Ncor):
-        stacked_array.append(marray[:, j::Ncor])
+        if cube:
+            stacked_array.append(marray[j::Ncor, j::Ncor])
+        else:
+            stacked_array.append(marray[:, j::Ncor])
     stacked_array = np.array(stacked_array)
     coarsed_array = np.nanmedian(stacked_array, axis=0)
     return coarsed_array

@@ -161,7 +161,7 @@ class Stream2D(FitsSet):
             calim[trace_mask] = np.nan
             if hotpix_mask is not None:
                 calim[hotpix_mask] = np.nan
-            model_im = median_XY_profile(calim, show=False)
+            model_im = median_XY_profile(calim)
             corrected_im = im-model_im
             hdu = pyf.PrimaryHDU(corrected_im, header)
             hdulist = pyf.HDUList([hdu])
