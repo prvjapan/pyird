@@ -151,21 +151,36 @@ class Stream2D(FitsSet):
             extin = self.extension
 
         extin_noexist, extout_noexist = self.check_existence(extin, extout)
-
+        # print('extin_noexist: ',extin_noexist)
+        # print('extout_noexist: ',extout_noexist)
         for i, fitsid in enumerate(tqdm.tqdm(extin_noexist)):
-            filen = self.rawdir/extin_noexist[i]
+            filen = self.rawdir / extin_noexist[i]
             hdu = pyf.open(filen)[0]
             im = hdu.data
             header = hdu.header
-            calim = np.copy(im)  # image for calibration
-            calim[trace_mask] = np.nan
-            if hotpix_mask is not None:
-                calim[hotpix_mask] = np.nan
-            model_im = median_XY_profile(calim)
-            corrected_im = im-model_im
+            if self.band == 'h':
+                calim = np.copy(im)  # image for calibration
+                calim[trace_mask] = np.nan
+                if hotpix_mask is not None:
+                    calim[hotpix_mask] = np.nan
+            elif self.band == 'y':
+                calim = np.copy(im)  # image for calibration
+                if hotpix_mask is not None:
+                    mask = trace_mask | hotpix_mask
+                else:
+                    mask = trace_mask
+                mask = mask.reshape(1, int(mask.size))
+                mask = mask[0][::-1].reshape(im.shape[0], im.shape[1]) # rotate mask matrix 180 degree
+                calim[mask] = np.nan
+
+            model_im = median_XY_profile(calim, show=False, Ncor=64, margin_npixel=4, sigma=0.2, xscale=32, yscale=64) # still need fine tuning
+            corrected_im = im - model_im
             hdu = pyf.PrimaryHDU(corrected_im, header)
             hdulist = pyf.HDUList([hdu])
             hdulist.writeto(extout_noexist[i], overwrite=True)
+            # np.savetxt('im.txt',im,delimiter=',')
+            # np.savetxt('model_im.txt',model_im,delimiter=',')
+            # np.savetxt('calim.txt', calim, delimiter=',')
 
         self.fitsdir = self.anadir
         self.extension = extout
@@ -545,15 +560,20 @@ class Stream2D(FitsSet):
                 wfile = self.anadir/('wmmfmmf_%s_%s.dat'%(self.band,self.trace.mmf))
                 nwsave_path = self.anadir/('nwmmfmmf_%s_%s.dat'%(self.band,self.trace.mmf))
                 ncwsave_path = self.anadir/('ncwmmfmmf_%s_%s.dat'%(self.band,self.trace.mmf))
+                LFCpath = self.anadir/'wmmfmmf_y_m1.dat'
             else:
                 wfile = self.anadir/('w%d_%s.dat'%(id,self.trace.mmf))
                 nwsave_path = self.anadir/('nw%d_%s.dat'%(id,self.trace.mmf))
                 ncwsave_path = self.anadir/('ncw%d_%s.dat'%(id,self.trace.mmf))
-            df_continuum, df_interp = comb_norm(wfile,flatfile)
-            df_continuum_save = df_continuum[['wav','order','nflux']]
-            df_interp_save = df_interp[['wav','nflux']]
-            df_continuum_save.to_csv(nwsave_path,**self.tocsvargs)
-            df_interp_save.to_csv(ncwsave_path,**self.tocsvargs)
+                if self.band == 'h':
+                    LFC_path = self.anadir.parent/'y'/('w%d_%s.dat'%(id-1,'m1'))
+                elif self.band == 'y':
+                    LFC_path = self.anadir.parent/'y'/('w%d_%s.dat'%(id,'m1'))
+            df_continuum, df_interp = comb_norm(wfile,flatfile,LFC_path)
+            df_continuum_save = df_continuum[['wav','order','nflux','SNratio','uncertainty']]
+            df_interp_save = df_interp[['wav','nflux','SNratio','uncertainty']]
+            df_continuum_save.to_csv(nwsave_path,header=False,index=False,sep=' ')
+            df_interp_save.to_csv(ncwsave_path,header=False,index=False,sep=' ')
             if i==0:
                 nflatsave_path = self.anadir/('nwflat_%s_%s.dat'%(self.band,self.trace.mmf))
                 df_continuum_nflat = df_continuum[['wav','order','nflat']]
