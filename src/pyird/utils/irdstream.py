@@ -154,7 +154,7 @@ class Stream2D(FitsSet):
         # print('extin_noexist: ',extin_noexist)
         # print('extout_noexist: ',extout_noexist)
         for i, fitsid in enumerate(tqdm.tqdm(extin_noexist)):
-            filen = self.rawdir / extin_noexist[i]
+            filen = self.rawdir/extin_noexist[i]
             hdu = pyf.open(filen)[0]
             im = hdu.data
             header = hdu.header
@@ -173,7 +173,7 @@ class Stream2D(FitsSet):
                 mask = mask[0][::-1].reshape(im.shape[0], im.shape[1]) # rotate mask matrix 180 degree
                 calim[mask] = np.nan
 
-            model_im = median_XY_profile(calim, show=False, Ncor=64, margin_npixel=4, sigma=0.2, xscale=32, yscale=64) # still need fine tuning
+            model_im = median_XY_profile(calim)
             corrected_im = im - model_im
             hdu = pyf.PrimaryHDU(corrected_im, header)
             hdulist = pyf.HDUList([hdu])
@@ -566,9 +566,9 @@ class Stream2D(FitsSet):
                 nwsave_path = self.anadir/('nw%d_%s.dat'%(id,self.trace.mmf))
                 ncwsave_path = self.anadir/('ncw%d_%s.dat'%(id,self.trace.mmf))
                 if self.band == 'h':
-                    LFC_path = self.anadir.parent/'y'/('w%d_%s.dat'%(id-1,'m1'))
+                    LFC_path = self.anadir/('w%d_%s.dat'%(id-1,'m1'))
                 elif self.band == 'y':
-                    LFC_path = self.anadir.parent/'y'/('w%d_%s.dat'%(id,'m1'))
+                    LFC_path = self.anadir/('w%d_%s.dat'%(id,'m1'))
             df_continuum, df_interp = comb_norm(wfile,flatfile,LFC_path)
             df_continuum_save = df_continuum[['wav','order','nflux','SNratio','uncertainty']]
             df_interp_save = df_interp[['wav','nflux','SNratio','uncertainty']]
