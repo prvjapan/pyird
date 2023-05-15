@@ -17,7 +17,7 @@ interp_non_zero_ending = 9 #cut -10 pix from the zero flux region at the edge of
 continuum_non_zero_beginning = 10 #cut +10 pix from the zero flux region at the edge of the order
 continuum_non_zero_ending = 60 #cut -60 pix from the zero flux region at the edge of the order
 #when fitting continuum
-order = 23 #he polynomial order to use
+order_fit = 23 #he polynomial order to use
 nsigma = [2,3] #the sigma clipping threshold: tuple (low, high)
 maxniter = 3 #the maximum number of iterations to do
 #when making sigma clipping
@@ -74,7 +74,7 @@ def continuum_oneord(wdata,flat,order):
     cutind[continuum_non_zero_beginning:-continuum_non_zero_ending] = True # mask pixels at both ends of the order
     useind = (~np.isnan(ffl_tmp)) & (~np.isnan(flux_tmp))
     # CHECK: fit order, clipping sigma
-    continuum = fit_continuum(wav_tmp[useind & cutind],ffl_tmp[useind & cutind],order=order,nsigma=nsigma,maxniter=maxniter)
+    continuum = fit_continuum(wav_tmp[useind & cutind],ffl_tmp[useind & cutind],order=order_fit,nsigma=nsigma,maxniter=maxniter)
     continuum = np.interp(wav_tmp[useind],wav_tmp[useind & cutind],continuum)
     return wav_tmp, flux_tmp, ffl_tmp, useind, continuum
 
@@ -257,6 +257,7 @@ def comb_norm(wfile,flatfile,combfile=None,method='mad'):
     else:
         readout_noise = default_readout_noise
         print('Using default readout Noise :', readout_noise)
+        print('readout noise of IRD detectors: ~12e- (10min exposure)')
     df_continuum = make_blaze(wdata,flat,readout_noise)
     df_interp = normalize(df_continuum,readout_noise)
     return df_continuum, df_interp
