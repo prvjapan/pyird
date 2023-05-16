@@ -570,8 +570,8 @@ class Stream2D(FitsSet):
                 elif self.band == 'y':
                     LFC_path = self.anadir/('w%d_%s.dat'%(id,'m1'))
             df_continuum, df_interp = comb_norm(wfile,flatfile,LFC_path)
-            df_continuum_save = df_continuum[['wav','order','nflux','SNratio','uncertainty']]
-            df_interp_save = df_interp[['wav','nflux','SNratio','uncertainty']]
+            df_continuum_save = df_continuum[['wav','order','nflux','sn_ratio','uncertainty']]
+            df_interp_save = df_interp[['wav','nflux','sn_ratio','uncertainty']]
             df_continuum_save.to_csv(nwsave_path,header=False,index=False,sep=' ')
             df_interp_save.to_csv(ncwsave_path,header=False,index=False,sep=' ')
             if i==0:
