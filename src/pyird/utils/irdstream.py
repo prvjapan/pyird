@@ -239,7 +239,7 @@ class Stream2D(FitsSet):
             if not os.path.exists(save_path):
                 median_image=self.immedian()
                 if not hotpix_mask is None:
-                    median_image=median_image*hotpix_mask
+                    median_image=median_image*(~hotpix_mask)
                 hdu = pyf.open(self.path()[0])[0]
                 header = hdu.header
                 rawspec, pixcoord, _, _, _, _ = flatten(
@@ -330,18 +330,117 @@ class Stream2D(FitsSet):
         os.chdir(currentdir)
         return rsd,wav,mask,pixcoord,rotim,iys_plot,iye_plot#,xmin,xmax
 
-    def immedian(self):
+    def apnormalize(self,rsd=None,hotpix_mask=None):
+        """normalize 2D apertures by 1D functions
+
+        Returns:
+            dictionary of pandas DataFrames of extracted and normalized spectra in each pixel
+        """
+        from pyird.image.oned_extract import flatten
+        from pyird.image.trace_function import trace_legendre
+        from pyird.spec.continuum import continuum_rsd
+        from pyird.image.hotpix import apply_hotpixel_mask
+
+        if rsd is None:
+            flatfile = self.anadir/('%s_%s_%s.fits'%(self.streamid,self.band,self.trace.mmf))
+            hdu=pyf.open(flatfile)[0]
+            rsd=hdu.data
+            header = hdu.header
+
+        if not hotpix_mask is None:
+            save_path = self.anadir/('hotpix_%s_%s.fits'%(self.band,self.trace.mmf))
+            rsd = apply_hotpixel_mask(hotpix_mask, rsd, self.trace.y0, self.trace.xmin, self.trace.xmax, self.trace.coeff, save_path=save_path)
+
+        df_continuum = continuum_rsd(rsd)
+
+        flat_median = self.immedian('_cp')
+        df_onepix = flatten(flat_median, trace_legendre, self.trace.y0, self.trace.xmin, self.trace.xmax, self.trace.coeff, inst=self.inst,onepix=True)#,width=[3,5])
+        apertures = [int(i.split('ec')[-1]) for i in df_onepix.keys()]
+        df_flatn = {}
+        for i in apertures:
+            df_flatn_tmp = df_onepix['ec%d'%(i)]/(df_continuum/len(apertures))
+            df_flatn['ec%d'%(i)] = df_flatn_tmp
+        return df_flatn
+
+    def apext_flatfield(self, df_flatn, extout='_fln', extin=None, hotpix_mask=None):
+        """aperture extraction and flat fielding (c.f., hdsis_ecf.cl)
+
+        Args:
+            df_flatn:
+            extout: extension of output files
+            extin: extension of input files
+            hotpix_mask: hotpix masked spectrum ('extout' to be automatically '_flnhp')
+        """
+        from pyird.image.hotpix import apply_hotpixel_mask
+        def sum_weighted_apertures(im,df_flatn):
+            from pyird.image.oned_extract import flatten
+            from pyird.image.trace_function import trace_legendre
+            df_onepix = flatten(im, trace_legendre, self.trace.y0, self.trace.xmin, self.trace.xmax, self.trace.coeff, inst=self.inst,onepix=True)
+            apertures = [int(i.split('ec')[-1]) for i in df_onepix.keys()]
+            df_ecf = {}
+            for i in apertures:
+                #flatn_mean = np.nanmean(df_flatn['ec%d'%(i)].loc[2:len(df_flatn['ec%d'%(i)])-1].values) #cf) hdsis_ecf
+                flatn_mean = np.nanmedian(df_flatn['ec%d'%(i)].loc[2:len(df_flatn['ec%d'%(i)])-1].values)
+                print("pixel = %d, Mean = %.5f"%(i,flatn_mean))
+                df_ecf['ec%d'%(i)] = (df_onepix['ec%d'%(i)]/df_flatn['ec%d'%(i)])*flatn_mean #cf) hdsis_ecf
+            for i,key in enumerate(df_ecf.keys()):
+                if i==0:
+                    df_sum_wap = df_ecf[key]
+                else:
+                    df_sum_wap += df_ecf[key]
+            return df_sum_wap
+
+        if extin is None:
+            extin = self.extension
+
+        if hotpix_mask is None:
+            extout = extout + '_' + self.trace.mmf
+        else:
+            extout = extout + 'hp_' + self.trace.mmf
+        if not self.imcomb:
+            extin_noexist, extout_noexist = self.check_existence(extin, extout)
+            for i, fitsid in enumerate(tqdm.tqdm(extin_noexist)):
+                filen = self.anadir/extin_noexist[i]
+                hdu = pyf.open(filen)[0]
+                im = hdu.data
+                header = hdu.header
+                df_sum_wap = sum_weighted_apertures(im,df_flatn)
+                rsd = df_sum_wap.values.T.astype(float)
+                if not hotpix_mask is None:
+                    save_path = self.anadir/('hotpix_%s_%s.fits'%(self.band,self.trace.mmf))
+                    rsd = apply_hotpixel_mask(hotpix_mask, rsd, self.trace.y0, self.trace.xmin, self.trace.xmax, self.trace.coeff, save_path=save_path)
+                hdux = pyf.PrimaryHDU(rsd, header)
+                hdulist = pyf.HDUList([hdux])
+                hdulist.writeto(self.anadir/extout_noexist[i], overwrite=True)
+        else:
+            save_path = self.anadir/('n%s_%s_%s.fits'%(self.streamid,self.band,self.trace.mmf))
+            if not os.path.exists(save_path):
+                median_image=self.immedian('_cp')
+                if not hotpix_mask is None:
+                    median_image=median_image*(~hotpix_mask)
+                df_sum_wap = sum_weighted_apertures(median_image,df_flatn)
+                rsd = df_sum_wap.values.T.astype(float)
+                hdux = pyf.PrimaryHDU(data=rsd,header=None)
+                hdulist = pyf.HDUList([hdux])
+                hdulist.writeto(save_path, overwrite=True)
+
+    def immedian(self, extension=None):
         """take image median.
 
         Return:
            median image
         """
+        e = self.extension
+        if not extension is None:
+            self.extension = extension
+        print('median combine: ',self.extension)
         imall = []
         for path in tqdm.tqdm(self.path(string=True, check=True)):
             imall.append(pyf.open(path)[0].data)
         imall = np.array(imall)
         # np.nansum(corrected_im_all,axis=0)#
         median_image = np.nanmedian(imall, axis=0)
+        self.extension = e
         return median_image
 
     def calibrate_wavelength(self, trace_file_path=None, maxiter=30, stdlim=0.001, npix=2048):
@@ -471,7 +570,7 @@ class Stream2D(FitsSet):
 
         return TraceAperture(trace_legendre, y0, xmin, xmax, coeff, inst)
 
-    def dispcor(self, extin='_fl', prefix='w', master_path=None):
+    def dispcor(self, extin='_fl', prefix='w', master_path=None, blaze=True):
         """dispersion correct and resample spectra
 
         Args:
@@ -520,21 +619,28 @@ class Stream2D(FitsSet):
                 #plot
                 show_wavcal_spectrum(wspec,alpha=0.5)
         else:
-            hdu = pyf.open(self.anadir/('%s_%s_%s.fits'%(self.streamid,self.band,self.trace.mmf)))[0]
-            spec_m12 = hdu.data
-            spec_m2 = spec_m12#[:,::2] # choose mmf2 (star fiber)
+            def save_wspec(hdu,save_path):
+                spec_m2 = hdu.data
+                hdu_ref = pyf.open(master_path)[0]
+                reference = hdu_ref.data
+                wspec = mkwspec(spec_m2,reference,save_path)
+                if self.info:
+                    outpath = str(save_path).split('/')[-1]
+                    print('dispcor: output spectrum= ', outpath)
+                #plot
+                show_wavcal_spectrum(wspec,alpha=0.5)
 
-            hdu = pyf.open(master_path)[0]
-            reference = hdu.data
+            if blaze:
+                hdu = pyf.open(self.anadir/('n%s_%s_%s.fits'%(self.streamid,self.band,self.trace.mmf)))[0]
+                save_path = self.anadir/('%sblaze_%s_%s.dat'%(prefix,self.band,self.trace.mmf))
+                save_wspec(hdu,save_path)
+            else:## need for fringe removal?
+                hdu = pyf.open(self.anadir/('%s_%s_%s.fits'%(self.streamid,self.band,self.trace.mmf)))[0]
+                save_path = self.anadir/('%s%s_%s_%s.dat'%(prefix,self.streamid,self.band,self.trace.mmf))
+                save_wspec(hdu,save_path)
 
-            save_path = self.anadir/('%s%s_%s_%s.dat'%(prefix,self.streamid,self.band,self.trace.mmf))
-            wspec = mkwspec(spec_m2,reference,save_path)
-            if self.info:
-                print('dispcor: output spectrum= %s%s_%s_%s.dat'%(prefix,self.streamid,self.band,self.trace.mmf))
-            #plot
-            show_wavcal_spectrum(wspec,alpha=0.5)
 
-    def normalize1D(self,flatid='flat',master_path=None):
+    def normalize1D(self,flatid='blaze',master_path=None,skipLFC=False):
         """combine orders and normalize spectrum
 
         Args:
@@ -565,15 +671,18 @@ class Stream2D(FitsSet):
                 wfile = self.anadir/('w%d_%s.dat'%(id,self.trace.mmf))
                 nwsave_path = self.anadir/('nw%d_%s.dat'%(id,self.trace.mmf))
                 ncwsave_path = self.anadir/('ncw%d_%s.dat'%(id,self.trace.mmf))
-                if self.band == 'h':
-                    LFC_path = self.anadir/('w%d_%s.dat'%(id-1,'m1'))
-                elif self.band == 'y':
-                    LFC_path = self.anadir/('w%d_%s.dat'%(id,'m1'))
-            df_continuum, df_interp = comb_norm(wfile,flatfile,LFC_path)
+                if not skipLFC:
+                    if self.band == 'h':
+                        LFC_path = self.anadir/('w%d_%s.dat'%(id-1,'m1'))
+                    elif self.band == 'y':
+                        LFC_path = self.anadir/('w%d_%s.dat'%(id,'m1'))
+                else:
+                    LFC_path = None
+            df_continuum, df_interp = comb_norm(wfile,flatfile,LFC_path,blaze=(flatid=='blaze'))
             df_continuum_save = df_continuum[['wav','order','nflux','sn_ratio','uncertainty']]
             df_interp_save = df_interp[['wav','nflux','sn_ratio','uncertainty']]
-            df_continuum_save.to_csv(nwsave_path,header=False,index=False,sep=' ')
-            df_interp_save.to_csv(ncwsave_path,header=False,index=False,sep=' ')
+            df_continuum_save.to_csv(nwsave_path,**self.tocsvargs)
+            df_interp_save.to_csv(ncwsave_path,**self.tocsvargs)
             if i==0:
                 nflatsave_path = self.anadir/('nwflat_%s_%s.dat'%(self.band,self.trace.mmf))
                 df_continuum_nflat = df_continuum[['wav','order','nflat']]
@@ -601,7 +710,7 @@ class Stream1D(DatSet):
         self.unlock = False
         self.info = False
         self.inst = inst
-        self.readargs = {'header':None,'delim_whitespace':True,'names':['wav','order','flux']}
+        self.readargs = {'header':None,'delim_whitespace':True,'names':['wav','order','flux','sn_ratio','uncertainty']}
         self.tocsvargs = {'header':False,'index':False,'sep':' '}
         if fitsid is not None:
             print('fitsid:', fitsid)

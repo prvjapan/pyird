@@ -54,6 +54,30 @@ def fit_continuum(x, y, order=6, nsigma=[0.3,3.0], maxniter=50):
         m = m_new
     return mu
 
+def continuum_rsd(rsd,npix=2048):
+    """fit continuum for rsd
+
+    Args:
+        rsd: raw spectrum detector matrix
+        npix: number of pixels
+
+    Returns:
+        pandas DataFrame of continuum
+    """
+    pixels = np.arange(1,npix+1)
+    orders = np.arange(1,len(rsd[0])+1)
+    df_continuum = pd.DataFrame([],columns=pixels,index=orders)
+    for order in orders:
+        flat_ord = rsd[:,order-1]
+        cutind = np.zeros(len(flat_ord),dtype=bool)
+        cutind[10:-60] = True # mask pixels at both ends of the order
+        cutind[np.where(flat_ord==0)[0]] = False # mask zeros
+        useind = (~np.isnan(flat_ord))
+        continuum_ord = fit_continuum(pixels[useind & cutind],flat_ord[useind & cutind],order=35,nsigma=[3,3],maxniter=3)
+        continuum_ord_interp = np.interp(pixels,pixels[useind & cutind],continuum_ord)
+        df_continuum.loc[order,pixels] = continuum_ord_interp
+    return df_continuum
+
 def continuum_oneord(wdata,flat,order):
     """fit continuum for one order
 
@@ -72,6 +96,7 @@ def continuum_oneord(wdata,flat,order):
     ffl_tmp = flat_tmp['flux'].values
     cutind = np.zeros(len(flat_tmp),dtype=bool)
     cutind[continuum_non_zero_beginning:-continuum_non_zero_ending] = True # mask pixels at both ends of the order
+    cutind[np.where(ffl_tmp==0)[0]] = False # mask zeros
     useind = (~np.isnan(ffl_tmp)) & (~np.isnan(flux_tmp))
     # CHECK: fit order, clipping sigma
     continuum = fit_continuum(wav_tmp[useind & cutind],ffl_tmp[useind & cutind],order=order_fit,nsigma=nsigma,maxniter=maxniter)
@@ -233,13 +258,14 @@ def normalize(df_continuum,readout_noise):
     df_interp['uncertainty'] = df_interp['tmp_uncertainty']/df_interp['continuum']
     return df_interp
 
-def comb_norm(wfile,flatfile,combfile=None,method='mad'):
+def comb_norm(wfile,flatfile,combfile=None,method='mad',blaze=True):
     """read .dat file and make 1D normalized spectrum
 
     Args:
         wfile: path to the wavelength calibrated 1D target spectrum
-        flatfile: path to the wavelength calibrated 1D FLAT
+        flatfile: path to the wavelength calibrated 1D FLAT or blaze file
         combfile: path to the laser frequency laser spectrum in Y/J band corresponding to wfile.
+        blaze: True when self.apext_flatfield() is used. if False, blaze function will be created from 1D FLAT
 
     Returns:
         pandas.DataFrame of 1D normalized spectrum
@@ -258,9 +284,41 @@ def comb_norm(wfile,flatfile,combfile=None,method='mad'):
         readout_noise = default_readout_noise
         print('Using default readout Noise :', readout_noise)
         print('readout noise of IRD detectors: ~12e- (10min exposure)')
-    df_continuum = make_blaze(wdata,flat,readout_noise)
+    if blaze:
+        df_continuum = blaze_to_df(wdata,flat,readout_noise)
+    else:
+        df_continuum = make_blaze(wdata,flat,readout_noise)
     df_interp = normalize(df_continuum,readout_noise)
     return df_continuum, df_interp
+
+def blaze_to_df(wdata,blaze,readout_noise):
+    """divide target flux by the blaze function
+
+    Args:
+        wdata: the wavelength calibrated 1D target spectrum
+        blaze: blaze function
+
+    Returns:
+        normalized spectrum of each order
+    """
+    ### readout_noise
+    blaze = blaze.assign(blaze_continuum=0)
+    orders = blaze['order'].unique()
+    for order in orders:
+        wav_tmp, flux_tmp, ffl_tmp, useind, continuum = continuum_oneord(blaze,blaze,order)
+        blaze.loc[blaze['order']==order,'blaze_continuum'] = continuum
+    blaze = blaze.rename(columns={'flux':'continuum'})
+    df_continuum = pd.merge(wdata,blaze,on=['wav','order'])
+    df_continuum['nflux'] = df_continuum['flux']/df_continuum['continuum']
+    df_continuum['nflat'] = df_continuum['continuum']/df_continuum['blaze_continuum']
+    if (df_continuum['wav']>wav_boundary_yj_and_h).any():
+        gain = gain_h #for H band
+    else:
+        gain = gain_y #for Y/J band
+    df_continuum['sn_ratio'] = (gain*df_continuum['flux'])/np.sqrt(gain*df_continuum['flux'] + (gain*readout_noise)**2)
+    df_continuum['tmp_uncertainty'] = np.sqrt(df_continuum['flux']/gain + readout_noise**2)
+    df_continuum['uncertainty'] = df_continuum['tmp_uncertainty']/df_continuum['continuum']
+    return df_continuum
 
 if __name__ == '__main__':
     wfile = '/Users/yuikasagi/IRD/PhDwork/pyird/data/20210317/target/w41511_m2.dat'

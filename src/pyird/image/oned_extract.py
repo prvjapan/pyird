@@ -1,8 +1,9 @@
 import tqdm
 import numpy as np
+import pandas as pd
 
 
-def flatten(im, trace_func, y0, xmin, xmax, coeff, inst='IRD'):
+def flatten(im, trace_func, y0, xmin, xmax, coeff, inst='IRD',onepix=False,npix=2048,width=None):
     """make mask for trace parameters for multiorder.
 
     Args:
@@ -13,54 +14,88 @@ def flatten(im, trace_func, y0, xmin, xmax, coeff, inst='IRD'):
        xmin: xmin
        xmax: xmax
        coeff: coefficients
+       inst: instrument (IRD or REACH)
+       onepix: extract the spectrum pixel by pixel in an aperture
+       npix: number of pixels
+       width: list of aperture widths ([width_start,width_end])
 
     Returns:
-       raw multiorder spectra
-       multiorder pixel coordinate
+       raw multiorder spectra and multiorder pixel coordinate
+       if onepix is True, return pandas DataFrame of spectra in each pixel
     """
 
-    if len(y0)==21: #h band
-        rotim = np.copy(im[::-1, ::-1])
-        width_str = 3
-        if inst=='REACH':
-            width_end = 3
-        elif inst=='IRD':
-            width_end = 4
-    elif len(y0)==51: # yj band
-        rotim = np.copy(im)
-        if inst=='REACH':
-            width_str = 4
-            width_end = 5
-        elif inst=='IRD':
-            width_str = 5
-            width_end = 6
+    if width is None:
+        if len(y0)==21: #h band
+            rotim = np.copy(im[::-1, ::-1])
+            width_str = 2#3
+            if inst=='REACH':
+                width_end = 3
+            elif inst=='IRD':
+                width_end = 4 ##CHECK!!
+        elif len(y0)==51: # yj band
+            rotim = np.copy(im)
+            if inst=='REACH':
+                width_str = 4
+                width_end = 5
+            elif inst=='IRD':
+                width_str = 5
+                width_end = 6
+    else:
+        width_str = width[0]
+        width_end = width[1]
+        if len(y0)==21: #h band
+            rotim = np.copy(im[::-1, ::-1])
+        elif len(y0)==51: # yj band
+            rotim = np.copy(im)
 
     x = []
     for i in range(len(y0)):
         x.append(list(range(xmin[i], xmax[i]+1)))
     tl = trace_func(x, y0, xmin, xmax, coeff)
     nx, ny = np.shape(im)
-    spec = []
-    pixcoord = []
-    iys_all,iye_all = [], []
+
+    spec, pixcoord, iys_all, iye_all = [], [], [], []
+    orders=range(1,len(y0)+1); pixels=range(1,npix+1)
+    df_zero = pd.DataFrame([],columns=pixels,index=orders)
+    if onepix:
+        df_onepix = {}
+        for i in range(-width_str,width_end):
+            df_onepix['ec%d'%(i)] = df_zero.copy()  ## initialize (need .copy())
     for i in tqdm.tqdm(range(len(y0))):
-        tl_tmp = np.array(tl[i], dtype=int)
+        tl_int = tl[i].astype(int)
+        tl_decimal = tl[i] - tl_int
         eachspec = []
         eachpixcoord = []
         iys_tmp,iye_tmp = [], []
         for j, ix in enumerate(x[i]):
-            iys = np.max([0, tl_tmp[j]-width_str])
-            iye = np.min([ny, tl_tmp[j]+width_end])
-            eachspec.append(np.sum(rotim[ix, iys:iye]))
-            eachpixcoord.append(ix)
-            iys_tmp.append(iys)
-            iye_tmp.append(iye)
+            if onepix:
+                for k in range(-width_str,width_end):
+                    if k<0:
+                        iys = np.max([0, tl_int[j]+k])
+                        iye = np.max([0, tl_int[j]+k+1])
+                    else:
+                        iys = np.min([ny, tl_int[j]+k])
+                        iye = np.min([ny, tl_int[j]+k+1])
+                    # At the ends of the aperture partial pixels are used. (cf. IRAF apall)
+                    apsum = np.sum(rotim[ix, iys+1:iye]) + rotim[ix,iys]*(1-tl_decimal[j]) + rotim[ix,iye]*tl_decimal[j]
+                    df_onepix['ec%d'%(k)].loc[i+1,ix+1] = apsum
+            else:
+                iys = np.max([0, tl_int[j]-width_str])
+                iye = np.min([ny, tl_int[j]+width_end])
+                # At the ends of the aperture partial pixels are used. (cf. IRAF apall)
+                apsum = np.sum(rotim[ix, iys+1:iye]) + rotim[ix,iys]*(1-tl_decimal[j]) + rotim[ix,iye]*tl_decimal[j]
+                eachspec.append(apsum)
+                eachpixcoord.append(ix)
+                iys_tmp.append(iys)
+                iye_tmp.append(iye)
         spec.append(eachspec)
         pixcoord.append(eachpixcoord)
         iys_all.append(iys_tmp)
         iye_all.append(iye_tmp)
-    return spec, pixcoord, rotim, tl, iys_all, iye_all
-
+    if onepix:
+        return df_onepix
+    else:
+        return spec, pixcoord, rotim, tl, iys_all, iye_all
 
 if __name__ == '__main__':
     import numpy as np

@@ -13,18 +13,18 @@ basedir = pathlib.Path('~/pyird/data/20210317/').expanduser()
 # aperture extraction
 datadir = basedir/'flat/'
 anadir = basedir/'flat/'
-flat=irdstream.Stream2D("flat",datadir,anadir)
-flat.fitsid=list(range(41704,41804,2)) ##FLAT_COMB
+flat_comb=irdstream.Stream2D("flat_comb",datadir,anadir)
+flat_comb.fitsid=list(range(41704,41804,2)) ##FLAT_COMB
 ################################
 ### SELECT H band or YJ band ###
 ################################
-flat.band='h' #'h' or 'y'
-print(flat.band,' band')
-if flat.band=='h':
-    flat.fitsid_increment() # when you use H-band
-    trace_mmf=flat.aptrace(cutrow = 800,nap=42) #TraceAperture instance
-elif flat.band=='y':
-    trace_mmf=flat.aptrace(cutrow = 1000,nap=102) #TraceAperture instance
+flat_comb.band='h' #'h' or 'y'
+print(flat_comb.band,' band')
+if flat_comb.band=='h':
+    flat_comb.fitsid_increment() # when you use H-band
+    trace_mmf=flat_comb.aptrace(cutrow = 800,nap=42) #TraceAperture instance
+elif flat_comb.band=='y':
+    trace_mmf=flat_comb.aptrace(cutrow = 1000,nap=102) #TraceAperture instance
 trace_mask = trace_mmf.mask()
 
 import matplotlib.pyplot as plt
@@ -35,7 +35,7 @@ plt.show()
 datadir = basedir/'dark/'
 anadir = basedir/'dark/'
 dark = irdstream.Stream2D('dark', datadir, anadir,fitsid=[41504]) # Multiple file is ok
-if flat.band=='h':
+if flat_comb.band=='h':
     dark.fitsid_increment() # when you use H-band
 median_image = dark.immedian()
 im_subbias = bias_subtract_image(median_image)
@@ -50,44 +50,60 @@ trace_mmf.mmf2() #mmf2 (star fiber)
 # load ThAr raw image
 datadir = basedir/'thar'
 anadir = basedir/'thar'
-if flat.band=='h':
+if flat_comb.band=='h':
     rawtag='IRDAD000'
-elif flat.band=='y':
+elif flat_comb.band=='y':
     rawtag='IRDBD000'
 
 #wavelength calibration
-thar=irdstream.Stream2D("thar",datadir,anadir,rawtag=rawtag,fitsid=list(range(14632,14732)))
+thar=irdstream.Stream2D("thar",datadir,anadir,rawtag=rawtag,fitsid=list(range(14632,14732))) #ThAr-ThAr
 thar.trace = trace_mmf
 thar.clean_pattern(trace_mask=trace_mask,extin='', extout='_cp', hotpix_mask=hotpix_mask)
 thar.calibrate_wavelength()
+
+
+### FLAT ###
+flat_comb.clean_pattern(trace_mask=trace_mask,extin='', extout='_cp', hotpix_mask=hotpix_mask)
+flat_comb.trace = trace_mmf
+flat_comb.imcomb = True # median combine
+flat_comb.flatten(hotpix_mask=hotpix_mask)
+df_flatn = flat_comb.apnormalize()
+
+datadir = basedir/'flat/'
+anadir = basedir/'flat/'
+flat_star=irdstream.Stream2D("flat_star",datadir,anadir)
+flat_star.fitsid=list(range(41804,41904,2)) ##FLAT_STAR
+flat_star.trace = trace_mmf
+flat_star.band='h' #'h' or 'y'
+if flat_star.band == 'h':
+    flat_star.fitsid_increment() # when you use H-band
+    flat_star.clean_pattern(trace_mask=trace_mask,extin='', extout='_cp', hotpix_mask=hotpix_mask)
+flat_star.imcomb = True # median combine
+flat_star.flatten(hotpix_mask=hotpix_mask)
 
 ### TARGET ###
 # Load data
 datadir = basedir/'target/'
 anadir = basedir/'target/'
 target = irdstream.Stream2D(
-    'targets', datadir, anadir, fitsid=[41510])
-if flat.band=='h':
+    'targets', datadir, anadir, fitsid=[41510,41512,41514,41516])
+if flat_comb.band=='h':
     target.fitsid_increment() # when you use H-band
 target.info = True  # show detailed info
 target.trace = trace_mmf
 # clean pattern
 target.clean_pattern(trace_mask=trace_mask,extin='', extout='_cp', hotpix_mask=hotpix_mask)
 # flatten
-target.flatten()#hotpix_mask=hotpix_mask)
+target.apext_flatfield(df_flatn,hotpix_mask=hotpix_mask)
 # assign reference spectra & resample
-target.dispcor(master_path=thar.anadir)#,extin='_hp')
+target.dispcor(master_path=thar.anadir,extin='_flnhp')#_hp
 
-### FLAT (for blaze function) ###
-flat.trace = trace_mmf
-if flat.band == 'h':
-    flat.clean_pattern(trace_mask=trace_mask,extin='', extout='_cp', hotpix_mask=hotpix_mask)
-flat.imcomb = True # median combine
-flat.flatten()
-flat.dispcor(master_path=thar.anadir)
+# blaze function
+flat_star.apext_flatfield(df_flatn,hotpix_mask=hotpix_mask)
+flat_star.dispcor(master_path=thar.anadir)
 
 # combine & normalize
-target.normalize1D(flatid=flat.streamid,master_path=flat.anadir)
+target.normalize1D(master_path=flat_star.anadir,skipLFC=True)#,flatid=flat_comb.streamid)
 
 """
 ### FOR RV MEASUREMENTS ###
