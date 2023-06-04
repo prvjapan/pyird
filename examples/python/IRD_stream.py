@@ -63,12 +63,6 @@ thar.calibrate_wavelength()
 
 
 ### FLAT ###
-flat_comb.clean_pattern(trace_mask=trace_mask,extin='', extout='_cp', hotpix_mask=hotpix_mask)
-flat_comb.trace = trace_mmf
-flat_comb.imcomb = True # median combine
-flat_comb.flatten(hotpix_mask=hotpix_mask)
-df_flatn = flat_comb.apnormalize()
-
 datadir = basedir/'flat/'
 anadir = basedir/'flat/'
 flat_star=irdstream.Stream2D("flat_star",datadir,anadir)
@@ -80,13 +74,14 @@ if flat_star.band == 'h':
     flat_star.clean_pattern(trace_mask=trace_mask,extin='', extout='_cp', hotpix_mask=hotpix_mask)
 flat_star.imcomb = True # median combine
 flat_star.flatten(hotpix_mask=hotpix_mask)
+df_flatn = flat_star.apnormalize()
 
 ### TARGET ###
 # Load data
 datadir = basedir/'target/'
 anadir = basedir/'target/'
 target = irdstream.Stream2D(
-    'targets', datadir, anadir, fitsid=[41510,41512,41514,41516])
+    'targets', datadir, anadir, fitsid=[41510])
 if flat_comb.band=='h':
     target.fitsid_increment() # when you use H-band
 target.info = True  # show detailed info
