@@ -8,6 +8,7 @@ include src/pyird/data/samples/apref_a
 include src/pyird/data/samples/apref_c
 include src/pyird/data/thar_mmf2_a_H_20210317.fits
 include src/pyird/data/samples/wflat_m2_20210317.dat
+include src/pyird/data/samples/wblaze_h_m2_20210317.dat
 include src/pyird/data/IP_fwhms_h.dat
 include src/pyird/data/hotpix_mask_h_202210_180s.fits
 include src/pyird/data/hotpix_mask_y_202210_180s.fits
