@@ -354,6 +354,8 @@ class Stream2D(FitsSet):
         df_continuum = continuum_rsd(rsd)
 
         flat_median = self.immedian('_cp')
+        if not hotpix_mask is None:
+            flat_median=flat_median*(~hotpix_mask)
         df_onepix = flatten(flat_median, trace_legendre, self.trace.y0, self.trace.xmin, self.trace.xmax, self.trace.coeff, inst=self.inst,onepix=True)#,width=[3,5])
         apertures = [int(i.split('ec')[-1]) for i in df_onepix.keys()]
         df_flatn = {}
@@ -390,6 +392,15 @@ class Stream2D(FitsSet):
                     df_sum_wap += df_ecf[key]
             return df_sum_wap
 
+        def rsd_order_medfilt(rsd,kernel_size=9):
+            from scipy.signal import medfilt
+            rsd_filtered = []
+            for i in range(len(rsd[0])):
+                filtered_data = medfilt(rsd[:,i],kernel_size=kernel_size)
+                rsd_filtered.append(filtered_data)
+            rsd_filtered = np.array(rsd_filtered).T
+            return rsd_filtered
+
         if extin is None:
             extin = self.extension
 
@@ -420,6 +431,7 @@ class Stream2D(FitsSet):
                     median_image=median_image*(~hotpix_mask)
                 df_sum_wap = sum_weighted_apertures(median_image,df_flatn)
                 rsd = df_sum_wap.values.T.astype(float)
+                rsd = rsd_order_medfilt(rsd)
                 hdux = pyf.PrimaryHDU(data=rsd,header=None)
                 hdulist = pyf.HDUList([hdux])
                 hdulist.writeto(save_path, overwrite=True)
@@ -663,10 +675,13 @@ class Stream2D(FitsSet):
 
         for i,id in enumerate(fits_range):
             if self.imcomb:
-                wfile = self.anadir/('wmmfmmf_%s_%s.dat'%(self.band,self.trace.mmf))
-                nwsave_path = self.anadir/('nwmmfmmf_%s_%s.dat'%(self.band,self.trace.mmf))
-                ncwsave_path = self.anadir/('ncwmmfmmf_%s_%s.dat'%(self.band,self.trace.mmf))
-                LFCpath = self.anadir/'wmmfmmf_y_m1.dat'
+                wfile = self.anadir/('w%s_%s_%s.dat'%(self.streamid,self.band,self.trace.mmf))
+                nwsave_path = self.anadir/('nw%s_%s_%s.dat'%(self.streamid,self.band,self.trace.mmf))
+                ncwsave_path = self.anadir/('ncw%s_%s_%s.dat'%(self.streamid,self.band,self.trace.mmf))
+                if not skipLFC:
+                    LFC_path = self.anadir/('w%s_y_m1.dat'%(self.streamid,))
+                else:
+                    LFC_path = None
             else:
                 wfile = self.anadir/('w%d_%s.dat'%(id,self.trace.mmf))
                 nwsave_path = self.anadir/('nw%d_%s.dat'%(id,self.trace.mmf))
@@ -683,10 +698,6 @@ class Stream2D(FitsSet):
             df_interp_save = df_interp[['wav','nflux','sn_ratio','uncertainty']]
             df_continuum_save.to_csv(nwsave_path,**self.tocsvargs)
             df_interp_save.to_csv(ncwsave_path,**self.tocsvargs)
-            if i==0:
-                nflatsave_path = self.anadir/('nwflat_%s_%s.dat'%(self.band,self.trace.mmf))
-                df_continuum_nflat = df_continuum[['wav','order','nflat']]
-                df_continuum_nflat.to_csv(nflatsave_path,**self.tocsvargs)
             if self.info and ~self.imcomb:
                 print('normalize1D: output normalized 1D spectrum= nw%d_%s.dat'%(id,self.trace.mmf))
             #plot
