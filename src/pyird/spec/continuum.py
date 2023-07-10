@@ -19,6 +19,7 @@ continuum_non_zero_beginning = 10 #cut +10 pix from the zero flux region at the 
 continuum_non_zero_ending = 60 #cut -60 pix from the zero flux region at the edge of the order
 #when fitting continuum
 order_fit = 23 #he polynomial order to use
+max_order_fit = 50
 nsigma = [2,3] #the sigma clipping threshold: tuple (low, high)
 maxniter = 3 #the maximum number of iterations to do
 #when making sigma clipping
@@ -61,12 +62,13 @@ def fit_continuum(x, y, order=6, nsigma=[0.3,3.0], maxniter=50, fitfunc='legendr
         m = m_new
     return mu, m
 
-def continuum_rsd(rsd,npix=2048):
+def continuum_rsd(rsd,npix=2048,ignore_orders=None):
     """fit continuum for rsd
 
     Args:
         rsd: raw spectrum detector matrix
         npix: number of pixels
+        ignore_order: list of orders not to be evaluated the goodness of the fitting
 
     Returns:
         pandas DataFrame of continuum
@@ -74,6 +76,8 @@ def continuum_rsd(rsd,npix=2048):
     order_fit_itr = order_fit
     pixels = np.arange(1,npix+1)
     orders = np.arange(1,len(rsd[0])+1)
+    if ignore_orders is None:
+        ignore_orders = [1,len(rsd[0])-1]
 
     df_continuum = pd.DataFrame([],columns=pixels,index=orders)
     order = orders[0]
@@ -87,7 +91,7 @@ def continuum_rsd(rsd,npix=2048):
                                       order=order_fit_itr,nsigma=nsigma,maxniter=maxniter)
         resid = flat_ord[useind & cutind][mask]-continuum_ord[mask]
 
-        if (order!=1 and order!=orders[-1]) and np.max(np.abs(100*resid/continuum_ord[mask]))>5:
+        if (order not in ignore_orders) and order_fit_itr<max_order_fit and 100*np.std(resid/continuum_ord[mask])>1.5:
             # change fitting parameter(s) to avoid bad fitting
             order_fit_itr += 1
             order = orders[0]
@@ -95,6 +99,11 @@ def continuum_rsd(rsd,npix=2048):
             continuum_ord_interp = np.interp(pixels,pixels[useind & cutind],continuum_ord)
             df_continuum.loc[order,pixels] = continuum_ord_interp
             order += 1
+    if order_fit_itr==max_order_fit:
+        print(f'WARNING: order_fit reaches the maximum value of {max_order_fit}.')
+    else:
+        print(f'continuum is fitted with order_fit = {order_fit_itr}.')
+
     return df_continuum
 
 def continuum_oneord(wdata,flat,order):

@@ -330,7 +330,7 @@ class Stream2D(FitsSet):
         os.chdir(currentdir)
         return rsd,wav,mask,pixcoord,rotim,iys_plot,iye_plot#,xmin,xmax
 
-    def apnormalize(self,rsd=None,hotpix_mask=None):
+    def apnormalize(self,rsd=None,hotpix_mask=None,ignore_orders=None):
         """normalize 2D apertures by 1D functions
 
         Returns:
@@ -351,7 +351,7 @@ class Stream2D(FitsSet):
             save_path = self.anadir/('hotpix_%s_%s.fits'%(self.band,self.trace.mmf))
             rsd = apply_hotpixel_mask(hotpix_mask, rsd, self.trace.y0, self.trace.xmin, self.trace.xmax, self.trace.coeff, save_path=save_path)
 
-        df_continuum = continuum_rsd(rsd)
+        df_continuum = continuum_rsd(rsd,ignore_orders=ignore_orders)
 
         flat_median = self.immedian('_cp')
         if not hotpix_mask is None:
