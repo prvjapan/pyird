@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.polynomial import legendre
 import pandas as pd
 from scipy import optimize
 from astropy.stats import sigma_clip
@@ -18,6 +19,7 @@ continuum_non_zero_beginning = 10 #cut +10 pix from the zero flux region at the 
 continuum_non_zero_ending = 60 #cut -60 pix from the zero flux region at the edge of the order
 #when fitting continuum
 order_fit = 23 #he polynomial order to use
+max_order_fit = 50
 nsigma = [2,3] #the sigma clipping threshold: tuple (low, high)
 maxniter = 3 #the maximum number of iterations to do
 #when making sigma clipping
@@ -26,7 +28,7 @@ sigma_upper = 2
 maxiters = 3
 ####
 
-def fit_continuum(x, y, order=6, nsigma=[0.3,3.0], maxniter=50):
+def fit_continuum(x, y, order=6, nsigma=[0.3,3.0], maxniter=50, fitfunc='legendre'):
     """Fit the continuum using sigma clipping
 
     Args:
@@ -35,16 +37,22 @@ def fit_continuum(x, y, order=6, nsigma=[0.3,3.0], maxniter=50):
         order: the polynomial order to use
         nsigma: the sigma clipping threshold: tuple (low, high)
         maxniter: the maximum number of iterations to do
+        fitfunc: fitting function (default is legendre)
 
     Returns:
         The value of the continuum at the wavelengths in x
 
     """
-    A = np.vander(x - np.nanmean(x), order+1)
+    if fitfunc==None:
+        A = np.vander(x - np.nanmean(x), order+1)
     m = np.ones(len(x), dtype=bool)
     for i in range(maxniter):
-        w = np.linalg.solve(np.dot(A[m].T, A[m]), np.dot(A[m].T, y[m]))
-        mu = np.dot(A, w)
+        if fitfunc==None:
+            w = np.linalg.solve(np.dot(A[m].T, A[m]), np.dot(A[m].T, y[m]))
+            mu = np.dot(A, w)
+        elif fitfunc=='legendre':
+            f = legendre.Legendre.fit(x[m],y[m],order)
+            mu = f(x)
         resid = y - mu
         sigma = np.sqrt(np.nanmedian(resid**2))
         m_new = (resid > -nsigma[0]*sigma) & (resid < nsigma[1]*sigma)
@@ -52,30 +60,50 @@ def fit_continuum(x, y, order=6, nsigma=[0.3,3.0], maxniter=50):
             m = m_new
             break
         m = m_new
-    return mu
+    return mu, m
 
-def continuum_rsd(rsd,npix=2048):
+def continuum_rsd(rsd,npix=2048,ignore_orders=None):
     """fit continuum for rsd
 
     Args:
         rsd: raw spectrum detector matrix
         npix: number of pixels
+        ignore_order: list of orders not to be evaluated the goodness of the fitting
 
     Returns:
         pandas DataFrame of continuum
     """
+    order_fit_itr = order_fit
     pixels = np.arange(1,npix+1)
     orders = np.arange(1,len(rsd[0])+1)
+    if ignore_orders is None:
+        ignore_orders = [1,len(rsd[0])-1]
+
     df_continuum = pd.DataFrame([],columns=pixels,index=orders)
-    for order in orders:
+    order = orders[0]
+    while order != orders[-1]+1:
         flat_ord = rsd[:,order-1]
         cutind = np.zeros(len(flat_ord),dtype=bool)
         cutind[10:-60] = True # mask pixels at both ends of the order
         cutind[np.where(flat_ord==0)[0]] = False # mask zeros
         useind = (~np.isnan(flat_ord))
-        continuum_ord = fit_continuum(pixels[useind & cutind],flat_ord[useind & cutind],order=35,nsigma=[3,3],maxniter=3)
-        continuum_ord_interp = np.interp(pixels,pixels[useind & cutind],continuum_ord)
-        df_continuum.loc[order,pixels] = continuum_ord_interp
+        continuum_ord, mask = fit_continuum(pixels[useind & cutind],flat_ord[useind & cutind],\
+                                      order=order_fit_itr,nsigma=nsigma,maxniter=maxniter)
+        resid = flat_ord[useind & cutind][mask]-continuum_ord[mask]
+
+        if (order not in ignore_orders) and order_fit_itr<max_order_fit and 100*np.std(resid/continuum_ord[mask])>1.5:
+            # change fitting parameter(s) to avoid bad fitting
+            order_fit_itr += 1
+            order = orders[0]
+        else:
+            continuum_ord_interp = np.interp(pixels,pixels[useind & cutind],continuum_ord)
+            df_continuum.loc[order,pixels] = continuum_ord_interp
+            order += 1
+    if order_fit_itr==max_order_fit:
+        print(f'WARNING: order_fit reaches the maximum value of {max_order_fit}.')
+    else:
+        print(f'continuum is fitted with order_fit = {order_fit_itr}.')
+
     return df_continuum
 
 def continuum_oneord(wdata,flat,order):
@@ -99,7 +127,7 @@ def continuum_oneord(wdata,flat,order):
     cutind[np.where(ffl_tmp==0)[0]] = False # mask zeros
     useind = (~np.isnan(ffl_tmp)) & (~np.isnan(flux_tmp))
     # CHECK: fit order, clipping sigma
-    continuum = fit_continuum(wav_tmp[useind & cutind],ffl_tmp[useind & cutind],order=order_fit,nsigma=nsigma,maxniter=maxniter)
+    continuum, mask = fit_continuum(wav_tmp[useind & cutind],ffl_tmp[useind & cutind],order=order_fit,nsigma=nsigma,maxniter=maxniter)
     continuum = np.interp(wav_tmp[useind],wav_tmp[useind & cutind],continuum)
     return wav_tmp, flux_tmp, ffl_tmp, useind, continuum
 
@@ -136,7 +164,7 @@ def make_blaze(wdata,flat,readout_noise,std_order=None):
         df_tmp = pd.DataFrame(data,columns=['wav','order','flux','flat','continuum'])
         df_continuum = pd.concat([df_continuum,df_tmp],ignore_index=True)
     df_continuum['nflux'] = df_continuum['flux']/df_continuum['continuum']
-    df_continuum['nflat'] = df_continuum['flat']/df_continuum['continuum']
+
     if (df_continuum['wav']>wav_boundary_yj_and_h).any():
         gain = gain_h #for H band
     else:
@@ -254,8 +282,10 @@ def normalize(df_continuum,readout_noise):
         df_tmp = pd.DataFrame(data,columns=df_interp.columns)
         df_interp = pd.concat([df_interp,df_tmp])
 
-    df_interp['nflux'] = df_interp['flux']/df_interp['continuum']
-    df_interp['uncertainty'] = df_interp['tmp_uncertainty']/df_interp['continuum']
+    zeroind = df_interp['continuum']==0
+    df_interp = df_interp.assign(nflux=np.nan,uncertainty=np.nan)
+    df_interp.loc[~zeroind,'nflux'] = df_interp['flux'][~zeroind]/df_interp['continuum'][~zeroind]
+    df_interp.loc[~zeroind,'uncertainty'] = df_interp['tmp_uncertainty'][~zeroind]/df_interp['continuum'][~zeroind]
     return df_interp
 
 def comb_norm(wfile,flatfile,combfile=None,method='mad',blaze=True):
@@ -303,14 +333,9 @@ def blaze_to_df(wdata,blaze,readout_noise):
     """
     ### readout_noise
     blaze = blaze.assign(blaze_continuum=0)
-    orders = blaze['order'].unique()
-    for order in orders:
-        wav_tmp, flux_tmp, ffl_tmp, useind, continuum = continuum_oneord(blaze,blaze,order)
-        blaze.loc[blaze['order']==order,'blaze_continuum'] = continuum
     blaze = blaze.rename(columns={'flux':'continuum'})
     df_continuum = pd.merge(wdata,blaze,on=['wav','order'])
     df_continuum['nflux'] = df_continuum['flux']/df_continuum['continuum']
-    df_continuum['nflat'] = df_continuum['continuum']/df_continuum['blaze_continuum']
     if (df_continuum['wav']>wav_boundary_yj_and_h).any():
         gain = gain_h #for H band
     else:
