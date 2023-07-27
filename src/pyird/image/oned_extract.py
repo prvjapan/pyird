@@ -25,28 +25,20 @@ def flatten(im, trace_func, y0, xmin, xmax, coeff, inst='IRD',onepix=False,npix=
     """
 
     if width is None:
-        if len(y0)==21: #h band
-            rotim = np.copy(im[::-1, ::-1])
-            width_str = 2#3
-            if inst=='REACH':
-                width_end = 3
-            elif inst=='IRD':
-                width_end = 4 ##CHECK!!
-        elif len(y0)==51: # yj band
-            rotim = np.copy(im)
-            if inst=='REACH':
-                width_str = 4
-                width_end = 5
-            elif inst=='IRD':
-                width_str = 5
-                width_end = 6
+        if inst=='IRD':
+            width_str = 2
+            width_end = 4
+        elif inst=='REACH':
+            width_str = 2
+            width_end = 3
     else:
         width_str = width[0]
         width_end = width[1]
-        if len(y0)==21: #h band
-            rotim = np.copy(im[::-1, ::-1])
-        elif len(y0)==51: # yj band
-            rotim = np.copy(im)
+
+    if len(y0)==21: #h band
+        rotim = np.copy(im[::-1, ::-1])
+    elif len(y0)==51: # yj band
+        rotim = np.copy(im)
 
     x = []
     for i in range(len(y0)):

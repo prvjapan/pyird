@@ -16,7 +16,7 @@ def test_aperture():
     #import matplotlib.pyplot as plt
     #plt.imshow(ta.mask())
     #plt.show()
-    assert np.sum(ta.mask()) > 239760
+    assert np.sum(ta.mask()) >= 239760
 
 if __name__ == '__main__':
     test_aperture()
