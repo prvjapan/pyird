@@ -165,13 +165,11 @@ class Stream2D(FitsSet):
                     calim[hotpix_mask] = np.nan
             elif self.band == 'y':
                 calim = np.copy(im)  # image for calibration
+                trace_mask_r = trace_mask.reshape(1, int(trace_mask.size))
+                trace_mask_r = trace_mask_r[0][::-1].reshape(im.shape[0], im.shape[1]) # rotate mask matrix 180 degree
+                calim[trace_mask_r] = np.nan
                 if hotpix_mask is not None:
-                    mask = trace_mask | hotpix_mask
-                else:
-                    mask = trace_mask
-                mask = mask.reshape(1, int(mask.size))
-                mask = mask[0][::-1].reshape(im.shape[0], im.shape[1]) # rotate mask matrix 180 degree
-                calim[mask] = np.nan
+                    calim[hotpix_mask] = np.nan
 
             model_im = median_XY_profile(calim)
             corrected_im = im - model_im

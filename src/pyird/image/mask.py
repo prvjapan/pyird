@@ -57,19 +57,12 @@ def trace(trace_func, y0, xmin, xmax, coeff, mask_shape=None, inst='IRD'):
     tl = trace_func(x, y0, xmin, xmax, coeff)
 #    mask = np.zeros_like(im, dtype=bool)
     mask = np.zeros(mask_shape, dtype=bool)
-    if len(y0)==21 or len(y0)==42: #h band
-        width_str = 3
-        if inst=='REACH':
-            width_end = 3
-        elif inst=='IRD':
-            width_end = 4
-    else: #if len(y0)==51 or len(y0)==102: # yj band
-        if inst=='REACH':
-            width_str = 4
-            width_end = 5
-        elif inst=='IRD':
-            width_str = 5
-            width_end = 6
+    if inst=='IRD':
+        width_str = 2
+        width_end = 4
+    elif inst=='REACH':
+        width_str = 2
+        width_end = 3
     nx, ny = mask_shape
     for i in tqdm.tqdm(range(len(y0))):
         tl_tmp = np.array(tl[i], dtype=int)
