@@ -1,11 +1,12 @@
 import pandas as pd
 import numpy as np
 from astropy.timeseries import LombScargle
+from astropy.stats import sigma_clip
 
 import argparse
 
 
-def ls_periodogram(wav,flux,search=True):
+def ls_periodogram(wav,flux,search=None):
     """Lomb-Scargle periodogram
 
     Args:
@@ -22,8 +23,8 @@ def ls_periodogram(wav,flux,search=True):
     flux_ones = np.ones(len(wav))
     frequency_window,power_window = LombScargle(wav,flux_ones,fit_mean=False,center_data=False,normalization='psd').autopower(method='fast')
 
-    if search==True:
-        search_min, search_max = 0.05,0.5
+    if not search==None:
+        search_min, search_max = search[0],search[1]
         sep_hz = 0.3 ##separate >0.3Hz
         ind = (1/search_max<frequency) & (frequency<1/search_min)
         freq_sort = frequency[ind][np.argsort(power[ind])[::-1]]
@@ -81,7 +82,8 @@ def remove_fringe_order(df_flat,df_target,order,mask=True):
         wav_flat=wav_flat[maskind]
         flux_flat=flux_flat[maskind]
 
-    ls,frequency,power,frequency_window,power_window,freqs = ls_periodogram(wav_flat,flux_flat)
+    search_min, search_max = 0.05, 0.5
+    ls,frequency,power,frequency_window,power_window,freqs = ls_periodogram(wav_flat,flux_flat,search=[search_min,search_max])
     if np.sum(freqs)==0:
         print(order)
 
@@ -89,20 +91,26 @@ def remove_fringe_order(df_flat,df_target,order,mask=True):
     useind_target = df_target['order']==order
     wav_target = df_target['wav'][useind_target]
     flux_target = df_target['flux_median'][useind_target]
+    flux_err_target = df_target['flux_err'][useind_target]
+    flux_target_clipped = sigma_clip(flux_target[216:-320])
+    #p = np.polyfit(wav_target,flux_target,1)
+    #poly = np.poly1d(p)(wav_target)
+    norm = np.median(flux_target[216:-320])
 
-    ls_ori,frequency_ori,power_ori,_,_,freqs_ori = ls_periodogram(wav_target[216:-320],flux_target[216:-320])
+    ls_ori,frequency_ori,power_ori,_,_,freqs_ori = ls_periodogram(wav_target[216:-320],flux_target_clipped/norm,search=[search_min,search_max])
     freqs_ori_use = []
     for freq in freqs_ori:
         diff = np.abs(freqs - freq)
-        useind = diff< 100
+        useind = diff< 0.1 #[nm]#100 [um]
         if True in useind:
             freqs_ori_use.append(freq)
     if len(freqs_ori_use)>0:
         flux_target_fit,offset_target = mk_model(ls_ori,freqs_ori_use,wav_target)
         flux_rmfringe = flux_target/flux_target_fit
+        flux_err_target_rmfringe = flux_err_target / flux_target_fit
 
         #ls_rmfringe,frequency_rmfringe,power_rmfringe,_,_,freqs_rmfringe = ls_periodogram(wav_target,flux_rmfringe)
-        return flux_rmfringe
+        return flux_rmfringe, flux_err_target_rmfringe
     else:
-        print("No prominent frequencies...")
-        return
+        print(f"No prominent frequencies in Order {order}. Periodicity does not removed.")
+        return flux_target, flux_err_target

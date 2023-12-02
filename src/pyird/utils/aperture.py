@@ -29,6 +29,7 @@ class TraceAperture(object):
         self.mmf = 'mmf12'
         self.inst = inst
         self.info = False
+        self.width = None
 
     def mask(self):
         """mask image
@@ -39,7 +40,7 @@ class TraceAperture(object):
         """
         if self.info:
             print('trace_mask used: ',self.mmf)
-        return trace(self.trace_function, self.y0, self.xmin, self.xmax, self.coeff, inst=self.inst)
+        return trace(self.trace_function, self.y0, self.xmin, self.xmax, self.coeff, inst=self.inst, width=self.width)
 
     def mmf2(self):
         """choose apertures for mmf2 (star fiber)

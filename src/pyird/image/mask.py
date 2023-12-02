@@ -28,7 +28,7 @@ def trace_from_iraf_trace_file(pathlist, mask_shape=None):
     return mask
 
 
-def trace(trace_func, y0, xmin, xmax, coeff, mask_shape=None, inst='IRD'):
+def trace(trace_func, y0, xmin, xmax, coeff, mask_shape=None, inst='IRD', width=None):
     """make mask for trace parameters for multiorder.
 
     Args:
@@ -40,6 +40,7 @@ def trace(trace_func, y0, xmin, xmax, coeff, mask_shape=None, inst='IRD'):
        coeff: coefficients
        mask_shape: (optional) shape of mask, c.f. np.shape(image)
        inst: IRD or REACH
+       width: list of aperture widths ([width_start,width_end])
 
     Returns:
        mask image (same shape as im)
@@ -57,12 +58,16 @@ def trace(trace_func, y0, xmin, xmax, coeff, mask_shape=None, inst='IRD'):
     tl = trace_func(x, y0, xmin, xmax, coeff)
 #    mask = np.zeros_like(im, dtype=bool)
     mask = np.zeros(mask_shape, dtype=bool)
-    if inst=='IRD':
-        width_str = 2
-        width_end = 4
-    elif inst=='REACH':
-        width_str = 2
-        width_end = 3
+    if width is None:
+        if inst=='IRD':
+            width_str = 2
+            width_end = 4
+        elif inst=='REACH':
+            width_str = 2
+            width_end = 3
+    else:
+        width_str = width[0]
+        width_end = width[1]
     nx, ny = mask_shape
     for i in tqdm.tqdm(range(len(y0))):
         tl_tmp = np.array(tl[i], dtype=int)

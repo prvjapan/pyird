@@ -184,13 +184,14 @@ class Stream2D(FitsSet):
         self.extension = extout
         os.chdir(currentdir)
 
-    def flatten(self, trace_path=None, extout='_fl', extin=None, hotpix_mask=None):
+    def flatten(self, trace_path=None, extout='_fl', extin=None, hotpix_mask=None, width=None):
         """
         Args:
            trace_path: trace file to be used in flatten
            extout: output extension
            extin: input extension
            hotpix_mask: hotpix masked spectrum ('extout' to be automatically '_hp')
+           width: list of aperture widths ([width_start,width_end])
 
         """
         from pyird.image.oned_extract import flatten
@@ -206,6 +207,7 @@ class Stream2D(FitsSet):
         if trace_path is None:
             y0, xmin, xmax, coeff = self.trace.y0, self.trace.xmin, self.trace.xmax, self.trace.coeff
             mmf = self.trace.mmf
+            width = self.trace.width
         else:
             y0, interp_function, xmin, xmax, coeff = read_trace_file(trace_path)
 
@@ -224,7 +226,7 @@ class Stream2D(FitsSet):
                 im = hdu.data
                 header = hdu.header
                 rawspec, pixcoord, _, _, _, _ = flatten(
-                    im, trace_legendre, y0, xmin, xmax, coeff, self.inst)
+                    im, trace_legendre, y0, xmin, xmax, coeff, inst=self.inst, width=width)
                 rsd = multiorder_to_rsd(rawspec, pixcoord)
                 if not hotpix_mask is None:
                     save_path = self.anadir/('hotpix_%s_%s.fits'%(self.band,self.trace.mmf))
@@ -241,7 +243,7 @@ class Stream2D(FitsSet):
                 hdu = pyf.open(self.path()[0])[0]
                 header = hdu.header
                 rawspec, pixcoord, _, _, _, _ = flatten(
-                    median_image, trace_legendre, y0, xmin, xmax, coeff, self.inst)
+                    median_image, trace_legendre, y0, xmin, xmax, coeff, inst=self.inst, width=width)
                 rsd = multiorder_to_rsd(rawspec, pixcoord)
                 hdux = pyf.PrimaryHDU(rsd, header)
                 hdulist = pyf.HDUList([hdux])
@@ -362,7 +364,7 @@ class Stream2D(FitsSet):
             df_flatn['ec%d'%(i)] = df_flatn_tmp
         return df_flatn
 
-    def apext_flatfield(self, df_flatn, extout='_fln', extin=None, hotpix_mask=None):
+    def apext_flatfield(self, df_flatn, extout='_fln', extin=None, hotpix_mask=None, width=None):
         """aperture extraction and flat fielding (c.f., hdsis_ecf.cl)
 
         Args:
@@ -370,17 +372,18 @@ class Stream2D(FitsSet):
             extout: extension of output files
             extin: extension of input files
             hotpix_mask: hotpix masked spectrum ('extout' to be automatically '_flnhp')
+            width: list of aperture widths ([width_start,width_end])
         """
         from pyird.image.hotpix import apply_hotpixel_mask
         def sum_weighted_apertures(im,df_flatn):
             from pyird.image.oned_extract import flatten
             from pyird.image.trace_function import trace_legendre
-            df_onepix = flatten(im, trace_legendre, self.trace.y0, self.trace.xmin, self.trace.xmax, self.trace.coeff, inst=self.inst,onepix=True)
+            df_onepix = flatten(im, trace_legendre, self.trace.y0, self.trace.xmin, self.trace.xmax, self.trace.coeff, inst=self.inst,onepix=True, width=self.trace.width)
             apertures = [int(i.split('ec')[-1]) for i in df_onepix.keys()]
             df_ecf = {}
             for i in apertures:
-                #flatn_mean = np.nanmean(df_flatn['ec%d'%(i)].loc[2:len(df_flatn['ec%d'%(i)])-1].values) #cf) hdsis_ecf
-                flatn_mean = np.nanmedian(df_flatn['ec%d'%(i)].loc[2:len(df_flatn['ec%d'%(i)])-1].values)
+                #flatn_mean = np.nanmean(df_flatn['ec%d'%(i)].loc[2:len(df_flatn['ec%d'%(i)])-1].values.astype(float)) #cf) hdsis_ecf
+                flatn_mean = np.nanmedian(df_flatn['ec%d'%(i)].loc[2:len(df_flatn['ec%d'%(i)])-1].values.astype(float))
                 print("pixel = %d, Mean = %.5f"%(i,flatn_mean))
                 df_ecf['ec%d'%(i)] = (df_onepix['ec%d'%(i)]/df_flatn['ec%d'%(i)])*flatn_mean #cf) hdsis_ecf
             for i,key in enumerate(df_ecf.keys()):
@@ -453,7 +456,7 @@ class Stream2D(FitsSet):
         self.extension = e
         return median_image
 
-    def calibrate_wavelength(self, trace_file_path=None, maxiter=30, stdlim=0.001, npix=2048):
+    def calibrate_wavelength(self, trace_file_path=None, maxiter=30, stdlim=0.001, npix=2048, width=None):
         """wavelength calibration usgin Th-Ar.
 
         Args:
@@ -461,6 +464,7 @@ class Stream2D(FitsSet):
            maxiter: maximum number of iterations
            stdlim: When the std of fitting residuals reaches this value, the iteration is terminated.
            npix: number of pixels
+           width: list of aperture widths ([width_start,width_end])
 
         """
         from pyird.spec.wavcal import wavcal_thar
@@ -494,6 +498,7 @@ class Stream2D(FitsSet):
         if trace_file_path is None:
             y0, xmin, xmax, coeff = self.trace.y0, self.trace.xmin, self.trace.xmax, self.trace.coeff
             mmf = self.trace.mmf
+            width = self.trace.width
         else:
             y0, interp_function, xmin, xmax, coeff = read_trace_file(trace_file_path)
 
@@ -505,7 +510,7 @@ class Stream2D(FitsSet):
             header = hdu.header
             nord = len(y0)
             rawspec, pixcoord, _, _, _, _ = flatten(
-                median_image, trace_legendre, y0, xmin, xmax, coeff, inst=self.inst)
+                median_image, trace_legendre, y0, xmin, xmax, coeff, inst=self.inst, width=width)
             rsd = multiorder_to_rsd(rawspec, pixcoord)
             print(np.shape(rsd.T)[0])
             ## set weights
@@ -515,6 +520,7 @@ class Stream2D(FitsSet):
             else: #TODO: for y band
                 w = np.ones(rsd.shape)
             wavsol, data = wavcal_thar(rsd.T, w, maxiter=maxiter, stdlim=stdlim)
+            #np.save('thar_%s_%s_final.npy'%(self.band,mmf),data)
             wavsol_2d = wavsol.reshape((npix,nord))
             hdux = pyf.PrimaryHDU(wavsol_2d, header)
             hdulist = pyf.HDUList([hdux])
@@ -772,8 +778,8 @@ class Stream1D(DatSet):
         self.extension = e
         return path_
 
-    def specmedian(self):
-        """take spectrum median.
+    def specmedian(self,method='mean'):
+        """take spectrum mean or median.
 
         Return:
            dataframe including median spectrum
@@ -783,12 +789,16 @@ class Stream1D(DatSet):
             data = pd.read_csv(path,**self.readargs)
             suffix = 'flux_%d'%(i)
             suffixes.append(suffix)
-            data = data.rename(columns={'flux':suffix})
+            data = data.rename(columns={'flux':'flux_%d'%(i),'sn_ratio':'sn_ratio_%d'%(i),'uncertainty':'uncertainty_%d'%(i)})
             if i==0:
                 df_merge = data
             else:
                 df_merge = pd.merge(df_merge,data,on=['wav','order'])
-        df_merge['flux_median'] = df_merge[suffixes].median(axis=1)
+        if method=='median':
+            df_merge['flux_median'] = df_merge[suffixes].median(axis=1)
+        elif method=='mean':
+            df_merge['flux_median'] = df_merge[suffixes].mean(axis=1)
+            df_merge['flux_err'] = np.sqrt(np.nansum(df_merge.filter(like='uncertainty') **2,axis=1))/len(df_merge.filter(like='uncertainty').columns)
         return df_merge
 
     def remove_fringe(self):
@@ -802,12 +812,15 @@ class Stream1D(DatSet):
 
         orders = df_targetmed['order'].unique()
         rmfringe_all = []
+        err_all = []
         for order in tqdm.tqdm(orders):
-            flux_rmfringe = remove_fringe_order(df_flat,df_targetmed,order,mask=True)
+            flux_rmfringe, flux_err_rmfringe = remove_fringe_order(df_flat,df_targetmed,order,mask=True)
             rmfringe_all.extend(flux_rmfringe.values)
+            err_all.extend(flux_err_rmfringe.values)
         df_targetmed['flux_rmfringe'] = rmfringe_all
+        df_targetmed['flux_err_rmfringe'] = err_all
         save_path = self.anadir/('rfnw%s_%s_%s%s.dat'%(self.streamid,self.date,self.band,self.extension))
-        df_targetmed_save = df_targetmed[['wav','order','flux_rmfringe']]
+        df_targetmed_save = df_targetmed[['wav','order','flux_rmfringe','flux_err_rmfringe']]
         df_targetmed_save.to_csv(save_path,**self.tocsvargs)
         if self.info:
             print('removing fringe: output = rfnw%s_%s_%s%s.dat'%(self.streamid,self.date,self.band,self.extension))
