@@ -61,12 +61,12 @@ elif mmf=='mmf1':
 datadir = basedir/'thar'
 anadir = basedir/'reduc'
 if band=='h':
-    rawtag='IRDAD000'
+    rawtag='IRDAD000' #for calib data taken by Gen2
     ignore_orders=None
 elif band=='y':
-    rawtag='IRDBD000'
+    rawtag='IRDBD000' #for calib data taken by Gen2
     ignore_orders = list(np.arange(1,32))+list([50,51])
-thar=irdstream.Stream2D("thar",datadir,anadir,fitsid=list(range(53347,53410,2)),inst=inst,rawtag=rawtag)#
+thar=irdstream.Stream2D("thar",datadir,anadir,fitsid=list(range(53347,53410,2)),inst=inst)#,rawtag=rawtag)#
 
 #wavelength calibration
 thar.trace = trace_smf
