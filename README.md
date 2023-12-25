@@ -5,6 +5,28 @@ Free from messy directory and file management of IRD analysis.
 Currently under heavily construction. Use develop branch for dev.
 
 
+Examples
+------------------
+
+Creating 1D spectra from raw data.
+- pyird/examples/python/IRD_stream.py -- IRD data; read [the docs](https://secondearths.sakura.ne.jp/pyird/tutorials/IRD_stream.html).
+- pyird/examples/python/REACH_stream.py -- REACH data
+
+
+Install
+------------------
+
+```
+pip install pyird
+```
+
+or
+
+```
+python setup.py install
+```
+
+
 Core Pipelines
 ------------------
 
