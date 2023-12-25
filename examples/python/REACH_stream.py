@@ -6,90 +6,106 @@ from pyird.image.bias import bias_subtract_image
 from pyird.image.hotpix import identify_hotpix_sigclip
 import astropy.io.fits as pyf
 
-# path
+#--------SETTINGS--------#
 basedir = pathlib.Path('~/pyird/data/20211110_REACH/').expanduser()
 
-### For REACH ###
 inst = 'REACH'
+band = 'h' #'h' or 'y'
+mmf = 'mmf2' #'mmf1' (comb fiber) or 'mmf2' (star fiber)
+skipLFC = False #if False, uncertainties are output. mmf1 of y band must be reduced first.
 
-### FOR CALIBRATION ###
-# aperture extraction
+
+#--------FOR CALIBRATION--------#
+## FLAT_STAR
+# please change directry names and fits ids
 datadir = basedir/'flat/'
-anadir = basedir/'flat/'
-flat=irdstream.Stream2D("flat",datadir,anadir,inst=inst)
-flat.fitsid=list(range(53235,53334,2)) #no light in the speckle fiber
-################################
-### SELECT H band or YJ band ###
-################################
-flat.band='h' #'h' or 'y'
-print(flat.band,' band')
-if flat.band=='h':
-    flat.fitsid_increment() # when you use H-band
-    trace_smf=flat.aptrace(cutrow = 800,nap=42) #TraceAperture instance
-elif flat.band=='y':
-    trace_smf=flat.aptrace(cutrow = 1000,nap=102) #TraceAperture instance
+anadir = basedir/'reduc/'
+flat_star=irdstream.Stream2D("flat",datadir,anadir,inst=inst)
+flat_star.fitsid=list(range(53235,53334,2))
+# aperture extraction
+flat_star.band=band
+print(flat_star.band,' band')
+if band=='h' and flat_star.fitsid[0]%2==0:
+    flat_star.fitsid_increment() 
+    trace_smf=flat_star.aptrace(cutrow = 800,nap=42) 
+elif band=='y':
+    trace_smf=flat_star.aptrace(cutrow = 600,nap=102) 
 trace_mask = trace_smf.mask()
 
+# apeture mask plot
 import matplotlib.pyplot as plt
-plt.imshow(trace_smf.mask()) #apeture mask plot
+plt.imshow(trace_smf.mask()) 
 plt.show()
 
-# hotpixel mask: See pyird/io/read_hotpix.py for reading fixed mask (Optional)
+## HOTPIXEL MASK: 
+# See pyird/io/read_hotpix.py for reading fixed mask (Optional)
+## DARK
 datadir = basedir/'dark/'
 anadir = basedir/'dark/'
 dark = irdstream.Stream2D('dark', datadir, anadir,fitsid=[47269],inst=inst)
-if flat.band=='h':
-    dark.fitsid_increment() # when you use H-band
+if band=='h' and dark.fitsid[0]%2==0:
+    dark.fitsid_increment()
 median_image = dark.immedian()
 for data in dark.rawpath:
     im = pyf.open(str(data))[0].data
 im_subbias = bias_subtract_image(im)
 hotpix_mask = identify_hotpix_sigclip(im_subbias)
 
-###########################
-### SELECT mmf2 or mmf1 ###
-###########################
-trace_smf.mmf2() #mmf2 (star fiber)
-#trace_smf.mmf1() #mmf1 (comb fiber)
+# reduce mmf1 or mmf2
+if mmf=='mmf2':
+    trace_smf.mmf2() #mmf2 (star fiber)
+elif mmf=='mmf1':
+    trace_smf.mmf1() #mmf1 (comb fiber)
 
-# load ThAr raw image
+## THAR
 datadir = basedir/'thar'
-anadir = basedir/'thar'
-if flat.band=='h':
-    rawtag='IRDAD000'
-elif flat.band=='y':
-    rawtag='IRDBD000'
+anadir = basedir/'reduc'
+if band=='h':
+    rawtag='IRDAD000' #for calib data taken by Gen2
+    ignore_orders=None
+elif band=='y':
+    rawtag='IRDBD000' #for calib data taken by Gen2
+    ignore_orders = list(np.arange(1,32))+list([50,51])
+thar=irdstream.Stream2D("thar",datadir,anadir,fitsid=list(range(53347,53410,2)),inst=inst)#,rawtag=rawtag)#
 
 #wavelength calibration
-thar=irdstream.Stream2D("thar",datadir,anadir,fitsid=list(range(53347,53410,2)),inst=inst)
 thar.trace = trace_smf
+##CHECK!!
+#if flat_star.band=='h' and thar.fitsid[0]%2==0:
+#    thar.fitsid_increment() 
 thar.clean_pattern(trace_mask=trace_mask,extin='', extout='_cp', hotpix_mask=hotpix_mask)
 thar.calibrate_wavelength()
 
-### TARGET ###
-# Load data
+## FLAT
+flat_star.trace = trace_smf
+flat_star.clean_pattern(trace_mask=trace_mask,extin='', extout='_cp', hotpix_mask=hotpix_mask)
+flat_star.imcomb = True # median combine
+flat_star.flatten(hotpix_mask=hotpix_mask)
+df_flatn = flat_star.apnormalize(ignore_orders=ignore_orders)
+
+#--------FOR TARGET--------#
 datadir = basedir/'target/'
-anadir = basedir/'target/'
+anadir = basedir/'reduc/'
 target = irdstream.Stream2D(
     'targets', datadir, anadir, fitsid=[53205],inst=inst)
-if flat.band=='h':
-    target.fitsid_increment() # when you use H-band
+if flat_star.band=='h' and target.fitsid[0]%2==0:
+    target.fitsid_increment() 
 target.info = True  # show detailed info
 target.trace = trace_smf
 # clean pattern
 target.clean_pattern(trace_mask=trace_mask,extin='', extout='_cp', hotpix_mask=hotpix_mask)
 # flatten
-target.flatten(hotpix_mask=hotpix_mask)
+target.apext_flatfield(df_flatn,hotpix_mask=hotpix_mask)
 # assign reference spectra & resample
-target.dispcor(master_path=thar.anadir,extin='_hp')
+target.dispcor(master_path=thar.anadir,extin='_flnhp')
 
-### FLAT (for blaze function) ###
-flat.trace = trace_smf
-if flat.band == 'h':
-    flat.clean_pattern(trace_mask=trace_mask,extin='', extout='_cp', hotpix_mask=hotpix_mask)
-flat.imcomb = True # median combine
-flat.flatten()
-flat.dispcor(master_path=thar.anadir)
+# blaze function
+flat_star.apext_flatfield(df_flatn,hotpix_mask=hotpix_mask)
+flat_star.dispcor(master_path=thar.anadir)
 
 # combine & normalize
-target.normalize1D(flatid=flat.streamid,master_path=flat.anadir)
+target.normalize1D(master_path=flat_star.anadir,skipLFC=skipLFC)
+
+# save noramlized flat for fringe removal
+flat_star.dispcor(master_path=thar.anadir,blaze=False)
+flat_star.normalize1D(master_path=flat_star.anadir,skipLFC=skipLFC)
