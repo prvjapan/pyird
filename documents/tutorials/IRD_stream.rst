@@ -22,10 +22,11 @@ and some common variables.
     skipLFC = False #if False, uncertainties are output. mmf1 of y band must be reduced first.
 
 If ``skipLFC`` is False (default), uncertainties and signal-to-noise
-ratio at each wavelength are included in output files (*nw?????_m?.dat\*
-and \*ncw?????_m?.dat*), computed by using the readout noise (RN) in the
-comb spectrum (in mmf1) of the Y/J band. Therefore, spectrum of mmf1 in
-the Y/J band should be reduced first when ``skipLFC=False.``
+ratio at each wavelength are included in output files
+(\*nw?????_m?.dat\* and \*ncw?????_m?.dat\*), computed by using the
+readout noise (RN) in the comb spectrum (in mmf1) of the Y/J band.
+Therefore, spectrum of mmf1 in the Y/J band should be reduced first when
+``skipLFC=False.``
 
 If ``skipLFC=True``, the RN is set by the default value (RN=12
 :math:`e^{-}`).
@@ -88,7 +89,7 @@ The function ``aptrace`` searches apertures to be traced.
 
 .. parsed-literal::
 
-    100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:00<00:00, 509.65it/s]
+    100%|██████████| 50/50 [00:00<00:00, 106.28it/s]
 
 
 .. parsed-literal::
@@ -102,7 +103,7 @@ The function ``aptrace`` searches apertures to be traced.
 
 .. parsed-literal::
 
-    100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 42/42 [00:12<00:00,  3.48it/s]
+    100%|██████████| 42/42 [00:22<00:00,  1.87it/s]
 
 
 
@@ -454,13 +455,13 @@ devide target spectrum by them.
 .. image:: IRD_stream_files/IRD_stream_36_4.png
 
 
-After ``normalize1D``, normalized spectrum (*nw?????_m?.dat*) will be
+After ``normalize1D``, normalized spectrum (\*nw?????_m?.dat\*) will be
 created.
 
 The data format is ``$1: Wavelength [nm]``, ``$2: Order``,
 ``$3: Counts``, ``$4: S/N``, ``$5: Uncertainties``.
 
-In addition, there will be \*ncw?????_m?.dat*, which is the order
+In addition, there will be \*ncw?????_m?.dat\*, which is the order
 combined spectrum.
 
 There are overlapping wavelengths at the edge of order, so we

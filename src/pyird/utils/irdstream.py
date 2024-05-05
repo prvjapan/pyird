@@ -2,7 +2,6 @@
 
 from pyird.utils.fitsset import FitsSet
 from pyird.utils.datset import DatSet
-from pyird.utils import directory_util
 from pyird.image.trace_function import trace_legendre
 from pyird.image.aptrace import aptrace
 from pyird.utils.aperture import TraceAperture
@@ -27,6 +26,7 @@ class Stream2D(FitsSet):
         rawtag="IRDA000",
         inst="IRD",
         rotate=False,
+        detector_artifact=False,
     ):
         """initialization
         Args:
@@ -35,7 +35,8 @@ class Stream2D(FitsSet):
             anadir: directory in which the processed file will put
             fitsid: fitsid list, such as [10301,10303]
             rawtag: 
-            rotate (boolen): If True, the image is rotated in 90 deg.
+            rotate (boolen): If True, the image is rotated in 90 deg (for old detector). See #80 in GitHub
+            detector_artifact (boolen): If True, fill the gaps seen in the old detector. See #80 in GitHub
         """
         super(Stream2D, self).__init__(rawtag, rawdir, extension="")
         self.streamid = streamid
@@ -46,6 +47,8 @@ class Stream2D(FitsSet):
         self.imcomb = False
         self.inst = inst
         self.rotate = rotate
+        self.detector_artifact = detector_artifact
+
         self.tocsvargs = {"header": False, "index": False, "sep": " "}
         if fitsid is not None:
             print("fitsid:", fitsid)
@@ -83,7 +86,7 @@ class Stream2D(FitsSet):
         """Load fitsset and make imcube.
 
         Returns:
-           imcube
+            imcube
         """
         imcube = []
         for data in tqdm.tqdm(self.rawpath):
@@ -96,10 +99,10 @@ class Stream2D(FitsSet):
         """path to file with extension.
 
         Args:
-           extension: extension
+            extension: extension
 
         Returns:
-           path array of fits files w/ extension
+            path array of fits files w/ extension
         """
         f = self.fitsdir
         e = self.extension
@@ -710,6 +713,11 @@ class Stream2D(FitsSet):
             flatmedian = flatmedian[::-1, ::-1]
         if self.rotate:
             flatmedian = np.rot90(flatmedian)
+        if self.detector_artifact:
+            for i in range(0,16):
+                flatmedian[63+i*128:63+i*128+1,:]=flatmedian[63+i*128-1:63+i*128,:]
+                flatmedian[63+i*128+1:63+i*128+2,:]=flatmedian[63+i*128+2:63+i*128+3,:]
+
         y0, xmin, xmax, coeff = aptrace(flatmedian, cutrow, nap)
 
         return TraceAperture(trace_legendre, y0, xmin, xmax, coeff, inst)
