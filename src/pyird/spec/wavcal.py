@@ -151,8 +151,8 @@ def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, stdlim=0.005):
         norder = np.shape(dat)[0]
         orders = np.arange(158, 107, -1)
         print('YJ band')
-    else:
-        raise ValueError("Cannot identify H/YJ/Hold mode.")
+    else:        
+        raise ValueError("Cannot identify H or YJ mode.")
 
     if W.shape != dat.T.shape:
         print('Error: weights does not match data.')
@@ -255,7 +255,6 @@ def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, stdlim=0.005):
     #Ni, Nx = 5, 4
     std, iter = 1, 1
     while (std > stdlim) and (iter < maxiter):
-        print(iter)
         # reject duplicated channel
         pdat2 = pdat2[~pdat2.duplicated(keep=False, subset='CHANNEL')]
         pdat2 = pdat2.reset_index(drop=True)
@@ -265,7 +264,7 @@ def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, stdlim=0.005):
         wavsol2_2d = wavsol2.reshape(npix, l-j)
         residuals, drop_ind = sigmaclip(data2.T, wavsol2_2d.T,N=1.5)
         std = np.std(residuals)
-        print(std)
+        print("#",iter,"standard dev=",std)
         iter += 1
         # print(pdat2.iloc[pdat2.index[drop_ind]])
         if len(drop_ind) != 0:
