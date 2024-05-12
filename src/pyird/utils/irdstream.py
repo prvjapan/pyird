@@ -217,7 +217,6 @@ class Stream2D(FitsSet):
         """
         from pyird.image.oned_extract import flatten
         from pyird.image.trace_function import trace_legendre
-        from pyird.image.mask import trace
         from pyird.io.iraf_trace import read_trace_file
         from pyird.spec.rsdmat import multiorder_to_rsd
         from pyird.image.hotpix import apply_hotpixel_mask
@@ -578,7 +577,6 @@ class Stream2D(FitsSet):
         npix=2048,
         width=None,
         force_rotate=False,
-        channel_mode=None,
     ):
         """wavelength calibration usgin Th-Ar.
 
@@ -589,7 +587,6 @@ class Stream2D(FitsSet):
             npix: number of pixels
             width: list of aperture widths ([width_start,width_end])
             force_rotate: forces rotating the detector, when the number of the order is not standard values (i.e. 21 or 51)
-            channel_mode: sets the channel mode H, YJ, or None (auto identification), default to None
 
 
         """
@@ -662,7 +659,6 @@ class Stream2D(FitsSet):
                 w,
                 maxiter=maxiter,
                 stdlim=stdlim,
-                channel_mode=channel_mode,
             )
             # np.save('thar_%s_%s_final.npy'%(self.band,mmf),data)
             wavsol_2d = wavsol.reshape((npix, nord))
@@ -857,7 +853,7 @@ class Stream2D(FitsSet):
         else:
             fits_range = self.fitsid
 
-        for i, id in enumerate(fits_range):
+        for id in fits_range:
             if self.imcomb:
                 wfile = self.anadir / (
                     "w%s_%s_%s.dat" % (self.streamid, self.band, self.trace.mmf)

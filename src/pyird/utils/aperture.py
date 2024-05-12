@@ -67,3 +67,12 @@ class TraceAperture(object):
         self.xmax = self.xmax[1::2]
         self.coeff = self.coeff[1::2]
         self.mmf = 'm1'
+
+    def single_mmf(self):
+        """choose apertures for a single fiber mode
+
+        Returns:
+            updated variables (y0, xmin, xmax, coeff)
+
+        """
+        self.mmf = 'msingle'
