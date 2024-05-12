@@ -120,7 +120,7 @@ def sigmaclip(data, wavsol, N=3):
             n += 1
     return residuals, drop_ind
 
-def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, stdlim=0.005):
+def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, stdlim=0.005, channel_mode=None):
     """wavelegth calibration for ThAr spectrum.
 
     Args:
@@ -130,7 +130,8 @@ def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, stdlim=0.005):
         Nx: order of the fitting function with respect to the aperture number
         maxiter: maximum number of iterations
         stdlim: When the std of fitting residuals reaches this value, the iteration is terminated.
-
+        channel_mode: sets the channel mode H, YJ, or None (auto identification), default to None
+        
     Returns:
         final results of the wavlength solution
         data of ThAr signals used for fitting
@@ -139,18 +140,20 @@ def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, stdlim=0.005):
         >>> wavsol, data = wavcal_thar(thar)
     """
     # Load a channel list
-    if np.shape(dat)[0] == 21:
+    if np.shape(dat)[0] == 21 or channel_mode=="H":
         chanfile = (pkg_resources.resource_filename(
             'pyird', 'data/channel_H.list'))
         norder = 21
         orders = np.arange(104, 83, -1)
         print('H band')
-    elif np.shape(dat)[0] > 45:
+    elif np.shape(dat)[0] > 45  or channel_mode=="YJ":
         chanfile = (pkg_resources.resource_filename(
             'pyird', 'data/channel_YJ.list'))
         norder = np.shape(dat)[0]
         orders = np.arange(158, 107, -1)
         print('YJ band')
+    else:
+        raise ValueError("Cannot identifiy H or YJ. Specify channel_mode.")
 
     if W.shape != dat.T.shape:
         print('Error: weights does not match data.')
@@ -168,7 +171,9 @@ def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, stdlim=0.005):
 
     # allocate the line positions in pixcoord
     pdat1 = pd.DataFrame([], columns=['ORDER', 'CHANNEL', 'WAVELENGTH'])
-    for i in range(j, l):
+    
+    lmin = np.min([l,np.shape(dat)[0]])
+    for i in range(j, lmin):
         porder = pdat0['ORDER']
         pchan = pdat0['CHANNEL']
         wav = pdat0['WAVELENGTH']
@@ -182,7 +187,7 @@ def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, stdlim=0.005):
                 pchanlocal_med = np.where(med == plocal_med)[0]
                 if len(pchanlocal_med)==0:
                     continue
-                pchanlocal_dat = np.where(dat[i, :] == max(
+                pchanlocal_dat = np.where(dat[i, :] == np.nanmax(
                     dat[i, :][pchanlocal_med]))[0][0]
                 channel_tmp = pchanlocal_dat
                 data = [i+1-offset, channel_tmp, wav[k]]
@@ -192,16 +197,16 @@ def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, stdlim=0.005):
     data1 = pdat_to_wavmat(pdat1,j,l)
 
     # wavlength solution (rough estimation)
-    p1 = fit_wav_solution((X, Y), data1, W, Ni, Nx)
-    wavsol1 = fitfunc((X, Y), Ni, Nx, p1)
-    wavsol1_2d = wavsol1.reshape(npix, l-j)
+    p1 = fit_wav_solution((X[0:lmin,:], Y[0:lmin,:]), data1[:,0:lmin], W, Ni, Nx)
+    wavsol1 = fitfunc((X[0:lmin,:], Y[0:lmin,:]), Ni, Nx, p1)
+    wavsol1_2d = wavsol1.reshape(npix, lmin-j)
 
-    zeroind = data1.ravel() == 0
-    residuals = (data1.ravel() - wavsol1)[~zeroind]
+    zeroind = data1[:,0:lmin].ravel() == 0
+    residuals = (data1[:,0:lmin].ravel() - wavsol1)[~zeroind]
     print('standard deviation of residuals of 1st iteration = %.5f' %
           np.std(residuals))
 
-    plot_refthar(wavsol1, data1, l-j)
+    plot_refthar(wavsol1, data1[:,0:lmin], lmin-j)
 
     # read thar_ird2.dat
     path = (pkg_resources.resource_filename(
@@ -210,8 +215,9 @@ def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, stdlim=0.005):
 
     # add lines
     pdat2 = pd.DataFrame([], columns=['ORDER', 'CHANNEL', 'WAVELENGTH'])
-    for i in range(j, l):
-        pdat1_order = pdat1[pdat1['ORDER'] == i+1-offset]
+    
+    for i in range(j, lmin):
+        #pdat1_order = pdat1[pdat1['ORDER'] == i+1-offset]
         wavsol1_order = wavsol1_2d[:, i]
         wavref_order = wavref[(min(wavsol1_order) <= wavref)
                               & (wavref <= max(wavsol1_order))]

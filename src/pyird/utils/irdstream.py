@@ -34,7 +34,7 @@ class Stream2D(FitsSet):
             rawdir: directory where the raw data are
             anadir: directory in which the processed file will put
             fitsid: fitsid list, such as [10301,10303]
-            rawtag: 
+            rawtag:
             rotate (boolen): If True, the image is rotated in 90 deg (for old detector). See #80 in GitHub
             detector_artifact (boolen): If True, fill the gaps seen in the old detector. See #80 in GitHub
         """
@@ -571,16 +571,26 @@ class Stream2D(FitsSet):
         return median_image
 
     def calibrate_wavelength(
-        self, trace_file_path=None, maxiter=30, stdlim=0.001, npix=2048, width=None
+        self,
+        trace_file_path=None,
+        maxiter=30,
+        stdlim=0.001,
+        npix=2048,
+        width=None,
+        force_rotate=False,
+        channel_mode=None,
     ):
         """wavelength calibration usgin Th-Ar.
 
         Args:
-           trace_file_path: path to the trace file
-           maxiter: maximum number of iterations
-           stdlim: When the std of fitting residuals reaches this value, the iteration is terminated.
-           npix: number of pixels
-           width: list of aperture widths ([width_start,width_end])
+            trace_file_path: path to the trace file
+            maxiter: maximum number of iterations
+            stdlim: When the std of fitting residuals reaches this value, the iteration is terminated.
+            npix: number of pixels
+            width: list of aperture widths ([width_start,width_end])
+            force_rotate: forces rotating the detector, when the number of the order is not standard values (i.e. 21 or 51)
+            channel_mode: sets the channel mode H, YJ, or None (auto identification), default to None
+
 
         """
         from pyird.spec.wavcal import wavcal_thar
@@ -627,7 +637,6 @@ class Stream2D(FitsSet):
         if not os.path.exists(master_path):
             filen = self.path()[0]  # header of the first file
             hdu = pyf.open(filen)[0]
-            im = hdu.data
             header = hdu.header
             nord = len(y0)
             rawspec, pixcoord, _, _, _, _ = flatten(
@@ -639,16 +648,22 @@ class Stream2D(FitsSet):
                 coeff,
                 inst=self.inst,
                 width=width,
+                force_rotate=force_rotate,
             )
             rsd = multiorder_to_rsd(rawspec, pixcoord)
-            print(np.shape(rsd.T)[0])
             ## set weights
             if self.band == "h":
                 # w = make_weight()
                 w = np.ones(rsd.shape)  # XXX!!
             else:  # TODO: for y band
                 w = np.ones(rsd.shape)
-            wavsol, data = wavcal_thar(rsd.T, w, maxiter=maxiter, stdlim=stdlim)
+            wavsol, data = wavcal_thar(
+                rsd.T,
+                w,
+                maxiter=maxiter,
+                stdlim=stdlim,
+                channel_mode=channel_mode,
+            )
             # np.save('thar_%s_%s_final.npy'%(self.band,mmf),data)
             wavsol_2d = wavsol.reshape((npix, nord))
             hdux = pyf.PrimaryHDU(wavsol_2d, header)
@@ -714,9 +729,13 @@ class Stream2D(FitsSet):
         if self.rotate:
             flatmedian = np.rot90(flatmedian)
         if self.detector_artifact:
-            for i in range(0,16):
-                flatmedian[63+i*128:63+i*128+1,:]=flatmedian[63+i*128-1:63+i*128,:]
-                flatmedian[63+i*128+1:63+i*128+2,:]=flatmedian[63+i*128+2:63+i*128+3,:]
+            for i in range(0, 16):
+                flatmedian[63 + i * 128 : 63 + i * 128 + 1, :] = flatmedian[
+                    63 + i * 128 - 1 : 63 + i * 128, :
+                ]
+                flatmedian[63 + i * 128 + 1 : 63 + i * 128 + 2, :] = flatmedian[
+                    63 + i * 128 + 2 : 63 + i * 128 + 3, :
+                ]
 
         y0, xmin, xmax, coeff = aptrace(flatmedian, cutrow, nap)
 
