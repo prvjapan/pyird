@@ -133,13 +133,10 @@ class Stream2D(FitsSet):
                 os.remove(self.extpath(extension, check=False, string=True)[i])
                 print("rm old " + self.extpath(extension, check=False, string=True)[i])
 
-    def remove_bias(self, rot=None, method="reference", hotpix_img=None):
-        if self.info:
-            print("remove_bias: files=")
-            print(self.rawpath)
+    def remove_bias(self, rot=None):
+        self.print_if_info_is_true("remove_bias: files="+str(self.rawpath))
         if rot == "r":
             print("180 degree rotation applied.")
-        # IRD_bias_sube.main(self.anadir,self.rawpath, method,rot,hotpix_im = hotpix_img)
         self.fitsdir = self.anadir
         self.extension = "_rb"
 
@@ -159,8 +156,7 @@ class Stream2D(FitsSet):
 
         currentdir = os.getcwd()
         os.chdir(str(self.anadir))
-        if self.info:
-            print("clean_pattern: output extension=", extout)
+        self.print_if_info_is_true("clean_pattern: output extension="+extout)
 
         if trace_mask is None:
             trace_mask = self.trace.mask()
@@ -287,11 +283,11 @@ class Stream2D(FitsSet):
     ):
         """
         Args:
-           trace_path: trace file to be used in flatten
-           extout: output extension
-           extin: input extension
-           hotpix_mask: hotpix masked spectrum ('extout' to be automatically '_hp')
-           width: list of aperture widths ([width_start,width_end])
+            trace_path: trace file to be used in flatten
+            extout: output extension
+            extin: input extension
+            hotpix_mask: hotpix masked spectrum ('extout' to be automatically '_hp')
+            width: list of aperture widths ([width_start,width_end])
 
         """
         from pyird.image.oned_extract import flatten
@@ -369,10 +365,7 @@ class Stream2D(FitsSet):
                     width=width,
                 )
                 rsd = multiorder_to_rsd(rawspec, pixcoord)
-                hdux = pyf.PrimaryHDU(rsd, header)
-                hdulist = pyf.HDUList([hdux])
-                hdulist.writeto(save_path, overwrite=True)
-
+                self.write_rsd(save_path, header, rsd)
         
         self.print_if_info_is_true("flatten (+ hotpix mask): output extension="+extout)
         self.fitsdir = self.anadir
@@ -434,19 +427,16 @@ class Stream2D(FitsSet):
 
         if not self.imcomb:
             print(self.extpath(extin, string=False, check=False))
-            # extin_noexist, extout_noexist = [str(self.extpath(extin, string=False, check=False)[0].name)], [str(self.extpath(extout, string=False, check=False)[0].name)]#self.check_existence(extin, extout)
             for i, fitsid in enumerate(self.fitsid):
                 filen = self.anadir / self.extpath(extin)[i].name  # extin_noexist[i]
                 print(filen)
                 im, header = self.load_image(filen)
-                # header = hdu.header
                 rsd, wav, mask, pixcoord, rotim, iys_plot, iye_plot = im_to_rsd(
                     im, hotpix_mask=hotpix_mask, wavcal_path=wavcal_path
                 )
         else:
             median_image = self.immedian()
             imall = []
-            rsdall = []
             for i, fitsid in enumerate(self.fitsid):
                 filen = self.anadir / self.extpath(extin)[i].name
                 im, header = self.load_image(filen)
