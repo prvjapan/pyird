@@ -20,7 +20,7 @@ jobs:
       - name: Set up Python 3.10
         uses: actions/setup-python@v2
         with:
-          python-version: 3.10
+          python-version: '3.10'
 
       # install package	  
       - name: Install dependencies
@@ -37,7 +37,7 @@ jobs:
       # pytest -> JUnit xml
       - name: PyTest
         run: |
-          python -m pytest tests --junit-xml results/pytest.xml
+          python -m pytest tests/unittests --junit-xml results/pytest.xml
         continue-on-error: true
 
       # show the results
