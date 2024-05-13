@@ -217,8 +217,8 @@ class Stream2D(FitsSet):
             img = np.rot90(img)
         if self.inverse:
             print("inverse the image along the 0th-axis when loading")
-            img = img[::-1,:]
-        
+            img = img[::-1, :]
+
         return img, header
 
     def load_rsd(self, filen):
@@ -234,6 +234,15 @@ class Stream2D(FitsSet):
         return self.load_fits_data_header(filen)
 
     def load_fits_data_header(self, filen):
+        """
+        loads data and header from fits 
+
+        Args:
+            filen (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         hdu = pyf.open(filen)[0]
         data = hdu.data
         header = hdu.header
@@ -250,7 +259,7 @@ class Stream2D(FitsSet):
             img (_type_): _description_
         """
         if self.inverse:
-            img = img[::-1,:]
+            img = img[::-1, :]
         if self.rotate:
             img = np.rot90(img, k=-1)
         return self.write_fits_data_header(extout_noexist, header, img)
