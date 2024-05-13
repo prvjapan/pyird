@@ -157,8 +157,6 @@ class Stream2D(FitsSet):
         """
         from pyird.image.pattern_model import median_XY_profile
 
-        # from pyird.image.mask import trace_from_iraf_trace_file
-
         currentdir = os.getcwd()
         os.chdir(str(self.anadir))
         if self.info:
@@ -171,8 +169,6 @@ class Stream2D(FitsSet):
             extin = self.extension
 
         extin_noexist, extout_noexist = self.check_existence(extin, extout)
-        # print('extin_noexist: ',extin_noexist)
-        # print('extout_noexist: ',extout_noexist)
         for i, fitsid in enumerate(tqdm.tqdm(extin_noexist)):
             filen = self.rawdir / extin_noexist[i]
             im, header = self.load_image(filen)
@@ -200,6 +196,10 @@ class Stream2D(FitsSet):
         self.extension = extout
         os.chdir(currentdir)
 
+    def print_if_info_is_true(self, msg):
+        if self.info:
+            print(msg)
+
     def load_image(self, filen):
         """
         loads a fits image, if self.rotate=True, the image is rotated in 90 deg, self.inverse=True, the image is inversed along the 0-th-axis
@@ -213,12 +213,13 @@ class Stream2D(FitsSet):
 
         img, header = self.load_fits_data_header(filen)
         if self.rotate:
-            print("rotates the image in 90 deg when loading")
             img = np.rot90(img)
+            self.print_if_info_is_true("rotates the image in 90 deg when loading")
+            
         if self.inverse:
-            print("inverse the image along the 0th-axis when loading")
             img = img[::-1, :]
-
+            self.print_if_info_is_true("inverse the image along the 0th-axis when loading")
+            
         return img, header
 
     def load_rsd(self, filen):
@@ -235,13 +236,13 @@ class Stream2D(FitsSet):
 
     def load_fits_data_header(self, filen):
         """
-        loads data and header from fits 
+        loads data and header from fits
 
         Args:
-            filen (_type_): _description_
+            filen (str): filename
 
         Returns:
-            _type_: _description_
+            data, header
         """
         hdu = pyf.open(filen)[0]
         data = hdu.data
@@ -372,9 +373,8 @@ class Stream2D(FitsSet):
                 hdulist = pyf.HDUList([hdux])
                 hdulist.writeto(save_path, overwrite=True)
 
-        if self.info:
-            print("flatten (+ hotpix mask): output extension=", extout)
-
+        
+        self.print_if_info_is_true("flatten (+ hotpix mask): output extension="+extout)
         self.fitsdir = self.anadir
         self.extension = extout
         os.chdir(currentdir)
@@ -764,8 +764,7 @@ class Stream2D(FitsSet):
                 extf_noexist.append(str(extfi.name))
                 ext_noexist.append(str(ext[i].name))
             else:
-                if self.info:
-                    print("Ignore ", str(ext[i].name), "->", str(extfi.name))
+                self.print_if_info_is_true("Ignore "+str(ext[i].name)+" -> "+str(extfi.name))
                 skip = skip + 1
 
         if skip > 1:
