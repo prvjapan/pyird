@@ -11,9 +11,9 @@ NAME = 'pyird'
 PACKAGES = find_packages(where='src')
 META_PATH = os.path.join('src', 'pyird', '__init__.py')
 CLASSIFIERS = [
-    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python',
 ]
-INSTALL_REQUIRES = ['numpy', 'matplotlib', 'tqdm', 'scipy', 'sep', 'gpkron', 'pandas', 'astropy']
+INSTALL_REQUIRES = ['numpy', 'matplotlib', 'tqdm', 'scipy', 'sep', 'gpkron', 'pandas', 'extension_helpers', 'astropy', 'astroquery']
 
 # END PROJECT SPECIFIC
 
