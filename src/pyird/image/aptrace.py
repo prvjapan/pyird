@@ -1,8 +1,7 @@
 import numpy as np
 import pandas as pd
-from scipy.signal import medfilt, find_peaks
+from scipy.signal import find_peaks
 from scipy.optimize import leastsq
-from torch import Value
 from tqdm import tqdm
 import warnings
 from pyird.plot.order import plot_crosssection, plot_tracelines

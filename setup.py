@@ -13,7 +13,7 @@ META_PATH = os.path.join('src', 'pyird', '__init__.py')
 CLASSIFIERS = [
     'Programming Language :: Python :: 3.10',
 ]
-INSTALL_REQUIRES = ['numpy', 'matplotlib', 'tqdm', 'scipy', 'sep', 'gpkron', 'pandas']
+INSTALL_REQUIRES = ['numpy', 'matplotlib', 'tqdm', 'scipy', 'sep', 'gpkron', 'pandas', 'astropy']
 
 # END PROJECT SPECIFIC
 

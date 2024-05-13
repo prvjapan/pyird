@@ -1,9 +1,8 @@
 import pytest
-from pyird.image.aptrace import aptrace
 from pyird.image.trace_function import trace_legendre
 from pyird.utils.aperture import TraceAperture
 
-def test_aperture():
+def aperture_test():
     import numpy as np
     #The following values are computed by test_aptrace.py
     y0=np.array([98, 198, 298, 398, 498, 598, 698, 798, 898, 998, 1098, 1198, 1298, 1398, 1498, 1598, 1698, 1798, 1898, 1998])
@@ -19,4 +18,4 @@ def test_aperture():
     assert np.sum(ta.mask()) >= 239760
 
 if __name__ == '__main__':
-    test_aperture()
+    aperture_test()
