@@ -1,8 +1,7 @@
 PYIRD
 ===========
 
-Free from messy directory and file management of IRD analysis.
-Currently under heavily construction. Use develop branch for dev.
+Free from messy directory, file management, wavelength calibration, IRAF stuffs, and so on, when analyzing the Subaru/IRD data.
 
 
 Examples
