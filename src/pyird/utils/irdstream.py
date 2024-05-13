@@ -26,6 +26,7 @@ class Stream2D(FitsSet):
         rawtag="IRDA000",
         inst="IRD",
         rotate=False,
+        inverse=False,
         detector_artifact=False,
     ):
         """initialization
@@ -36,6 +37,7 @@ class Stream2D(FitsSet):
             fitsid: fitsid list, such as [10301,10303]
             rawtag:
             rotate (boolen): If True, the image is rotated in 90 deg (for old detector). See #80 in GitHub
+            inverse (boolen): If True, the image is inversed along y axis. See #80 in GitHub
             detector_artifact (boolen): If True, fill the gaps seen in the old detector. See #80 in GitHub
         """
         super(Stream2D, self).__init__(rawtag, rawdir, extension="")
@@ -47,6 +49,7 @@ class Stream2D(FitsSet):
         self.imcomb = False
         self.inst = inst
         self.rotate = rotate
+        self.inverse = inverse
         self.detector_artifact = detector_artifact
 
         self.tocsvargs = {"header": False, "index": False, "sep": " "}
@@ -146,10 +149,10 @@ class Stream2D(FitsSet):
         """
 
         Args:
-           trace_mask: trace mask (from iraf, use image.mask.trace_from_iraf_trace_file)
-           hotpix_mask: hot pixel mask
-           extout: output extension
-           extin: input extension
+            trace_mask: trace mask (from iraf, use image.mask.trace_from_iraf_trace_file)
+            hotpix_mask: hot pixel mask
+            extout: output extension
+            extin: input extension
 
         """
         from pyird.image.pattern_model import median_XY_profile
@@ -172,9 +175,7 @@ class Stream2D(FitsSet):
         # print('extout_noexist: ',extout_noexist)
         for i, fitsid in enumerate(tqdm.tqdm(extin_noexist)):
             filen = self.rawdir / extin_noexist[i]
-            hdu = pyf.open(filen)[0]
-            im = hdu.data
-            header = hdu.header
+            im, header = self.load_image(filen)
             if self.band == "h":
                 calim = np.copy(im)  # image for calibration
                 calim[trace_mask] = np.nan
@@ -192,16 +193,84 @@ class Stream2D(FitsSet):
 
             model_im = median_XY_profile(calim)
             corrected_im = im - model_im
-            hdu = pyf.PrimaryHDU(corrected_im, header)
-            hdulist = pyf.HDUList([hdu])
-            hdulist.writeto(extout_noexist[i], overwrite=True)
-            # np.savetxt('im.txt',im,delimiter=',')
-            # np.savetxt('model_im.txt',model_im,delimiter=',')
-            # np.savetxt('calim.txt', calim, delimiter=',')
+
+            self.write_image(extout_noexist[i], header, corrected_im)
 
         self.fitsdir = self.anadir
         self.extension = extout
         os.chdir(currentdir)
+
+    def load_image(self, filen):
+        """
+        loads a fits image, if self.rotate=True, the image is rotated in 90 deg, self.inverse=True, the image is inversed along the 0-th-axis
+
+        Args:
+            filen (str): filename
+
+        Returns:
+            image, header
+        """
+
+        img, header = self.load_fits_data_header(filen)
+        if self.rotate:
+            print("rotates the image in 90 deg when loading")
+            img = np.rot90(img)
+        if self.inverse:
+            print("inverse the image along the 0th-axis when loading")
+            img = img[::-1,:]
+        
+        return img, header
+
+    def load_rsd(self, filen):
+        """
+        loads Raw Spectral Detector matrix (RSD matrix)
+
+        Args:
+            filen (str): filename
+
+        Returns:
+            rsd, header
+        """
+        return self.load_fits_data_header(filen)
+
+    def load_fits_data_header(self, filen):
+        hdu = pyf.open(filen)[0]
+        data = hdu.data
+        header = hdu.header
+        hdu._close()
+        return data, header
+
+    def write_image(self, extout_noexist, header, img):
+        """
+        write an image to fits format, self.inverse=True, the image is inversed along the 0-th-axis, if self.rotate=True, the image is rotated in - 90 deg,
+
+        Args:
+            extout_noexist (_type_): _description_
+            header (_type_): _description_
+            img (_type_): _description_
+        """
+        if self.inverse:
+            img = img[::-1,:]
+        if self.rotate:
+            img = np.rot90(img, k=-1)
+        return self.write_fits_data_header(extout_noexist, header, img)
+
+    def write_rsd(self, extout_noexist, header, rsd):
+        """
+        write Raw Spectral Detector matrix (RSD matrix) to fits format
+
+        Args:
+            extout_noexist (_type_): _description_
+            header (_type_): _description_
+            rsd (_type_): _description_
+        """
+        self.write_fits_data_header(extout_noexist, header, rsd)
+
+    def write_fits_data_header(self, extout_noexist, header, rsd):
+        hdu = pyf.PrimaryHDU(rsd, header)
+        hdulist = pyf.HDUList([hdu])
+        hdulist.writeto(self.anadir / extout_noexist, overwrite=True)
+        hdu._close()
 
     def flatten(
         self, trace_path=None, extout="_fl", extin=None, hotpix_mask=None, width=None
@@ -247,9 +316,7 @@ class Stream2D(FitsSet):
             extin_noexist, extout_noexist = self.check_existence(extin, extout)
             for i, fitsid in enumerate(tqdm.tqdm(extin_noexist)):
                 filen = self.anadir / extin_noexist[i]
-                hdu = pyf.open(filen)[0]
-                im = hdu.data
-                header = hdu.header
+                im, header = self.load_image(filen)
                 rawspec, pixcoord, _, _, _, _ = flatten(
                     im,
                     trace_legendre,
@@ -268,9 +335,9 @@ class Stream2D(FitsSet):
                     rsd = apply_hotpixel_mask(
                         hotpix_mask, rsd, y0, xmin, xmax, coeff, save_path=save_path
                     )
-                hdux = pyf.PrimaryHDU(rsd, header)
-                hdulist = pyf.HDUList([hdux])
-                hdulist.writeto(extout_noexist[i], overwrite=True)
+
+                self.write_rsd(extout_noexist[i], header, rsd)
+
         else:
             save_path = self.anadir / (
                 "%s_%s_%s.fits" % (self.streamid, self.band, mmf)
@@ -308,10 +375,10 @@ class Stream2D(FitsSet):
     ):
         """
         Args:
-           trace_path: trace file to be used in flatten
-           extin: input extension
+            trace_path: trace file to be used in flatten
+            extin: input extension
             wavcal_path: path to master file of the wavelength calibration
-           hotpix_mask: hotpix mask
+            hotpix_mask: hotpix mask
         """
         from pyird.image.oned_extract import flatten
         from pyird.image.trace_function import trace_legendre
@@ -362,10 +429,8 @@ class Stream2D(FitsSet):
             for i, fitsid in enumerate(self.fitsid):
                 filen = self.anadir / self.extpath(extin)[i].name  # extin_noexist[i]
                 print(filen)
-                hdu = pyf.open(filen)
-                im = hdu[0].data
+                im, header = self.load_image(filen)
                 # header = hdu.header
-                hdu.close()
                 rsd, wav, mask, pixcoord, rotim, iys_plot, iye_plot = im_to_rsd(
                     im, hotpix_mask=hotpix_mask, wavcal_path=wavcal_path
                 )
@@ -375,10 +440,8 @@ class Stream2D(FitsSet):
             rsdall = []
             for i, fitsid in enumerate(self.fitsid):
                 filen = self.anadir / self.extpath(extin)[i].name
-                hdu = pyf.open(filen)
-                im = hdu[0].data
+                im, header = self.load_image(filen)
                 imall.append(im)
-                hdu.close()
             imall = np.array(imall)
             median_image = np.nanmedian(imall, axis=0)
             rsd, wav, mask, pixcoord, rotim, iys_plot, iye_plot = im_to_rsd(
@@ -404,9 +467,7 @@ class Stream2D(FitsSet):
             flatfile = self.anadir / (
                 "%s_%s_%s.fits" % (self.streamid, self.band, self.trace.mmf)
             )
-            hdu = pyf.open(flatfile)[0]
-            rsd = hdu.data
-            header = hdu.header
+            rsd, header = self.load_rsd(flatfile)
 
         if not hotpix_mask is None:
             save_path = self.anadir / (
@@ -514,9 +575,7 @@ class Stream2D(FitsSet):
             extin_noexist, extout_noexist = self.check_existence(extin, extout)
             for i, fitsid in enumerate(tqdm.tqdm(extin_noexist)):
                 filen = self.anadir / extin_noexist[i]
-                hdu = pyf.open(filen)[0]
-                im = hdu.data
-                header = hdu.header
+                im, header = self.load_image(filen)
                 df_sum_wap = sum_weighted_apertures(im, df_flatn)
                 rsd = df_sum_wap.values.T.astype(float)
                 if not hotpix_mask is None:
@@ -532,9 +591,7 @@ class Stream2D(FitsSet):
                         self.trace.coeff,
                         save_path=save_path,
                     )
-                hdux = pyf.PrimaryHDU(rsd, header)
-                hdulist = pyf.HDUList([hdux])
-                hdulist.writeto(self.anadir / extout_noexist[i], overwrite=True)
+                self.write_rsd(extout_noexist[i], header, rsd)
         else:
             save_path = self.anadir / (
                 "n%s_%s_%s.fits" % (self.streamid, self.band, self.trace.mmf)
@@ -546,9 +603,7 @@ class Stream2D(FitsSet):
                 df_sum_wap = sum_weighted_apertures(median_image, df_flatn)
                 rsd = df_sum_wap.values.T.astype(float)
                 rsd = rsd_order_medfilt(rsd)
-                hdux = pyf.PrimaryHDU(data=rsd, header=None)
-                hdulist = pyf.HDUList([hdux])
-                hdulist.writeto(save_path, overwrite=True)
+                self.write_rsd(save_path, None, rsd)
 
     def immedian(self, extension=None):
         """take image median.
@@ -562,7 +617,8 @@ class Stream2D(FitsSet):
         print("median combine: ", self.extension)
         imall = []
         for path in tqdm.tqdm(self.path(string=True, check=True)):
-            imall.append(pyf.open(path)[0].data)
+            img, header = self.load_image(path)
+            imall.append(img)
         imall = np.array(imall)
         # np.nansum(corrected_im_all,axis=0)#
         median_image = np.nanmedian(imall, axis=0)
@@ -632,6 +688,7 @@ class Stream2D(FitsSet):
 
         master_path = "thar_%s_%s.fits" % (self.band, mmf)
         if not os.path.exists(master_path):
+
             filen = self.path()[0]  # header of the first file
             hdu = pyf.open(filen)[0]
             header = hdu.header
@@ -662,6 +719,7 @@ class Stream2D(FitsSet):
             )
             # np.save('thar_%s_%s_final.npy'%(self.band,mmf),data)
             wavsol_2d = wavsol.reshape((npix, nord))
+
             hdux = pyf.PrimaryHDU(wavsol_2d, header)
             hdulist = pyf.HDUList([hdux])
             hdulist.writeto(master_path, overwrite=True)
@@ -722,8 +780,7 @@ class Stream2D(FitsSet):
         flatmedian = self.immedian()
         if nap == 42 or nap == 21:
             flatmedian = flatmedian[::-1, ::-1]
-        if self.rotate:
-            flatmedian = np.rot90(flatmedian)
+
         if self.detector_artifact:
             for i in range(0, 16):
                 flatmedian[63 + i * 128 : 63 + i * 128 + 1, :] = flatmedian[
