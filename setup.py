@@ -12,8 +12,11 @@ PACKAGES = find_packages(where='src')
 META_PATH = os.path.join('src', 'pyird', '__init__.py')
 CLASSIFIERS = [
     'Programming Language :: Python',
+    "Programming Language :: Python :: 3.10",
+    "Operating System :: OS Independent",
 ]
-INSTALL_REQUIRES = ['numpy', 'matplotlib', 'tqdm', 'scipy', 'astroquery', 'sep', 'gpkron', 'pandas']
+
+INSTALL_REQUIRES = ['numpy', 'matplotlib', 'tqdm', 'scipy', 'sep', 'gpkron', 'pandas', 'astropy', 'astroquery']
 
 # END PROJECT SPECIFIC
 
@@ -55,6 +58,7 @@ if __name__ == '__main__':
         long_description=read('README.md'),
         long_description_content_type='text/x-rst',
         packages=PACKAGES,
+        python_requires='>=3.10',
         package_dir={'': 'src'},
         include_package_data=True,
         install_requires=INSTALL_REQUIRES,
