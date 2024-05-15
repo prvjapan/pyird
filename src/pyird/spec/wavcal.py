@@ -271,6 +271,23 @@ def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, stdlim=0.005):
             pdat2 = pdat2.drop(pdat2.index[drop_ind])
     return wavsol2, data2
 
+def make_weight(): #REVIEW: there may be other appropreate weights
+    path = (pkg_resources.resource_filename('pyird', 'data/IP_fwhms_h.dat'))
+    fwhms = np.loadtxt(path)
+    calc_wtmp = lambda fwhm: 1/(fwhm)
+    w = []
+    for order in range(len(fwhms)):
+        w_ord = []
+        for part in range(len(fwhms[0])):
+            if part != len(fwhms[0])-1:
+                w_tmp = [calc_wtmp(fwhms[order][part])]*108
+            else:
+                w_tmp = [calc_wtmp(fwhms[order][part])]*104
+            w_ord.extend(w_tmp)
+        w.append(w_ord)
+    w = np.array(w).T
+    return w
+
 if __name__ == '__main__':
     # Load a Th-Ar spectrum
     path = (pkg_resources.resource_filename(

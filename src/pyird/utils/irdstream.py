@@ -168,20 +168,15 @@ class Stream2D(FitsSet):
         for i, fitsid in enumerate(tqdm.tqdm(extin_noexist)):
             filen = self.rawdir / extin_noexist[i]
             im, header = self.load_image(filen)
-            if self.band == "h":
-                calim = np.copy(im)  # image for calibration
-                calim[trace_mask] = np.nan
-                if hotpix_mask is not None:
-                    calim[hotpix_mask] = np.nan
-            elif self.band == "y":
-                calim = np.copy(im)  # image for calibration
-                trace_mask_r = trace_mask.reshape(1, int(trace_mask.size))
-                trace_mask_r = trace_mask_r[0][::-1].reshape(
+            calim = np.copy(im)  # image for calibration
+            if self.band == "y":
+                trace_mask = trace_mask.reshape(1, int(trace_mask.size))
+                trace_mask = trace_mask[0][::-1].reshape(
                     im.shape[0], im.shape[1]
                 )  # rotate mask matrix 180 degree
-                calim[trace_mask_r] = np.nan
-                if hotpix_mask is not None:
-                    calim[hotpix_mask] = np.nan
+            calim[trace_mask] = np.nan
+            if hotpix_mask is not None:
+                calim[hotpix_mask] = np.nan
 
             model_im = median_XY_profile(calim)
             corrected_im = im - model_im
@@ -278,8 +273,31 @@ class Stream2D(FitsSet):
         hdulist.writeto(self.anadir / extout_noexist, overwrite=True)
         hdu._close()
 
+    def extract_trace_info(self,trace_path=None):
+        """
+        extract parameters for trace
+
+        Args:
+            trace_path: path to trace file
+
+        Returns:
+            data and parameters for aperture trace
+        """
+        if trace_path is None:
+            y0, xmin, xmax, coeff = (
+                self.trace.y0,
+                self.trace.xmin,
+                self.trace.xmax,
+                self.trace.coeff,
+            )
+        else:
+            y0, interp_function, xmin, xmax, coeff = read_trace_file(trace_path)
+        mmf = self.trace.mmf
+        width = self.trace.width
+        return y0, xmin, xmax, coeff, mmf, width
+
     def flatten(
-        self, trace_path=None, extout="_fl", extin=None, hotpix_mask=None, width=None
+        self, trace_path=None, extout="_fl", extin=None, hotpix_mask=None, width=None, check=False, master_path=None
     ):
         """
         Args:
@@ -288,6 +306,8 @@ class Stream2D(FitsSet):
             extin: input extension
             hotpix_mask: hotpix masked spectrum ('extout' to be automatically '_hp')
             width: list of aperture widths ([width_start,width_end])
+            check: if True, return the extracted spectrum
+            master_path: if this set the path to wavelength reference file with check=True, return wavelength allocated spectrum
 
         """
         from pyird.image.oned_extract import flatten
@@ -299,17 +319,7 @@ class Stream2D(FitsSet):
         currentdir = os.getcwd()
         os.chdir(str(self.anadir))
 
-        if trace_path is None:
-            y0, xmin, xmax, coeff = (
-                self.trace.y0,
-                self.trace.xmin,
-                self.trace.xmax,
-                self.trace.coeff,
-            )
-            mmf = self.trace.mmf
-            width = self.trace.width
-        else:
-            y0, interp_function, xmin, xmax, coeff = read_trace_file(trace_path)
+        y0, xmin, xmax, coeff, mmf, width = self.trace_info(trace_path)
 
         if extin is None:
             extin = self.extension
@@ -323,7 +333,7 @@ class Stream2D(FitsSet):
             for i, fitsid in enumerate(tqdm.tqdm(extin_noexist)):
                 filen = self.anadir / extin_noexist[i]
                 im, header = self.load_image(filen)
-                rawspec, pixcoord, _, _, _, _ = flatten(
+                rawspec, pixcoord, rotim, tl, iys_plot, iye_plot = flatten(
                     im,
                     trace_legendre,
                     y0,
@@ -341,8 +351,18 @@ class Stream2D(FitsSet):
                     rsd = apply_hotpixel_mask(
                         hotpix_mask, rsd, y0, xmin, xmax, coeff, save_path=save_path
                     )
-
-                self.write_rsd(extout_noexist[i], header, rsd)
+                if not check:
+                    self.write_rsd(extout_noexist[i], header, rsd)
+                else:
+                    mask_shape = (2048, 2048)
+                    trace_mask = np.zeros(mask_shape)
+                    for i in range(len(y0)):
+                        trace_mask[i, xmin[i] : xmax[i] + 1] = tl[i]
+                    if not master_path is None:
+                        wav, _ = self.load_image(master_path)
+                    else:
+                        wav = []
+                    return rsd,wav,trace_mask,pixcoord,rotim,iys_plot,iye_plot
 
         else:
             save_path = self.anadir / (
@@ -352,8 +372,8 @@ class Stream2D(FitsSet):
                 median_image = self.immedian()
                 if not hotpix_mask is None:
                     median_image = median_image * (~hotpix_mask)
-                hdu = pyf.open(self.path()[0])[0]
-                header = hdu.header
+                filen = self.path()[0]  # header of the first file
+                _, header = self.load_image(filen)
                 rawspec, pixcoord, _, _, _, _ = flatten(
                     median_image,
                     trace_legendre,
@@ -371,85 +391,6 @@ class Stream2D(FitsSet):
         self.fitsdir = self.anadir
         self.extension = extout
         os.chdir(currentdir)
-
-    def flatten_check(
-        self, trace_path=None, extin=None, wavcal_path=None, hotpix_mask=None
-    ):
-        """
-        Args:
-            trace_path: trace file to be used in flatten
-            extin: input extension
-            wavcal_path: path to master file of the wavelength calibration
-            hotpix_mask: hotpix mask
-        """
-        from pyird.image.oned_extract import flatten
-        from pyird.image.trace_function import trace_legendre
-        from pyird.io.iraf_trace import read_trace_file
-        from pyird.spec.rsdmat import multiorder_to_rsd
-        from pyird.image.hotpix import apply_hotpixel_mask
-
-        def im_to_rsd(im, hotpix_mask=None, wavcal_path=None):
-            rawspec, pixcoord, rotim, tl, iys_plot, iye_plot = flatten(
-                im, trace_legendre, y0, xmin, xmax, coeff, self.inst
-            )
-            mask_shape = (2048, 2048)
-            mask = np.zeros(mask_shape)
-            for i in range(len(y0)):
-                mask[i, xmin[i] : xmax[i] + 1] = tl[i]
-            rsd = multiorder_to_rsd(rawspec, pixcoord)
-            if not hotpix_mask is None:
-                rsd = apply_hotpixel_mask(hotpix_mask, rsd, y0, xmin, xmax, coeff)
-            if not wavcal_path is None:
-                hdu = pyf.open(wavcal_path)
-                wav = hdu[0].data
-                hdu.close()
-            else:
-                wav = []
-            return rsd, wav, mask, pixcoord, rotim, iys_plot, iye_plot
-
-        currentdir = os.getcwd()
-        os.chdir(str(self.anadir))
-
-        global y0, xmin, xmax, coeff
-        if trace_path is None:
-            y0, xmin, xmax, coeff = (
-                self.trace.y0,
-                self.trace.xmin,
-                self.trace.xmax,
-                self.trace.coeff,
-            )
-            mmf = self.trace.mmf
-        else:
-            y0, interp_function, xmin, xmax, coeff = read_trace_file(trace_path)
-
-        if extin is None:
-            extin = self.extension
-
-        if not self.imcomb:
-            print(self.extpath(extin, string=False, check=False))
-            for i, fitsid in enumerate(self.fitsid):
-                filen = self.anadir / self.extpath(extin)[i].name  # extin_noexist[i]
-                print(filen)
-                im, header = self.load_image(filen)
-                rsd, wav, mask, pixcoord, rotim, iys_plot, iye_plot = im_to_rsd(
-                    im, hotpix_mask=hotpix_mask, wavcal_path=wavcal_path
-                )
-        else:
-            median_image = self.immedian()
-            imall = []
-            for i, fitsid in enumerate(self.fitsid):
-                filen = self.anadir / self.extpath(extin)[i].name
-                im, header = self.load_image(filen)
-                imall.append(im)
-            imall = np.array(imall)
-            median_image = np.nanmedian(imall, axis=0)
-            rsd, wav, mask, pixcoord, rotim, iys_plot, iye_plot = im_to_rsd(
-                median_image, hotpix_mask=hotpix_mask, wavcal_path=wavcal_path
-            )
-
-        self.fitsdir = self.anadir
-        os.chdir(currentdir)
-        return rsd, wav, mask, pixcoord, rotim, iys_plot, iye_plot  # ,xmin,xmax
 
     def apnormalize(self, rsd=None, hotpix_mask=None, ignore_orders=None):
         """normalize 2D apertures by 1D functions
@@ -517,51 +458,10 @@ class Stream2D(FitsSet):
             width: list of aperture widths ([width_start,width_end])
         """
         from pyird.image.hotpix import apply_hotpixel_mask
+        from pyird.spec.rsdmat import rsd_order_medfilt
+        from pyird.image.oned_extract import sum_weighted_apertures
 
-        def sum_weighted_apertures(im, df_flatn):
-            from pyird.image.oned_extract import flatten
-            from pyird.image.trace_function import trace_legendre
-
-            df_onepix = flatten(
-                im,
-                trace_legendre,
-                self.trace.y0,
-                self.trace.xmin,
-                self.trace.xmax,
-                self.trace.coeff,
-                inst=self.inst,
-                onepix=True,
-                width=self.trace.width,
-            )
-            apertures = [int(i.split("ec")[-1]) for i in df_onepix.keys()]
-            df_ecf = {}
-            for i in apertures:
-                # flatn_mean = np.nanmean(df_flatn['ec%d'%(i)].loc[2:len(df_flatn['ec%d'%(i)])-1].values.astype(float)) #cf) hdsis_ecf
-                flatn_mean = np.nanmedian(
-                    df_flatn["ec%d" % (i)]
-                    .loc[2 : len(df_flatn["ec%d" % (i)]) - 1]
-                    .values.astype(float)
-                )
-                print("pixel = %d, Mean = %.5f" % (i, flatn_mean))
-                df_ecf["ec%d" % (i)] = (
-                    df_onepix["ec%d" % (i)] / df_flatn["ec%d" % (i)]
-                ) * flatn_mean  # cf) hdsis_ecf
-            for i, key in enumerate(df_ecf.keys()):
-                if i == 0:
-                    df_sum_wap = df_ecf[key]
-                else:
-                    df_sum_wap += df_ecf[key]
-            return df_sum_wap
-
-        def rsd_order_medfilt(rsd, kernel_size=9):
-            from scipy.signal import medfilt
-
-            rsd_filtered = []
-            for i in range(len(rsd[0])):
-                filtered_data = medfilt(rsd[:, i], kernel_size=kernel_size)
-                rsd_filtered.append(filtered_data)
-            rsd_filtered = np.array(rsd_filtered).T
-            return rsd_filtered
+        y0, xmin, xmax, coeff, mmf, width = extract_trace_info()
 
         if extin is None:
             extin = self.extension
@@ -575,7 +475,7 @@ class Stream2D(FitsSet):
             for i, fitsid in enumerate(tqdm.tqdm(extin_noexist)):
                 filen = self.anadir / extin_noexist[i]
                 im, header = self.load_image(filen)
-                df_sum_wap = sum_weighted_apertures(im, df_flatn)
+                df_sum_wap = sum_weighted_apertures(im, df_flatn, y0, xmin, xmax, coeff, width, self.inst)
                 rsd = df_sum_wap.values.T.astype(float)
                 if not hotpix_mask is None:
                     save_path = self.anadir / (
@@ -599,7 +499,7 @@ class Stream2D(FitsSet):
                 median_image = self.immedian("_cp")
                 if not hotpix_mask is None:
                     median_image = median_image * (~hotpix_mask)
-                df_sum_wap = sum_weighted_apertures(median_image, df_flatn)
+                df_sum_wap = sum_weighted_apertures(median_image, df_flatn, y0, xmin, xmax, coeff, width, self.inst)
                 rsd = df_sum_wap.values.T.astype(float)
                 rsd = rsd_order_medfilt(rsd)
                 self.write_rsd(save_path, None, rsd)
@@ -626,7 +526,7 @@ class Stream2D(FitsSet):
 
     def calibrate_wavelength(
         self,
-        trace_file_path=None,
+        trace_path=None,
         maxiter=30,
         stdlim=0.001,
         npix=2048,
@@ -636,7 +536,7 @@ class Stream2D(FitsSet):
         """wavelength calibration usgin Th-Ar.
 
         Args:
-            trace_file_path: path to the trace file
+            trace_path: path to the trace file
             maxiter: maximum number of iterations
             stdlim: When the std of fitting residuals reaches this value, the iteration is terminated.
             npix: number of pixels
@@ -651,46 +551,17 @@ class Stream2D(FitsSet):
         from pyird.image.trace_function import trace_legendre
         from pyird.spec.rsdmat import multiorder_to_rsd
 
-        def make_weight():  # REVIEW: there may be other appropreate weights
-            path = pkg_resources.resource_filename("pyird", "data/IP_fwhms_h.dat")
-            fwhms = np.loadtxt(path)
-            calc_wtmp = lambda fwhm: 1 / (fwhm)
-            w = []
-            for order in range(len(fwhms)):
-                w_ord = []
-                for part in range(len(fwhms[0])):
-                    if part != len(fwhms[0]) - 1:
-                        w_tmp = [calc_wtmp(fwhms[order][part])] * 108
-                    else:
-                        w_tmp = [calc_wtmp(fwhms[order][part])] * 104
-                    w_ord.extend(w_tmp)
-                w.append(w_ord)
-            w = np.array(w).T
-            return w
-
         currentdir = os.getcwd()
         os.chdir(str(self.anadir))
 
         median_image = self.immedian()
 
-        if trace_file_path is None:
-            y0, xmin, xmax, coeff = (
-                self.trace.y0,
-                self.trace.xmin,
-                self.trace.xmax,
-                self.trace.coeff,
-            )
-            mmf = self.trace.mmf
-            width = self.trace.width
-        else:
-            y0, interp_function, xmin, xmax, coeff = read_trace_file(trace_file_path)
+        y0, xmin, xmax, coeff, mmf, width = self.trace_info(trace_path)
 
         master_path = "thar_%s_%s.fits" % (self.band, mmf)
         if not os.path.exists(master_path):
-
             filen = self.path()[0]  # header of the first file
-            hdu = pyf.open(filen)[0]
-            header = hdu.header
+            _, header = self.load_image(filen)
             nord = len(y0)
             rawspec, pixcoord, _, _, _, _ = flatten(
                 median_image,
@@ -704,12 +575,7 @@ class Stream2D(FitsSet):
                 force_rotate=force_rotate,
             )
             rsd = multiorder_to_rsd(rawspec, pixcoord)
-            ## set weights
-            if self.band == "h":
-                # w = make_weight()
-                w = np.ones(rsd.shape)  # XXX!!
-            else:  # TODO: for y band
-                w = np.ones(rsd.shape)
+            w = np.ones(rsd.shape) ##weights for identifying thar
             wavsol, data = wavcal_thar(
                 rsd.T,
                 w,
@@ -724,13 +590,6 @@ class Stream2D(FitsSet):
             hdulist.writeto(master_path, overwrite=True)
 
         os.chdir(currentdir)
-
-    def flatfielding1D(self):
-        return
-
-    def extract1D(self):
-        """extract 1D specctra."""
-        return
 
     def check_existence(self, extin, extout):
         """check files do not exist or not.
@@ -792,6 +651,27 @@ class Stream2D(FitsSet):
 
         return TraceAperture(trace_legendre, y0, xmin, xmax, coeff, inst)
 
+    def write_df_spec_wav(self, spec_m2, reference, save_path):
+        """
+        write spectrum and wavelengths to pandas.DataFrame format
+
+        Args:
+            spec_m2:    spectrum not yet allocated wavelength
+            reference:  wavelength reference
+            save_path:  path to .csv file 
+        """
+        wspec = pd.DataFrame([], columns=["wav", "order", "flux"])
+        for i in range(len(reference[0])):
+            wav = reference[:, i]
+            order = np.ones(len(wav))
+            order[:] = i + 1
+            data_order = [wav, order, spec_m2[:, i]]
+            df_order = pd.DataFrame(data_order, index=["wav", "order", "flux"]).T
+            wspec = pd.concat([wspec, df_order])
+        wspec = wspec.fillna(0)
+        wspec.to_csv(save_path, **self.tocsvargs)
+        return wspec
+
     def dispcor(self, extin="_fl", prefix="w", master_path=None, blaze=True):
         """dispersion correct and resample spectra
 
@@ -803,19 +683,6 @@ class Stream2D(FitsSet):
 
         """
         from pyird.plot.showspec import show_wavcal_spectrum
-
-        def mkwspec(spec_m2, reference, save_path):
-            wspec = pd.DataFrame([], columns=["wav", "order", "flux"])
-            for i in range(len(reference[0])):
-                wav = reference[:, i]
-                order = np.ones(len(wav))
-                order[:] = i + 1
-                data_order = [wav, order, spec_m2[:, i]]
-                df_order = pd.DataFrame(data_order, index=["wav", "order", "flux"]).T
-                wspec = pd.concat([wspec, df_order])
-            wspec = wspec.fillna(0)
-            wspec.to_csv(save_path, **self.tocsvargs)
-            return wspec
 
         if master_path == None:
             master_path = self.anadir.joinpath("..", "thar").resolve() / (
@@ -842,27 +709,17 @@ class Stream2D(FitsSet):
                 save_path = self.anadir / (
                     "%s%d_%s.dat" % (prefix, id, self.trace.mmf)
                 )  ##e.g. w41511_m2.dat
-                wspec = mkwspec(spec_m2, reference, save_path)
-                if self.info:
-                    print(
-                        "dispcor: output spectrum= %s%d_%s.dat"
-                        % (prefix, id, self.trace.mmf)
-                    )
+                wspec = self.write_df_spec_wav(spec_m2, reference, save_path)
+
+                self.print_if_info_is_true(
+                    "dispcor: output spectrum= %s%d_%s.dat"
+                    % (prefix, id, self.trace.mmf)
+                )
                 # plot
                 show_wavcal_spectrum(wspec, alpha=0.5)
         else:
-
-            def save_wspec(hdu, save_path):
-                spec_m2 = hdu.data
-                hdu_ref = pyf.open(master_path)[0]
-                reference = hdu_ref.data
-                wspec = mkwspec(spec_m2, reference, save_path)
-                if self.info:
-                    outpath = str(save_path).split("/")[-1]
-                    print("dispcor: output spectrum= ", outpath)
-                # plot
-                show_wavcal_spectrum(wspec, alpha=0.5)
-
+            hdu_ref = pyf.open(master_path)[0]
+            reference = hdu_ref.data
             if blaze:
                 hdu = pyf.open(
                     self.anadir
@@ -871,7 +728,6 @@ class Stream2D(FitsSet):
                 save_path = self.anadir / (
                     "%sblaze_%s_%s.dat" % (prefix, self.band, self.trace.mmf)
                 )
-                save_wspec(hdu, save_path)
             else:  ## need for fringe removal?
                 hdu = pyf.open(
                     self.anadir
@@ -881,7 +737,16 @@ class Stream2D(FitsSet):
                     "%s%s_%s_%s.dat"
                     % (prefix, self.streamid, self.band, self.trace.mmf)
                 )
-                save_wspec(hdu, save_path)
+            spec_m2 = hdu.data
+            wspec = self.write_df_spec_wav(spec_m2, reference, save_path)
+            
+            outpath = str(save_path).split("/")[-1]
+            self.print_if_info_is_true(
+                "dispcor: output spectrum= %s"
+                % (outpath)
+            )
+            # plot
+            show_wavcal_spectrum(wspec, alpha=0.5)
 
     def normalize1D(self, flatid="blaze", master_path=None, skipLFC=False):
         """combine orders and normalize spectrum
