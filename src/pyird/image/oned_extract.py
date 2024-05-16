@@ -1,6 +1,7 @@
 import tqdm
 import numpy as np
 import pandas as pd
+from pyird.image.trace_function import trace_legendre
 
 
 def flatten(
@@ -110,6 +111,55 @@ def flatten(
     else:
         return spec, pixcoord, rotim, tl, iys_all, iye_all
 
+def sum_weighted_apertures(im, df_flatn, y0, xmin, xmax, coeff, width, inst):
+    """
+    taking waighted sum of the counts in aperture pixels (refer to hdsis_ecf for HDS/Subaru data)
+
+    Args:
+        im: image
+        df_flatn: apnormalized flat spectrum
+        y0: y-offset
+        xmin: xmin
+        xmax: xmax
+        coeff: coefficients
+        inst: instrument (IRD or REACH)
+        onepix: extract the spectrum pixel by pixel in an aperture
+        npix: number of pixels
+        width: list of aperture widths ([width_start,width_end])
+
+    Returns:
+        1D spectrum
+    """
+    df_onepix = flatten(
+        im,
+        trace_legendre,
+        y0,
+        xmin,
+        xmax,
+        coeff,
+        inst=inst,
+        onepix=True,
+        width=width,
+    )
+    apertures = [int(i.split("ec")[-1]) for i in df_onepix.keys()]
+    df_ecf = {}
+    for i in apertures:
+        # flatn_mean = np.nanmean(df_flatn['ec%d'%(i)].loc[2:len(df_flatn['ec%d'%(i)])-1].values.astype(float)) #cf) hdsis_ecf
+        flatn_mean = np.nanmedian(
+            df_flatn["ec%d" % (i)]
+            .loc[2 : len(df_flatn["ec%d" % (i)]) - 1]
+            .values.astype(float)
+        )
+        print("pixel = %d, Mean = %.5f" % (i, flatn_mean))
+        df_ecf["ec%d" % (i)] = (
+            df_onepix["ec%d" % (i)] / df_flatn["ec%d" % (i)]
+        ) * flatn_mean  # cf) hdsis_ecf
+    for i, key in enumerate(df_ecf.keys()):
+        if i == 0:
+            df_sum_wap = df_ecf[key]
+        else:
+            df_sum_wap += df_ecf[key]
+    return df_sum_wap
 
 if __name__ == "__main__":
     import numpy as np
