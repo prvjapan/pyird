@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-def show_wavcal_spectrum(df_wspec,**kwargs):
+def show_wavcal_spectrum(df_wspec,title=None,**kwargs):
     """show the wavelength calibrated spectrum.
 
     Args:
@@ -15,4 +15,6 @@ def show_wavcal_spectrum(df_wspec,**kwargs):
     fig=plt.figure()
     ax=fig.add_subplot(111)
     ax.plot(wav,flux,**kwargs)
+
+    ax.set(title=title,xlabel="Wavelength [nm]",ylabel="Flux")
     plt.show()
