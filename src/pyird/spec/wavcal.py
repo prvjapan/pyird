@@ -3,7 +3,7 @@ from scipy.optimize import leastsq
 import matplotlib.pyplot as plt
 
 import pandas as pd
-from pyird.plot.order import plot_refthar
+from pyird.plot.order import plot_fitresult_thar
 from pyird.io.read_linelist import read_linelist
 from astropy.io import fits
 from scipy.signal import medfilt
@@ -204,7 +204,8 @@ def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, stdlim=0.005):
     print('standard deviation of residuals of 1st iteration = %.5f' %
           np.std(residuals))
 
-    plot_refthar(wavsol1, data1, l-j)
+    # plot result from the first iteration
+    #plot_fitresult_thar(wavsol1, data1, l-j)
 
     # read thar_ird2.dat
     path = (pkg_resources.resource_filename(
@@ -235,21 +236,6 @@ def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, stdlim=0.005):
                 pdat2 = pd.concat([pdat2, df_tmp], ignore_index=True)
 
     data2 = pdat_to_wavmat(pdat2,j,l)
-    # """ # compare previous wav-channel list & new wav-channel list
-    fig = plt.figure(figsize=(7, 5))
-    ax = fig.add_subplot(111)
-    for i in range(len(data1[0])):
-        ax.plot(wavsol1_2d[:, i], color='gray', alpha=0.5)
-        data1_plot = np.copy(data1[:, i])
-        data1_plot[data1_plot == 0] = np.nan
-        ax.plot(data1_plot, '.', color='r')
-        data2_plot = np.copy(data2[:, i])
-        data2_plot[data2_plot == 0] = np.nan
-        ax.plot(data2_plot, 'x', color='blue')
-        #ax.text(2050, result_plot[i][-1]-5, i, color='green',fontsize=10)
-    ax.set(xlabel='pixel', ylabel='wavelength [nm]')
-    plt.show()
-    # """
 
     # iterate fitting polynomial function
     #Ni, Nx = 5, 4
@@ -269,6 +255,9 @@ def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, stdlim=0.005):
         # print(pdat2.iloc[pdat2.index[drop_ind]])
         if len(drop_ind) != 0:
             pdat2 = pdat2.drop(pdat2.index[drop_ind])
+            
+    # plot result from the final iteration
+    plot_fitresult_thar(wavsol2, data2, l-j)
     return wavsol2, data2
 
 def make_weight(): #REVIEW: there may be other appropreate weights

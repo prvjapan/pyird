@@ -716,7 +716,7 @@ class Stream2D(FitsSet):
                 % (outpath)
             )
             # plot
-            show_wavcal_spectrum(wspec, alpha=0.5)
+            show_wavcal_spectrum(wspec, title="Extracted spectrum: %s"%(outpath),alpha=0.5)
 
     def normalize1D(self, flatid="blaze", master_path=None, skipLFC=False):
         """combine orders and normalize spectrum
@@ -780,8 +780,10 @@ class Stream2D(FitsSet):
                     % (self.fitsid[i], self.trace.mmf)
                 )
             # plot
-            show_wavcal_spectrum(df_continuum_save, alpha=0.5)
-            show_wavcal_spectrum(df_interp_save, alpha=0.5)
+            show_wavcal_spectrum(df_continuum_save,title="Normalized spectrum: nw%d_%s.dat"
+                                % (self.fitsid[i], self.trace.mmf),alpha=0.5)
+            show_wavcal_spectrum(df_interp_save, title="Normalized & Order combined spectrum: ncw%d_%s.dat"
+                                % (self.fitsid[i], self.trace.mmf),alpha=0.5)
 
 
 class Stream1D(DatSet):
