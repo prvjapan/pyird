@@ -10,7 +10,7 @@ def cal_nct(nctrend_im,margin_npixel=4,Ncor=64, sigma=0.1, xscale=32, yscale=64,
     subarray = subarray[:, margin_npixel:-margin_npixel]
 
     coarsed_array = calc_coarsed_array(nctrend_im, Ncor, cube=cube)
-    #coarsed_array[coarsed_array !=coarsed_array] = np.nanmedian(coarsed_array)
+    coarsed_array[coarsed_array !=coarsed_array] = np.nanmedian(coarsed_array)
 
     nctrend_model = GP2D(coarsed_array, RBF, sigma, (xscale, yscale), pshape=np.shape(subarray))
     return nctrend_model
@@ -97,7 +97,7 @@ def median_XY_profile(calim0, rm_nct=True, margin_npixel=4):
 
     ## stripe model
     corrected_im_tmp = calim0 - model_image
-    stripe = np.nanmedian(corrected_im_tmp,axis=1)
+    stripe = np.nanmedian(corrected_im_tmp,axis=0) ## 0
     stripe = np.array([stripe]*2048)
     model_image += stripe
 

@@ -91,7 +91,7 @@ def flatten(
                     df_onepix["ec%d" % (k)].loc[i + 1, ix + 1] = apsum
             else:
                 iys = np.max([0, tl_int[j] - width_str])
-                iye = np.min([ny - 1, tl_int[j] + width_end])
+                iye = np.min([ny - 1, tl_int[j] + width_end + 1])
                 # At the ends of the aperture partial pixels are used. (cf. IRAF apall)
                 apsum = (
                     np.sum(rotim[ix, iys + 1 : iye])
