@@ -228,7 +228,7 @@ def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, stdlim=0.005):
             ind_low, ind_upp = max(ind - waround, 0), min(ind+waround+1, npix)
             if np.nanmax(med[ind_low:ind_upp]) > np.nanpercentile(med[med>0], 80): #CHECK!!
                 pix_med = np.where(med == np.nanmax(med[ind_low:ind_upp]))[0]
-                pix_dat = np.where(dat[i, :] == max(dat[i, pix_med]))[0][0]
+                pix_dat = np.where(dat[i, :] == np.nanmax(dat[i, pix_med]))[0][0]
                 pix_tmp = pix_dat
                 wav = ref
                 data = [i+1-offset, pix_tmp, wav]
