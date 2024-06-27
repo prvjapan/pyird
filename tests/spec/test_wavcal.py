@@ -1,5 +1,5 @@
 import pytest
-from pyird.spec.wavcal import fitfunc, fit_wav_solution
+from pyird.spec.wavcal import fit_polynomial, fit_wav_solution
 
 def test_wavcal():
     import numpy as np
@@ -19,7 +19,7 @@ def test_wavcal():
 
     w = np.ones(X.shape)
 
-    data_in = fitfunc((X,Y),Ni,Nx,params=p_in).reshape(npix,l-j)
+    data_in = fit_polynomial((X,Y),Ni,Nx,params=p_in).reshape(npix,l-j)
     p_out = fit_wav_solution((X,Y),data_in,w,Ni,Nx)
     p_relerr = (p_out/p_in) - 1
     #data_out = fitfunc((X,Y),Ni,Nx,p_out).reshape(npix,l-j)
