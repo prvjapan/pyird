@@ -517,7 +517,7 @@ class Stream2D(FitsSet):
         self,
         trace_path=None,
         maxiter=30,
-        stdlim=0.001,
+        std_threshold=0.001,
         npix=2048,
         width=None,
         force_rotate=False,
@@ -527,7 +527,7 @@ class Stream2D(FitsSet):
         Args:
             trace_path: path to the trace file
             maxiter: maximum number of iterations
-            stdlim: When the std of fitting residuals reaches this value, the iteration is terminated.
+            std_threshold: When the std of fitting residuals reaches this value, the iteration is terminated.
             npix: number of pixels
             width: list of aperture widths ([width_start,width_end])
             force_rotate: forces rotating the detector, when the number of the order is not standard values (i.e. 21 or 51)
@@ -569,7 +569,7 @@ class Stream2D(FitsSet):
                 rsd.T,
                 w,
                 maxiter=maxiter,
-                stdlim=stdlim,
+                std_threshold=std_threshold,
             )
             # np.save('thar_%s_%s_final.npy'%(self.band,mmf),data)
             wavsol_2d = wavsol.reshape((npix, nord))
