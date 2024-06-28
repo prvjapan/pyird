@@ -37,35 +37,35 @@ def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, std_threshold=0.005):
     #----- 1st identification by using the prepared channel file -----#
     # map pixels to wavelengths
     df_pixwavmap_obs = first_identification(dat, channelfile)
-    data1 = pixel_df_to_wav_mat(df_pixwavmap_obs,0,norder) # convert wavelength matrix
+    data = pixel_df_to_wav_mat(df_pixwavmap_obs,0,norder) # convert wavelength matrix
 
     # initialize pixel matrix
     pixels = np.arange(1, npix+1, 1)
     X, Y = np.meshgrid(pixels, orders)
 
     # wavlength solution from the 1st guess
-    coeffs1 = fit_wav_solution((X, Y), data1, W, Ni, Nx)
-    wavlength_solution1 = fit_polynomial((X, Y), Ni, Nx, coeffs1)
-    wavlength_solution1_matrix = wavlength_solution1.reshape(npix, norder)
+    coeffs = fit_wav_solution((X, Y), data, W, Ni, Nx)
+    wavlength_solution = fit_polynomial((X, Y), Ni, Nx, coeffs)
+    wavlength_solution_matrix = wavlength_solution.reshape(npix, norder)
 
     # calculate std of residuals
-    residuals = calculate_residuals(data1, wavlength_solution1)
-    print('standard deviation of residuals (1st guess) = %.5f' %
+    residuals = calculate_residuals(data, wavlength_solution)
+    print('standard deviation of residuals (1st identification) = %.5f' %
           np.std(residuals))
 
     #----- 2nd identification by using the ThAr line list -----#
     # map pixels to wavelengths
-    df_pixwavmap_obs = second_identification(dat, wavlength_solution1_matrix, residuals, npix, norder)
-    data2 = pixel_df_to_wav_mat(df_pixwavmap_obs,0,norder) # convert to wavelength matrix
+    df_pixwavmap_obs = second_identification(dat, wavlength_solution_matrix, residuals, npix, norder)
+    data = pixel_df_to_wav_mat(df_pixwavmap_obs,0,norder) # convert to wavelength matrix
 
     #----- Iterations -----#
     print("Start iterations of ThAr fitting:")
-    wavlength_solution2, data2 = iterate_fitting(
+    wavlength_solution, data = iterate_fitting(
                     X, Y, df_pixwavmap_obs, W, Ni, Nx, maxiter, std_threshold, npix, norder)
             
     # plot result from the final iteration
-    plot_fitresult_thar(wavlength_solution2, data2, norder)
-    return wavlength_solution2, data2
+    plot_fitresult_thar(wavlength_solution, data, norder)
+    return wavlength_solution, data
 
 def pixel_df_to_wav_mat(df_pixwavmap, j, l, npix=2048):
     """conversion channel-wavelength data to wavelength matrix.
@@ -213,13 +213,14 @@ def identify_channel_mode(dat):
         raise ValueError("Cannot identify H or YJ mode.")
     return npix, norder, orders, channelfile
 
-def first_identification(dat, channelfile, pixel_search_area=5):
+def first_identification(dat, channelfile, pixel_search_area=5, kernel_size=3):
     """map pixels to wavelengths by using the previously identified data with ecidentify(IRAF)
 
     Args:
         dat: ThAr spectrum (norder x npix matrix)
         channelfile: reference channel-wavelength map
         pixel_search_area: pixel area to search peaks around a ThAr emission in a reference spectrum
+        kernel_size: kernel size for median filter
 
     Returns:
         channel(pixel)-wavelength map
@@ -231,7 +232,7 @@ def first_identification(dat, channelfile, pixel_search_area=5):
 
     for k, order_tmp in enumerate(df_pixwavmap_ref['ORDER']):
         dat_order = dat[order_tmp - 1, :]
-        filtered_dat = medfilt(dat_order, kernel_size=3)
+        filtered_dat = medfilt(dat_order, kernel_size=kernel_size)
         # search peaks in the current spectrum
         ind_low = df_pixwavmap_ref['CHANNEL'][k] - pixel_search_area
         ind_upp = df_pixwavmap_ref['CHANNEL'][k] + pixel_search_area
@@ -247,7 +248,7 @@ def first_identification(dat, channelfile, pixel_search_area=5):
         df_pixwavmap_obs = pd.concat([df_pixwavmap_obs, df_tmp], ignore_index=True)
     return df_pixwavmap_obs
 
-def second_identification(dat, wavlength_solution_matrix, residuals, npix, norder, pixel_search_area=None, detect_level=80):
+def second_identification(dat, wavlength_solution_matrix, residuals, npix, norder, pixel_search_area=None, kernel_size=3,detect_level=80):
     """detect additional ThAr lines in the observed data with referencing the line list
 
     Args:
@@ -257,6 +258,7 @@ def second_identification(dat, wavlength_solution_matrix, residuals, npix, norde
         npix: number of pixels
         norder: number of orders
         pixel_search_area: pixel area to search peaks around a ThAr emission in a line list
+        kernel_size: kernel size for median filter
         detect_level: determine the lower limit of what percentage of the top data should be detected as peaks
 
     Returns:
@@ -267,16 +269,18 @@ def second_identification(dat, wavlength_solution_matrix, residuals, npix, norde
         'pyird', 'data/thar_ird2.dat'))
     wavref = read_linelist(thar_linelist)
 
+    search_default = pixel_search_area is None
+
     # update pixel-wavelength mapping list
     df_pixwavmap = pd.DataFrame([], columns=['ORDER', 'CHANNEL', 'WAVELENGTH'])
     
     for order_tmp in range(1,norder+1):
         dat_order = dat[order_tmp - 1, :]
-        filtered_dat = medfilt(dat_order, kernel_size=3)
+        filtered_dat = medfilt(dat_order, kernel_size=kernel_size)
         wavlength_solution_order = wavlength_solution_matrix[:, order_tmp - 1]
         wavref_order = wavref[(min(wavlength_solution_order) <= wavref) & (wavref <= max(wavlength_solution_order))]
 
-        if pixel_search_area is None:
+        if search_default:
             scale_quality = 3
             first_ident_quality = scale_quality * np.std(residuals) 
             wav_dependence = 100 * (1700 - 900)/np.mean(wavlength_solution_order) # arbitrarily tuned? (wavmin~900, wavmax~1700)
