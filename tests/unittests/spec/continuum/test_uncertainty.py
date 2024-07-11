@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import pandas as pd
 from io import StringIO
-from pyird.spec.continuum_test import FluxUncertainty
+from pyird.spec.uncertainty import FluxUncertainty
 
 def test_determine_readout_noise():
     rng = np.random.default_rng(0)

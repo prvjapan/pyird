@@ -1,6 +1,6 @@
 import pytest
 import pkg_resources
-from pyird.spec.continuum_test import SpectrumNormalizer
+from pyird.spec.normalize import SpectrumNormalizer
 
 def test_normalize1D():
     import numpy as np

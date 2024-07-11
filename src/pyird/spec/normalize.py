@@ -1,4 +1,4 @@
-from pyird.spec.continuum_test import ContinuumFit
+from pyird.spec.continuum import ContinuumFit
 from pyird.spec.uncertainty import FluxUncertainty   
 from scipy import optimize
 import numpy as np

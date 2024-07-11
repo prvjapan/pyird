@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 import pandas as pd
-from pyird.spec.continuum_test import ContinuumFit
+from pyird.spec.continuum import ContinuumFit
 
 def test_fit_continuum():
     x = np.arange(10)

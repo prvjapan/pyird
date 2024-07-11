@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 import pandas as pd
-from pyird.spec.continuum_test import SpectrumNormalizer
+from pyird.spec.normalize import SpectrumNormalizer
 
 def test_determine_scale_continuum():
     expected_scale = 1/5
