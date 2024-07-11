@@ -10,8 +10,7 @@ import numpy as np
 import pandas as pd
 import tqdm
 import os
-
-import pkg_resources
+import warnings
 
 __all__ = ["Stream1D", "Stream2D"]
 
@@ -283,6 +282,8 @@ class Stream2D(FitsSet):
         Returns:
             data and parameters for aperture trace
         """
+        from pyird.io.iraf_trace import read_trace_file
+
         if trace_path is None:
             y0, xmin, xmax, coeff = (
                 self.trace.y0,
@@ -388,7 +389,7 @@ class Stream2D(FitsSet):
         """
         from pyird.image.oned_extract import flatten
         from pyird.image.trace_function import trace_legendre
-        from pyird.spec.continuum import continuum_rsd
+        from pyird.spec.continuum import ContinuumFit
         from pyird.image.hotpix import apply_hotpixel_mask
 
         if rsd is None:
@@ -411,7 +412,8 @@ class Stream2D(FitsSet):
                 save_path=save_path,
             )
 
-        df_continuum = continuum_rsd(rsd, ignore_orders=ignore_orders)
+        continuum_fit = ContinuumFit()
+        df_continuum = continuum_fit.continuum_rsd(rsd, ignore_orders=ignore_orders)
 
         flat_median = self.immedian("_cp")
         if not hotpix_mask is None:
@@ -718,18 +720,30 @@ class Stream2D(FitsSet):
             # plot
             show_wavcal_spectrum(wspec, title="Extracted spectrum: %s"%(outpath),alpha=0.5)
 
-    def normalize1D(self, flatid="blaze", master_path=None, skipLFC=False):
+    def normalize1D(self, flatid="blaze", master_path=None, readout_noise_mode='default', skipLFC=None):
         """combine orders and normalize spectrum
 
         Args:
             flatid: streamid for flat data
             master_path: path to the directory containing the calibrated flat file
+            readout_noise_mode: 'real' or 'default'. 'real' calculates the readout noise based on the observed LFC spectrum.
+
+        Note:
+            If readout_noise_mode='real', mmf1 data for Y/J band should be reduced at first. 
 
         """
-        from pyird.spec.continuum import comb_norm
+        from pyird.spec.normalize import SpectrumNormalizer
         from pyird.plot.showspec import show_wavcal_spectrum
         from pyird.utils.datset import DatSet
-
+        
+        if skipLFC is not None:
+            warn_msg = "The 'skipLFC' parameter is deprecated and will be removed in the next release. Please use 'readout_noise_mode' instead."
+            warnings.warn(warn_msg, FutureWarning)
+            if skipLFC:
+                readout_noise_mode = "default"
+            else:
+                readout_noise_mode = "real"
+        
         if master_path == None:
             flatfile = self.anadir.joinpath("..", "flat").resolve() / (
                 "w%s_%s_%s.dat" % (flatid, self.band, self.trace.mmf)
@@ -743,19 +757,19 @@ class Stream2D(FitsSet):
         if self.imcomb:
             datset.fitsid = [self.streamid]
             datset.extension = "_%s_%s" % (self.band, self.trace.mmf)
-            if not skipLFC:
+            if readout_noise_mode == 'real':
                 LFC_path = [self.anadir / ("w%s_y_m1.dat" % (self.streamid,))]
         else:
             datset.fitsid = self.fitsid
             datset.extension = "_%s" % (self.trace.mmf)
-            if not skipLFC:
+            if readout_noise_mode == 'real':
                 LFC_path = []
                 for id in self.fitsid:
                     if self.band == "h":
                         LFC_path.append(self.anadir / ("w%d_%s.dat" % (id - 1, "m1")))
                     elif self.band == "y":
                         LFC_path.append(self.anadir / ("w%d_%s.dat" % (id, "m1")))
-        if skipLFC:
+        if readout_noise_mode == 'default':
             LFC_path = [None]
         datset.prefix = "w"
         wfile = datset.path(string=True,check=False)
@@ -765,8 +779,9 @@ class Stream2D(FitsSet):
         ncwsave_path = datset.path(string=True,check=False)
 
         for i in range(len(wfile)):
-            df_continuum, df_interp = comb_norm(
-                wfile[i], flatfile, LFC_path[i], blaze=(flatid == "blaze")
+            spectrum_normalizer = SpectrumNormalizer(combfile=LFC_path[i])
+            df_continuum, df_interp = spectrum_normalizer.combine_normalize(
+                wfile[i], flatfile, blaze=(flatid == "blaze")
             )
             df_continuum_save = df_continuum[
                 ["wav", "order", "nflux", "sn_ratio", "uncertainty"]

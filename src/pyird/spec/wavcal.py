@@ -231,6 +231,8 @@ def first_identification(dat, channelfile, pixel_search_area=5, kernel_size=3):
     df_pixwavmap_obs = pd.DataFrame([], columns=['ORDER', 'CHANNEL', 'WAVELENGTH'])
 
     for k, order_tmp in enumerate(df_pixwavmap_ref['ORDER']):
+        if order_tmp < 0: # order=-7 in channel_YJ.list (?)
+            continue
         dat_order = dat[order_tmp - 1, :]
         filtered_dat = medfilt(dat_order, kernel_size=kernel_size)
         # search peaks in the current spectrum
