@@ -1,8 +1,9 @@
 import pytest
-from pyird.image.hotpix import identify_hotpix,identify_hotpix_sigclip
+from pyird.image.hotpix import identify_hotpix, identify_hotpix_sigclip, apply_hotpixel_mask
 import numpy as np
 import pathlib
 import astropy.io.fits as pyf
+import pkg_resources
 
 def test_identify_hotpix():
     basedir = pathlib.Path(__file__).parent.parent.parent
@@ -18,6 +19,20 @@ def test_identify_hotpix_sigclip():
     hotpix_mask = identify_hotpix_sigclip(im)
     assert np.sum(hotpix_mask.ravel())==16556
 
+def test_apply_hotpixel_mask():
+    path=pkg_resources.resource_filename('pyird', 'data/hotpix_mask_h_202210_180s.fits')
+
+    npix = 2048
+    norder = 21
+    rsd = np.ones((npix,norder))
+    rsd[1,:] = np.nan #including nan
+    xmin = np.zeros(norder,dtype=int)
+    xmax = np.ones(norder,dtype=int) * npix
+
+    rsd_masked = apply_hotpixel_mask(None, rsd, None, xmin, xmax, None, save_path=path)
+    assert np.nansum(rsd_masked) == (npix-1)*norder
+
 if __name__ == '__main__':
     test_identify_hotpix()
     test_identify_hotpix_sigclip()
+    test_apply_hotpixel_mask()
