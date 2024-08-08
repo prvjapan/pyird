@@ -129,16 +129,17 @@ def apply_hotpixel_mask(hotpix_mask, rsd, y0, xmin, xmax, coeff, save_path=None)
         mask_ord = mask_ind[:,j]
         mask_edge = np.ones(len(flux[:,j]),dtype=bool)
         mask_edge[xmin[j]:xmax[j]+1] = False
-        pix_masked = pixels[:,j][~(mask_ord | mask_edge)]
-        flux_masked = flux[:,j][~(mask_ord | mask_edge)]
+        mask_nan = np.isnan(flux[:,j])
+        pix_masked = pixels[:,j][~(mask_ord | mask_edge | mask_nan)]
+        flux_masked = flux[:,j][~(mask_ord | mask_edge | mask_nan)]
 
         ### raplace bad pixels based on spline interpolation ###
-        spline_func = IUS(pix_masked, flux_masked)
+        spline_func = IUS(pix_masked, flux_masked, check_finite=True)
 
         interp_flux = spline_func(pixels[:,j])
         flux_tmp = flux[:,j].copy()
         flux_tmp[mask_ord | mask_edge] = interp_flux[mask_ord | mask_edge]
-        flux_tmp[mask_edge] = np.nan
+        flux_tmp[mask_edge | mask_nan] = np.nan
         flux_new.append(flux_tmp)
     flux_new = np.array(flux_new).T
     return flux_new
