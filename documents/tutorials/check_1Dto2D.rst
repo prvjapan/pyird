@@ -1,11 +1,15 @@
-Check 1D to 2D
-==============
+Tools for Mapping 1D Spectra to 2D Detector Images
+==================================================
 
 Sometimes we want to check the detector image corresponds to a point of
 the extracted spectrum.
 
+Preparations
+~~~~~~~~~~~~
+
 The first part is the same as the usual reduction process before assign
-wavelength to the extracted spectrum. See IRD_stream for more detail.
+wavelength to the extracted spectrum. See the tutorial of IRD_stream for
+more detail.
 
 .. code:: ipython3
 
@@ -54,8 +58,8 @@ wavelength to the extracted spectrum. See IRD_stream for more detail.
     ###########################
     ### SELECT mmf2 or mmf1 ###
     ###########################
-    trace_mmf.mmf2() #mmf2 (star fiber)
-    #trace_mmf.mmf1() #mmf1 (comb fiber)
+    trace_mmf.choose_mmf2_aperture() #mmf2 (star fiber)
+    #trace_mmf.choose_mmf1_aperture() #mmf1 (comb fiber)
     
     # load ThAr raw image
     datadir = basedir/'thar'
@@ -95,11 +99,12 @@ wavelength to the extracted spectrum. See IRD_stream for more detail.
 
 .. parsed-literal::
 
-    100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:00<00:00, 530.90it/s]
+    100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:00<00:00, 349.53it/s]
 
 
 .. parsed-literal::
 
+    default nap value
     cross-section: row  1170
 
 
@@ -109,7 +114,7 @@ wavelength to the extracted spectrum. See IRD_stream for more detail.
 
 .. parsed-literal::
 
-    100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 42/42 [00:12<00:00,  3.46it/s]
+    100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 42/42 [00:13<00:00,  3.19it/s]
 
 
 
@@ -118,7 +123,7 @@ wavelength to the extracted spectrum. See IRD_stream for more detail.
 
 .. parsed-literal::
 
-    100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 42/42 [00:00<00:00, 104.21it/s]
+    100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 42/42 [00:00<00:00, 96.71it/s]
 
 
 
@@ -134,7 +139,7 @@ wavelength to the extracted spectrum. See IRD_stream for more detail.
 
 .. parsed-literal::
 
-    100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 21/21 [00:00<00:00, 102.00it/s]
+    100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 21/21 [00:00<00:00, 93.81it/s]
 
 
 .. parsed-literal::
@@ -154,7 +159,7 @@ wavelength to the extracted spectrum. See IRD_stream for more detail.
 
 .. parsed-literal::
 
-    100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 1250.36it/s]
+    100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 1023.43it/s]
     /Users/yuikasagi/miniforge3/envs/py39_pip/lib/python3.9/site-packages/numpy/lib/nanfunctions.py:1218: RuntimeWarning: All-NaN slice encountered
       r, k = function_base._ureduce(a, func=_nanmedian, axis=axis, out=out,
 
@@ -162,17 +167,17 @@ wavelength to the extracted spectrum. See IRD_stream for more detail.
 .. parsed-literal::
 
     fitsid: [41510]
-    clean_pattern: output extension= _cp
+    clean_pattern: output extension=_cp
 
 
 .. parsed-literal::
 
-    100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 21/21 [00:00<00:00, 105.77it/s]
+    100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 21/21 [00:00<00:00, 98.50it/s]
 
 
 .. parsed-literal::
 
-    Ignore  IRDA00041511.fits -> IRDA00041511_cp.fits
+    Ignore IRDA00041511.fits -> IRDA00041511_cp.fits
 
 
 .. parsed-literal::
@@ -180,7 +185,8 @@ wavelength to the extracted spectrum. See IRD_stream for more detail.
     0it [00:00, ?it/s]
 
 
-The following is the process of displaying the figures.
+Settings to display figures
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can set some parameters for plot(s). For example, you can get images
 for several orders.
@@ -207,19 +213,22 @@ for several orders.
     #######################
     
     ## Values needed for plotting
-    rsd,wav,mask,pixcoord,rotim,iys_plot,iye_plot = target.flatten_check(extin='_cp',wavcal_path=wavcal_path)
+    rsd,wav,mask,pixcoord,rotim,iys_plot,iye_plot = target.flatten(extin='_cp',check=True,master_path=wavcal_path)
 
 
 .. parsed-literal::
 
-    [PosixPath('/Users/yuikasagi/pyird/data/20210317/reduc/IRDA00041511_cp.fits')]
-    /Users/yuikasagi/pyird/data/20210317/reduc/IRDA00041511_cp.fits
+      0%|                                                                                                                           | 0/1 [00:00<?, ?it/s]
+      0%|                                                                                                                          | 0/21 [00:00<?, ?it/s][A
+     24%|███████████████████████████▏                                                                                      | 5/21 [00:00<00:00, 48.04it/s][A
+     48%|█████████████████████████████████████████████████████▊                                                           | 10/21 [00:00<00:00, 44.36it/s][A
+     71%|████████████████████████████████████████████████████████████████████████████████▋                                | 15/21 [00:00<00:00, 43.07it/s][A
+    100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 21/21 [00:00<00:00, 42.79it/s]
+      0%|                                                                                                                           | 0/1 [00:00<?, ?it/s]
 
 
-.. parsed-literal::
-
-    100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 21/21 [00:00<00:00, 46.10it/s]
-
+Case 1. Plot Absorption Lines
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``show_spec_to_image()`` will create two figures in one window for each
 order.
@@ -230,8 +239,10 @@ order.
 -  When you press any key on the spectrum, corresponding positions on
    the detector will be plotted as ‘x’.
 
-*!!! caution !!! If you run in jupyter notebook, add
-``%matplolib notebook`` and comment out ``root.mainloop()``*
+**Note**:
+
+If you run in jupyter notebook, add ``%matplolib notebook`` and comment
+out ``root.mainloop()``.
 
 .. code:: ipython3
 
@@ -260,7 +271,7 @@ order.
 
 .. raw:: html
 
-    <div id='e389dbc9-c4b1-42f2-9de0-2a49b55fac4d'></div>
+    <div id='89376f09-a6e7-431b-a6ec-a73efd3997ba'></div>
 
 
 .. parsed-literal::
@@ -277,8 +288,11 @@ order.
 
 .. raw:: html
 
-    <div id='981ee3cd-7c21-4c2d-b294-e74651687ece'></div>
+    <div id='7280bfa7-7c97-4ff5-8e3d-56ffd7fd42e8'></div>
 
+
+Case 2. Plot Emission Lines
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``show_emission_position()`` will be useful for the emission spectrum
 (e.g. sky spectrum).
@@ -288,14 +302,53 @@ order.
 -  By fitting 2D gaussian to the emissions on the detector, the emission
    like signal and hotpixels are distinguished automatically.
 
-*!!! caution !!! If you run in jupyter notebook, add
-``%matplolib notebook`` and comment out ``root.mainloop()``*
+**Note**:
 
-## show positions of emissions on a detector image
-%matplotlib notebook
-for order in orders:
-    ## draw window
-    root2 = tk.Tk()
-    window2 = image_1Dand2D(root2,order=order,band=flat.band)
-    window2.show_emission_position(target,rsd,wav,mask,pixcoord,rotim,iys_plot,iye_plot,wavcal_path=wavcal_path,hotpix_mask=hotpix_mask,**params)
-#root2.mainloop()
+If you run in jupyter notebook, add ``%matplolib notebook`` and comment
+out ``root.mainloop()``.
+
+.. code:: ipython3
+
+    ## show positions of emissions on a detector image
+    %matplotlib notebook
+    for order in orders:
+        ## draw window
+        root2 = tk.Tk()
+        window2 = image_1Dand2D(root2,order=order,band=flat.band)
+        window2.show_emission_position(target,rsd,wav,mask,pixcoord,rotim,iys_plot,iye_plot,wavcal_path=wavcal_path,hotpix_mask=hotpix_mask,**params)
+    #root2.mainloop()
+
+
+
+.. parsed-literal::
+
+    <IPython.core.display.Javascript object>
+
+
+
+.. raw:: html
+
+    <div id='c72a68e2-8ea5-4ce7-8712-5150d4219ff6'></div>
+
+
+.. parsed-literal::
+
+    WARNING: The fit may be unsuccessful; check fit_info['message'] for more information. [astropy.modeling.fitting]
+
+
+
+.. parsed-literal::
+
+    <IPython.core.display.Javascript object>
+
+
+
+.. raw:: html
+
+    <div id='6a4f6a35-b3b5-43d1-a668-db9d14ce3e49'></div>
+
+
+.. parsed-literal::
+
+    WARNING: The fit may be unsuccessful; check fit_info['message'] for more information. [astropy.modeling.fitting]
+

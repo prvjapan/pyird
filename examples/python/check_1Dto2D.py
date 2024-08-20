@@ -49,8 +49,8 @@ hotpix_mask = identify_hotpix_sigclip(im_subbias)
 ###########################
 ### SELECT mmf2 or mmf1 ###
 ###########################
-trace_mmf.mmf2() #mmf2 (star fiber)
-#trace_mmf.mmf1() #mmf1 (comb fiber)
+trace_mmf.choose_mmf2_aperture() #mmf2 (star fiber)
+#trace_mmf.choose_mmf1_aperture() #mmf1 (comb fiber)
 
 # load ThAr raw image
 datadir = basedir/'thar'

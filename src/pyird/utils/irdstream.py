@@ -681,7 +681,11 @@ class Stream2D(FitsSet, StreamCommon):
                     elif self.band == "y":
                         LFC_path.append(self.anadir / ("w%d_%s.dat" % (id, "m1")))
         if readout_noise_mode == 'default':
-            LFC_path = [None] * len(self.fitsid)
+            LFC_path = [None]
+        if readout_noise_mode not in ["default", "real"]:
+            warnings.warn(f"Warning: '{readout_noise_mode}' is not a recognized mode. Using 'default' instead.", UserWarning)
+            # Set a default behavior or handle the unexpected input accordingly
+            readout_noise_mode = "default"
         datset.prefix = "w"
         wfile = datset.path(string=True,check=False)
         datset.prefix = "nw"

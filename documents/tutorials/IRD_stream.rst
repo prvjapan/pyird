@@ -1,79 +1,119 @@
-IRD stream
-==========
+Pipeline to Get 1D Spectra from Raw Data (IRD Stream)
+=====================================================
 
-By using the framework of ``Stream2D``, you can apply functions into
-multiple fits files. Here, we try to reduce from raw data to wavelength
-calibrated spectra.
+This tutorial demonstrates how to reduce raw data to
+wavelength-calibrated 1D spectra. By using the ``Stream2D`` framework,
+you can apply functions to multiple FITS files efficiently.
 
-Start by setting a path for the directory which contains raw data of
-‘Flat’, ‘ThAr’, and ‘Target’ (and ‘Dark’, optionally)
+- :ref:`step0`
+- :ref:`step1`
+    - :ref:`step1-1`
+    - :ref:`step1-2` 
+    - :ref:`step1-3`
+    - :ref:`step1-4`
+- :ref:`step2`
+    - :ref:`step2-1`
+    - :ref:`step2-2`
+    - :ref:`step2-3`
+    - :ref:`step2-4`
+    - :ref:`step2-5`
+
+.. _step0: 
+
+Step 0: Settings
+------------------
+
+Directory Structure
+~~~~~~~~~~~~~~~~~~~~
+
+First, create a ``datadir`` for the raw data and ``anadir`` for storing
+the output.
+
+This tutorial assumes the following directory structure:
+
+::
+
+   .
+   └── pyird/
+       └── data/
+           └── 20210317/
+               ├── flat
+               ├── thar
+               ├── target
+               ├── dark
+               └── reduc
+
+In this structure, the flat, thar, target, and dark directories are part
+of the ``datadir``, each containing raw data for ‘Flat’, ‘ThAr’,
+‘Target’, and optionally ‘Dark’ frames. The reduc directory is used as
+``anadir`` for storing processed data.
 
 .. code:: ipython3
 
     import pathlib
     basedir = pathlib.Path('~/pyird/data/20210317/').expanduser()
 
-and some common variables.
+Specify the Data to be Analyzed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Please change the following variables based on the data you want to
+analyze.
 
 .. code:: ipython3
 
     band = 'h' #'h' or 'y'
     mmf = 'mmf2' #'mmf1' (comb fiber) or 'mmf2' (star fiber)
-    skipLFC = False #if False, uncertainties are output. mmf1 of y band must be reduced first.
+    readout_noise_mode = 'default'
 
-If ``skipLFC`` is False (default), uncertainties and signal-to-noise
-ratio at each wavelength are included in output files
-(\*nw?????_m?.dat\* and \*ncw?????_m?.dat\*), computed by using the
-readout noise (RN) in the comb spectrum (in mmf1) of the Y/J band.
-Therefore, spectrum of mmf1 in the Y/J band should be reduced first when
-``skipLFC=False.``
+**Note**:
 
-If ``skipLFC=True``, the RN is set by the default value (RN=12
-:math:`e^{-}`).
+Ensure that the ``readout_noise_mode`` is set to either ‘real’ or
+‘default’.
 
-Preprocessing of calibration dataset
-------------------------------------
+-  ``readout_noise_mode = 'real'``: Need to reduce the dataset with
+   ``band = 'y'`` and ``mmf = 'mmf1'`` at first.
 
-Set the directory and frame numbers for ‘Flat’ to search for reference
-apertures for spectrum extraction.
+   -  With this setting, uncertainties and signal-to-noise ratio at each
+      wavelength will be included in the output files (**nw…_m?.dat*\*
+      and \**ncw…_m?.dat**).
+   -  Those values are based on the readout noise (RN) calculated using
+      the comb spectrum (in mmf1) of the Y/J band.
 
--  It would be better to use FLAT_COMB data (flat light injected to the
-   LFC fiber) because lights can be found in both fibers so that there
-   is no need to change frame IDs when switching fiber to analyze.
--  Frame numbers can be set the even numbers. When analyzing H band,
-   they are increased by one by using ``fitsid_increment()``.
+-  ``readout_noise_mode = 'real'``: Uses a default readout noise (RN)
+   value (RN=12 :math:`e^{-}`).
+
+.. _step1: 
+
+Step 1: Preprocessing the Calibration Dataset
+----------------------------------------------
+
+.. image:: ../figures/reduc_flowchart_calib.png
+
+
+.. _step1-1: 
+
+Step 1-1: Identifying Apertures
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  The ``aptrace`` function is used to identify apertures.
+-  Number of apertures (``nap``): 42 for H band, 102 for Y/J band.
+-  These apertures are identified in the FLAT_COMB data.
+-  If your observation was performed with a single fiber, set ``nap`` to
+   half the default value.
 
 .. code:: ipython3
 
     from pyird.utils import irdstream
+    
     ## FLAT_COMB
+    # settings
     datadir = basedir/'flat/'
     anadir = basedir/'reduc/'
-    flat_comb=irdstream.Stream2D("flat_comb",datadir,anadir)
-    flat_comb.fitsid=list(range(41704,41804,2)) 
+    flat_comb = irdstream.Stream2D("flat_comb",datadir,anadir)
+    flat_comb.fitsid = list(range(41704,41804,2)) 
     
-    flat_comb.band=band
-    print(flat_comb.band,' band')
-
-
-.. parsed-literal::
-
-    No fitsid yet.
-    h  band
-
-
-The function ``aptrace`` searches apertures to be traced.
-
--  The number of apertures is specified by ``nap``, which should be set
-   42 (or 21) for H band and 102 (or 51) for YJ band.
--  The apertures begin its search at ``cutrow``, which is the row number
-   of the detector (wavelength direction), and continue in the direction
-   of increasing numbers until it matches the appropriate number of
-   apertures. You may as well change the value of ``cutrow`` if the
-   aperture trace is failed.
-
-.. code:: ipython3
-
+    flat_comb.band = band
+    
     # aperture extraction
     if band=='h' and flat_comb.fitsid[0]%2==0:
         flat_comb.fitsid_increment() 
@@ -84,44 +124,38 @@ The function ``aptrace`` searches apertures to be traced.
 
 .. parsed-literal::
 
+    No fitsid yet.
     median combine:  
 
 
 .. parsed-literal::
 
-    100%|██████████| 50/50 [00:00<00:00, 106.28it/s]
+    100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:00<00:00, 420.69it/s]
 
 
 .. parsed-literal::
 
+    default nap value
     cross-section: row  1201
 
 
 
-.. image:: IRD_stream_files/IRD_stream_8_3.png
+.. image:: IRD_stream_files/IRD_stream_11_3.png
 
 
 .. parsed-literal::
 
-    100%|██████████| 42/42 [00:22<00:00,  1.87it/s]
+    100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 42/42 [00:08<00:00,  4.80it/s]
 
 
 
-.. image:: IRD_stream_files/IRD_stream_8_5.png
+.. image:: IRD_stream_files/IRD_stream_11_5.png
 
 
-You can change the aperture width if you want. By default, the width is
-6 pixels (from -2 to +4) for IRD data and 5 pixels (from -2 to 3) for
-REACH data.
-
-For example, setting to 6 pixels (from -2 to +4) can be done as follows:
-
-.. code:: ipython3
-
-    width_str, width_end = 2, 4
-    trace_mmf.width = [width_str, width_end]
-
-Show trace mask.
+-  Define ‘trace_mask’ to mask light from both fibers.
+-  Aperture width is 6 pixels (from -2 to +4) for IRD data and 5 pixels
+   (from -2 to 3) for REACH data by default. You can change it
+   ``.width`` instance of trace_mmf.
 
 .. code:: ipython3
 
@@ -135,17 +169,34 @@ Show trace mask.
 
 .. parsed-literal::
 
-    100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 42/42 [00:00<00:00, 101.46it/s]
-    100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 42/42 [00:00<00:00, 103.25it/s]
+    100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 42/42 [00:00<00:00, 104.48it/s]
+    100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 42/42 [00:00<00:00, 102.21it/s]
 
 
 
-.. image:: IRD_stream_files/IRD_stream_12_1.png
+.. image:: IRD_stream_files/IRD_stream_13_1.png
 
 
-There are two options for the hotpixel mask:
+-  Reduce apertures in the mask to extract the spectrum from the desired
+   fiber
 
-One is made from dark data as follows.
+.. code:: ipython3
+
+    if mmf=='mmf2':
+        trace_mmf.choose_mmf2_aperture() #mmf2 (star fiber)
+    elif mmf=='mmf1':
+        trace_mmf.choose_mmf1_aperture() #mmf1 (comb fiber)
+
+.. _step1-2: 
+
+Step 1-2: Removing hotpixels
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+-  There are two options for creating the hotpixel mask.
+-  This tutorial introduces one method using dark data.
+-  Refer to
+   `pyird.io.read_hotpix <https://secondearths.sakura.ne.jp/pyird/pyird/pyird.io.html#module-pyird.io.read_hotpix>`_
+   module for an alternative approach without dark data.
 
 .. code:: ipython3
 
@@ -172,55 +223,40 @@ One is made from dark data as follows.
 
 .. parsed-literal::
 
-    100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:00<00:00, 110.40it/s]
+    100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:00<00:00, 121.30it/s]
 
 
 .. parsed-literal::
 
     hotpix mask = 0.45 percent
 
+.. _step1-3: 
 
-Another option is reading the prepared hotpixel mask as follows.
+Step 1-3: Wavelength Calibration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code:: ipython3
-
-    # example to read a hotpixel mask used in IRD
-    import pkg_resources
-    from pyird.io.read_hotpix import read_hotpix
-    if band=='h':
-        path=pkg_resources.resource_filename('pyird', 'data/hotpix_mask_h_202210_180s.fits')
-    elif band=='y':
-        path=pkg_resources.resource_filename('pyird', 'data/hotpix_mask_y_202210_180s.fits')
-    hotpix_mask=read_hotpix(path)
-
-Then, select the fiber to analyze. The following operations are just
-drop even/odd number of apertures from all apertures identified by Flat.
-
-.. code:: ipython3
-
-    # reduce mmf1 or mmf2
-    if mmf=='mmf2':
-        trace_mmf.mmf2() #mmf2 (star fiber)
-    elif mmf=='mmf1':
-        trace_mmf.mmf1() #mmf1 (comb fiber)
-
-Wavelength calibration is performed by using reference frames
-(Thrium-Argon). We do not need to identify the emission lines by eye;
-``calibrate_wavelength`` automatically refer to the line list!
+-  Wavelength calibration is performed by using reference frames
+   (Thrium-Argon).
+-  You do not need to manually identify emission lines;
+   ``calibrate_wavelength`` automatically references the line list!
 
 .. code:: ipython3
 
     ## THAR (ThAr-ThAr)
+    # Settings
     datadir = basedir/'thar'
     anadir = basedir/'reduc'
     if band=='h':
         rawtag='IRDAD000'
     elif band=='y':
         rawtag='IRDBD000'
-    #wavelength calibration
     thar=irdstream.Stream2D("thar",datadir,anadir,rawtag=rawtag,fitsid=list(range(14632,14732)))
     thar.trace = trace_mmf
+    
+    # removing noise pattern
     thar.clean_pattern(trace_mask=trace_mask,extin='', extout='_cp', hotpix_mask=hotpix_mask)
+    
+    # wavelength calibration
     thar.calibrate_wavelength()
 
 
@@ -242,19 +278,29 @@ Wavelength calibration is performed by using reference frames
 
 .. parsed-literal::
 
-    100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 1310.82it/s]
-    /Users/yuikasagi/miniforge3/envs/py39_pip/lib/python3.9/site-packages/numpy/lib/nanfunctions.py:1218: RuntimeWarning: All-NaN slice encountered
-      r, k = function_base._ureduce(a, func=_nanmedian, axis=axis, out=out,
+    100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [00:00<00:00, 1139.24it/s]
+    /Users/yuikasagi/git/pyird/src/pyird/utils/irdstream.py:514: RuntimeWarning: All-NaN slice encountered
+      median_image = np.nanmedian(imall, axis=0)
 
+.. _step1-4: 
 
-To reduce the fringe appearing in a spectrum, a process like
-[\`\ ``hdsis_ecf''](https://github.com/chimari/hds_iraf) for HDS/Subaru data is applied. In the preparation of this process, we create the normalized flat by using``\ apnormalize.\`
+Step 1-4: Creating a Normalized Flat
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  This process similar to
+   `hdsis_ecf <https://github.com/chimari/hds_iraf>`_ for
+   HDS/Subaru data to reduce the fringe appearing in a spectrum.
+-  In the preparation of this process, we create the normalized flat by
+   using ``apnormalize``.
+-  After applying ``flatten``, **‘{stream_id}_{band}_{mmf}.fits’**
+   (e.g., flat_star_h_m2.fits) is created in anadir, containing the
+   extracted spectrum of flat data.
 
 .. code:: ipython3
 
     ## FLAT
-    if mmf=='mmf2':
-        ## FLAT_STAR
+    if mmf=='mmf2': # Star fiber -> FLAT_STAR
+        # Settings
         datadir = basedir/'flat/'
         anadir = basedir/'reduc/'
         flat_star=irdstream.Stream2D("flat_star",datadir,anadir)
@@ -263,15 +309,28 @@ To reduce the fringe appearing in a spectrum, a process like
         flat_star.band=band 
         if band == 'h' and flat_star.fitsid[0]%2==0:
             flat_star.fitsid_increment() 
+    
+        # Removing noise pattern
         flat_star.clean_pattern(trace_mask=trace_mask,extin='', extout='_cp', hotpix_mask=hotpix_mask)
         flat_star.imcomb = True # median combine
+    
+        # Extract 1D spectrum
         flat_star.flatten(hotpix_mask=hotpix_mask)
+    
+        # Flat spectrum normalized in each pixel within an aperture
         df_flatn = flat_star.apnormalize()
-    elif mmf=='mmf1':
+    
+    elif mmf=='mmf1': # Comb fiber -> FLAT_COMB
         flat_comb.trace = trace_mmf
+    
+        # Removing noise pattern
         flat_comb.clean_pattern(trace_mask=trace_mask,extin='', extout='_cp', hotpix_mask=hotpix_mask)
         flat_comb.imcomb = True # median combine
+    
+        # Extract 1D spectrum
         flat_comb.flatten(hotpix_mask=hotpix_mask)
+    
+        # Flat spectrum normalized in each pixel within an aperture
         df_flatn = flat_comb.apnormalize()
 
 
@@ -284,6 +343,7 @@ To reduce the fringe appearing in a spectrum, a process like
 .. parsed-literal::
 
     0it [00:00, ?it/s]
+    0it [00:00, ?it/s]
 
 
 .. parsed-literal::
@@ -294,22 +354,25 @@ To reduce the fringe appearing in a spectrum, a process like
 
 .. parsed-literal::
 
-    100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:00<00:00, 408.17it/s]
-    /Users/yuikasagi/miniforge3/envs/py39_pip/lib/python3.9/site-packages/numpy/lib/nanfunctions.py:1218: RuntimeWarning: All-NaN slice encountered
-      r, k = function_base._ureduce(a, func=_nanmedian, axis=axis, out=out,
-    100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 21/21 [00:05<00:00,  3.53it/s]
+    100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:00<00:00, 403.72it/s]
+    /Users/yuikasagi/git/pyird/src/pyird/utils/irdstream.py:514: RuntimeWarning: All-NaN slice encountered
+      median_image = np.nanmedian(imall, axis=0)
+    100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 21/21 [00:04<00:00,  4.21it/s]
 
+.. _step2: 
 
-The preparation of calibration data is now complete!
-
-Extract target 1D spectrum
---------------------------
+Step 2: Extracting the Target 1D Spectrum
+-----------------------------------------
 
 From here, we will extract target spectrum.
+
+.. image:: ../figures/reduc_flowchart_target.png
+
 
 .. code:: ipython3
 
     #--------FOR TARGET--------#
+    # Settings
     datadir = basedir/'target/'
     anadir = basedir/'reduc/'
     target = irdstream.Stream2D(
@@ -324,62 +387,74 @@ From here, we will extract target spectrum.
 
     fitsid: [41510]
 
+.. _step2-1: 
 
-Remove noise pattern on detector by ``clean_pattern``.
+Step 2-1: Removing Noise Pattern on the Detector
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: ipython3
 
-    # clean pattern
-    target.clean_pattern(trace_mask=trace_mask,extin='', extout='_cp', hotpix_mask=hotpix_mask)
+    target.clean_pattern(trace_mask=trace_mask, extin='', extout='_cp', hotpix_mask=hotpix_mask)
 
 
 .. parsed-literal::
 
-    clean_pattern: output extension= _cp
-    Ignore  IRDA00041511.fits -> IRDA00041511_cp.fits
+    clean_pattern: output extension=_cp
+    Ignore IRDA00041511.fits -> IRDA00041511_cp.fits
 
 
 .. parsed-literal::
 
     0it [00:00, ?it/s]
 
+.. _step2-2:
 
-In ``apext_flatfield``, each order will be extracted with the flat
-fielding. The option of ``hotpix_mask`` determines whether hotpixels are
-masked or not.
+Step 2-2: Aperture Extraction & Flat Fielding
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  The ``apext_flatfield`` function extracts each order while applying
+   flat fielding.
+-  This process requires the flat spectrum normalized in each pixel
+   within an aperture (i.e., df_flatn).
+-  After this process, \**’IRDA000…_flnhp.fits’*\* (when ``hotpix_mask``
+   is set) or \**’IRDA000…_fln.fits’*\* (when ``hotpix_mask = None``) is
+   created.
 
 .. code:: ipython3
 
-    # flatten
-    target.apext_flatfield(df_flatn,hotpix_mask=hotpix_mask)
+    target.apext_flatfield(df_flatn, hotpix_mask=hotpix_mask)
 
 
 .. parsed-literal::
 
-    Ignore  IRDA00041511_cp.fits -> IRDA00041511_flnhp_m2.fits
+    Ignore IRDA00041511_cp.fits -> IRDA00041511_flnhp_m2.fits
 
 
 .. parsed-literal::
 
     0it [00:00, ?it/s]
 
+.. _step2-3:
 
-If there is set any hotpixel mask, \*IRDA000?????_flnhp.fits\* will be
-created in ``anadir``.
+Step 2-3: Assigning Wavelength to the Extracted Spectrum
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Or, if ``hotpix_mask=None`` (default), \*IRDA000?????_fln.fits\* will be
-created in ``anadir``.
-
-Assign wavelength to extracted spectrum.
-
-The option ``extin`` determines whether using the hotpixel masked and
-flat fielded spectrum (``extin='_flnhp'``) or not (``extin='fln'``
-(default)).
+-  The ``dispcor`` function assigns wavelength solution to the extracted
+   spectrum.
+-  Please change the ``extin`` option to ``extin='_flnhp'`` or
+   ``extin='_fln'`` depending on the previous process.
+-  After this process, \**’w…_m?.dat’*\* is created, with data format:
+   ``$1: Wavelength [nm]``, ``$2: Order``, ``$3: Counts``.
 
 .. code:: ipython3
 
-    # assign reference spectra & resample
     target.dispcor(master_path=thar.anadir,extin='_flnhp')
+
+
+.. parsed-literal::
+
+    /Users/yuikasagi/git/pyird/src/pyird/utils/irdstream.py:661: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+      wspec = pd.concat([wspec, df_order])
 
 
 .. parsed-literal::
@@ -388,17 +463,16 @@ flat fielded spectrum (``extin='_flnhp'``) or not (``extin='fln'``
 
 
 
-.. image:: IRD_stream_files/IRD_stream_31_1.png
+.. image:: IRD_stream_files/IRD_stream_30_2.png
 
+.. _step2-4:
 
-\*w?????_m?.dat\* will be created, whose data format is
-``$1: Wavelength [nm]``, ``$2: Order``, ``$3: Counts``.
+Step 2-4: Creating the Blaze Function
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-\*w?????_m?.dat\* reflects the blaze function, so we want to “normalize”
-the spectra.
-
-The blaze function of each order are created by applying the same
-aperture extract procedure to Flat image.
+-  The blaze function is created from FLAT spectrum to ‘’normalize’’ the
+   spectra.
+-  After this process, \**’wblaze_{band}_{mmf}.dat’*\* is created.
 
 .. code:: ipython3
 
@@ -411,35 +485,59 @@ aperture extract procedure to Flat image.
         flat_comb.dispcor(master_path=thar.anadir)
 
 
+.. parsed-literal::
 
-.. image:: IRD_stream_files/IRD_stream_34_0.png
+    0it [00:00, ?it/s]
+    /Users/yuikasagi/git/pyird/src/pyird/utils/irdstream.py:661: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+      wspec = pd.concat([wspec, df_order])
 
 
-Flat spectrum is now extracted, and *wflat_h_m?.dat* is created.
 
-Then, fit the continuum of the flat spectrum as blaze function and
-devide target spectrum by them.
+.. image:: IRD_stream_files/IRD_stream_32_1.png
+
+.. _step2-5:
+
+Step 2-5: Normalizing the Spectra
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Normalize the target spectrum by dividing it by the blaze function.
+-  After ``normalize1D``, the normalized spectrum (**nw…_m?.dat\ **) and
+   the order-combined spectrum (**\ ncw…_m?.dat**) are created.
+
+   -  Data formats are:
+
+      -  Normalized (**nw**): ``$1: Wavelength [nm]``, ``$2: Order``,
+         ``$3: Counts``, ``$4: S/N``, ``$5: Uncertainties``
+      -  Order-combined (**ncw**): ``$1: Wavelength [nm]``,
+         ``$2: Counts``, ``$3: S/N``, ``$4: Uncertainties``
+
+-  For the order-combined spectra: There are overlapping wavelengths at
+   the edges of orders, so we “normalize” by summing up the flux in
+   these regions to improve the signal-to-noise ratio.
 
 .. code:: ipython3
 
     # combine & normalize
     if mmf=='mmf2':
-        target.normalize1D(master_path=flat_star.anadir,skipLFC=skipLFC)
+        target.normalize1D(master_path=flat_star.anadir,readout_noise_mode=readout_noise_mode)
     elif mmf=='mmf1':
-        target.normalize1D(master_path=flat_comb.anadir,skipLFC=skipLFC)
+        target.normalize1D(master_path=flat_comb.anadir,readout_noise_mode=readout_noise_mode)
 
 
 .. parsed-literal::
 
-    Readout Noise is : 7.9305032251889385
+    Using default readout Noise : 12
+    readout noise of IRD detectors: ~12e- (10min exposure)
 
 
 .. parsed-literal::
 
-    /Users/yuikasagi/miniforge3/envs/py39_pip/lib/python3.9/site-packages/pandas/core/arraylike.py:397: RuntimeWarning: invalid value encountered in sqrt
+    /Users/yuikasagi/miniforge3/envs/py312_pip/lib/python3.12/site-packages/pandas/core/arraylike.py:399: RuntimeWarning: invalid value encountered in sqrt
       result = getattr(ufunc, method)(*inputs, **kwargs)
-    /Users/yuikasagi/miniforge3/envs/py39_pip/lib/python3.9/site-packages/pandas/core/arraylike.py:397: RuntimeWarning: invalid value encountered in sqrt
+    /Users/yuikasagi/miniforge3/envs/py312_pip/lib/python3.12/site-packages/pandas/core/arraylike.py:399: RuntimeWarning: invalid value encountered in sqrt
       result = getattr(ufunc, method)(*inputs, **kwargs)
+    /Users/yuikasagi/git/pyird/src/pyird/spec/normalize.py:246: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+      df_interp = pd.concat([df_interp, df_former[add_ind][df_interp.columns]])
 
 
 .. parsed-literal::
@@ -448,25 +546,11 @@ devide target spectrum by them.
 
 
 
-.. image:: IRD_stream_files/IRD_stream_36_3.png
+.. image:: IRD_stream_files/IRD_stream_34_3.png
 
 
 
-.. image:: IRD_stream_files/IRD_stream_36_4.png
+.. image:: IRD_stream_files/IRD_stream_34_4.png
 
 
-After ``normalize1D``, normalized spectrum (\*nw?????_m?.dat\*) will be
-created.
-
-The data format is ``$1: Wavelength [nm]``, ``$2: Order``,
-``$3: Counts``, ``$4: S/N``, ``$5: Uncertainties``.
-
-In addition, there will be \*ncw?????_m?.dat\*, which is the order
-combined spectrum.
-
-There are overlapping wavelengths at the edge of order, so we
-“normalize” the spectrum after summing up the flux of that regions to
-higher signal-to-noise ratio.
-
-The data format is ``$1: Wavelength [nm]``, ``$2: Counts``, ``$3: S/N``,
-``$4: Uncertainties``.
+This concludes the data reduction process!
