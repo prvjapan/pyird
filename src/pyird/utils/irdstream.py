@@ -336,6 +336,9 @@ class Stream2D(FitsSet):
             extout_noexist = [out_path] * (not os.path.exists(out_path))
         else:
             extin_noexist, extout_noexist = self.check_existence(extin, extout)
+        if check:
+            extin_noexist = self.extpath(extin, string=False, check=False)
+            extout_noexist = self.extpath(extout, string=False, check=False)
 
         for i in tqdm.tqdm(range(len(extout_noexist))):
             if self.imcomb:
@@ -371,7 +374,7 @@ class Stream2D(FitsSet):
                 for i in range(len(y0)):
                     trace_mask[i, xmin[i] : xmax[i] + 1] = tl[i]
                 if not master_path is None:
-                    wav, _ = self.load_image(master_path)
+                    wav, _ = self.load_fits_data_header(master_path)
                 else:
                     wav = []
                 return rsd,wav,trace_mask,pixcoord,rotim,iys_plot,iye_plot
@@ -770,7 +773,7 @@ class Stream2D(FitsSet):
                     elif self.band == "y":
                         LFC_path.append(self.anadir / ("w%d_%s.dat" % (id, "m1")))
         if readout_noise_mode == 'default':
-            LFC_path = [None]
+            LFC_path = [None] * len(self.fitsid)
         datset.prefix = "w"
         wfile = datset.path(string=True,check=False)
         datset.prefix = "nw"

@@ -116,7 +116,7 @@ class image_1Dand2D(ttk.Frame):
         ## plot 'x' when a key is pressed
         def onkey(event):
             xi = event.xdata
-            cmap = plt.cm.get_cmap("Set1",9)
+            cmap = plt.get_cmap("Set1",9)
             color = cmap(int(xi*1e2)%9)
             rsd_ord = np.nan_to_num(rsd[:,self.order-1],0)
             if master_path is not None:
