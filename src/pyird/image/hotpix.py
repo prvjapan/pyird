@@ -138,8 +138,8 @@ def apply_hotpixel_mask(hotpix_mask, rsd, y0, xmin, xmax, coeff, save_path=None)
 
         interp_flux = spline_func(pixels[:,j])
         flux_tmp = flux[:,j].copy()
-        flux_tmp[mask_ord | mask_edge] = interp_flux[mask_ord | mask_edge]
-        flux_tmp[mask_edge | mask_nan] = np.nan
+        flux_tmp[mask_ord | mask_nan] = interp_flux[mask_ord | mask_nan]
+        flux_tmp[mask_edge] = np.nan
         flux_new.append(flux_tmp)
     flux_new = np.array(flux_new).T
     return flux_new

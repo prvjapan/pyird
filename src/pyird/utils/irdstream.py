@@ -384,7 +384,20 @@ class Stream2D(FitsSet):
         self.extension = extout
         os.chdir(currentdir)
 
-    def apnormalize(self, rsd=None, hotpix_mask=None, ignore_orders=None):
+    def update_attr(self, instance, **kwargs):
+        """ Update the attributes using kwargs
+
+        Args:
+            instance: Python Class 
+            kwargs: keys and values to be updated 
+        """
+        for key, value in kwargs.items():
+            if hasattr(instance, key):
+                setattr(instance, key, value)
+            else:
+                raise AttributeError(f"ContinuumFit has no attribute named '{key}'")
+
+    def apnormalize(self, rsd=None, hotpix_mask=None, ignore_orders=None, **kwargs_continuum):
         """normalize 2D apertures by 1D functions
 
         Returns:
@@ -416,6 +429,7 @@ class Stream2D(FitsSet):
             )
 
         continuum_fit = ContinuumFit()
+        self.update_attr(continuum_fit, **kwargs_continuum)
         df_continuum = continuum_fit.continuum_rsd(rsd, ignore_orders=ignore_orders)
 
         flat_median = self.immedian("_cp")
@@ -723,7 +737,7 @@ class Stream2D(FitsSet):
             # plot
             show_wavcal_spectrum(wspec, title="Extracted spectrum: %s"%(outpath),alpha=0.5)
 
-    def normalize1D(self, flatid="blaze", master_path=None, readout_noise_mode='default', skipLFC=None):
+    def normalize1D(self, flatid="blaze", master_path=None, readout_noise_mode='default', skipLFC=None, **kwargs_normalize):
         """combine orders and normalize spectrum
 
         Args:
@@ -783,6 +797,7 @@ class Stream2D(FitsSet):
 
         for i in range(len(wfile)):
             spectrum_normalizer = SpectrumNormalizer(combfile=LFC_path[i])
+            self.update_attr(spectrum_normalizer, **kwargs_normalize)
             df_continuum, df_interp = spectrum_normalizer.combine_normalize(
                 wfile[i], flatfile, blaze=(flatid == "blaze")
             )
