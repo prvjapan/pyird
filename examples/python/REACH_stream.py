@@ -1,5 +1,4 @@
 import numpy as np
-import pkg_resources
 from pyird.utils import irdstream
 import pathlib
 from pyird.image.bias import bias_subtract_image

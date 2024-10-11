@@ -163,7 +163,7 @@ def sum_weighted_apertures(im, df_flatn, y0, xmin, xmax, coeff, width, inst):
 
 if __name__ == "__main__":
     import numpy as np
-    import pkg_resources
+    import importlib
     from pyird.utils import irdstream
     import pathlib
     import matplotlib.pyplot as plt
@@ -183,8 +183,8 @@ if __name__ == "__main__":
         im = pyf.open(str(datapath))[0].data
 
     # image for calibration
-    pathC = pkg_resources.resource_filename("pyird", "data/samples/aprefC")
-    path_c = pkg_resources.resource_filename("pyird", "data/samples/apref_c")
+    pathC = importlib.resources.files('pyird').joinpath("data/samples/aprefC")
+    path_c = importlib.resources.files('pyird').joinpath("data/samples/apref_c")
     y0, interp_function, xmin, xmax, coeff = read_trace_file([pathC, path_c])
 
     mask = trace(im, trace_legendre, y0, xmin, xmax, coeff)
@@ -195,7 +195,7 @@ if __name__ == "__main__":
     corrected_im = im - model_im
 
     # trace
-    pathA = pkg_resources.resource_filename("pyird", "data/samples/aprefA")
+    pathA = importlib.resources.files('pyird').joinpath("data/samples/aprefA")
     y0, interp_function, xmin, xmax, coeff = read_trace_file(pathA)
 
     # flatten

@@ -28,6 +28,6 @@ def read_hotpix(filename):
 
 
 if __name__ == '__main__':
-    import pkg_resources
-    path = (pkg_resources.resource_filename('pyird', 'data/hotpix_mask_h_202210_180s.fits'))
+    import importlib
+    path = (importlib.resources.files('pyird').joinpath('data/hotpix_mask_h_202210_180s.fits'))
     hotpix_mask = read_hotpix(path)

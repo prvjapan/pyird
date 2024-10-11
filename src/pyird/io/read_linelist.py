@@ -22,6 +22,6 @@ def read_linelist(filename):
 
 
 if __name__ == '__main__':
-    import pkg_resources
-    path = (pkg_resources.resource_filename('pyird', 'data/thar_ird2.dat'))
+    import importlib
+    path = (importlib.resources.files('pyird').joinpath('data/thar_ird2.dat'))
     wavref = read_linelist(path)
