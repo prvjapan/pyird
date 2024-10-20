@@ -10,4 +10,3 @@ def test_read_trace_file():
 
 if __name__ == '__main__':
     test_read_trace_file()
-    test_mask_from_trace_file()

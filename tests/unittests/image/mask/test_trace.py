@@ -77,7 +77,7 @@ def test_trace_small_mask(trace_parameters):
     Test the trace function with a small mask shape.
     """
     y0, xmin, xmax, coeff = trace_parameters
-    mask_shape = (100, 100)
+    mask_shape = (500, 500) ## must not exceed xmax values 
 
     # Generate the mask with a smaller shape
     mask = trace(mock_trace_func, y0, xmin, xmax, coeff, mask_shape=mask_shape)

@@ -3,6 +3,8 @@
 from astroquery.simbad import Simbad
 from astropy.coordinates import SkyCoord
 from astropy import units as u
+from packaging.version import parse
+import astroquery
 
 
 def get_radec(name):
@@ -17,8 +19,12 @@ def get_radec(name):
     """
 
     Simbad.SIMBAD_URL = 'http://simbad.u-strasbg.fr/simbad/sim-script'
-    Simbad.add_votable_fields(
-        'sp', 'flux(V)', 'flux(R)', 'flux(J)', 'flux(H)', 'flux(K)')
+    if parse(astroquery.__version__) <= parse("0.4.7"):
+        Simbad.add_votable_fields(
+            'sp', 'flux(V)', 'flux(R)', 'flux(J)', 'flux(H)', 'flux(K)')
+    else:
+        Simbad.add_votable_fields('sp', 'flux')
+
     result_table = Simbad.query_object(name)
     namex = result_table['MAIN_ID'][0]  # .decode('utf-8')
     ra = result_table['RA'][0]
