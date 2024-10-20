@@ -8,7 +8,7 @@ from pyird.io.read_linelist import read_linelist
 from astropy.io import fits
 from scipy.signal import medfilt
 
-import pkg_resources
+import importlib
 
 def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, std_threshold=0.005):
     """wavelegth calibration for ThAr spectrum.
@@ -200,13 +200,11 @@ def identify_channel_mode(dat):
     npix = np.shape(dat)[1]
     norder_h = 21
     if norder == norder_h:
-        channelfile = (pkg_resources.resource_filename(
-            'pyird', 'data/channel_H.list')) 
+        channelfile = (importlib.resources.files('pyird').joinpath('data/channel_H.list')) 
         orders = np.arange(104, 83, -1)
         print('H band')
     elif norder > norder_h:
-        channelfile = (pkg_resources.resource_filename(
-            'pyird', 'data/channel_YJ.list'))
+        channelfile = (importlib.resources.files('pyird').joinpath('data/channel_YJ.list'))
         orders = np.arange(158, 107, -1)
         print('YJ band')
     else:        
@@ -267,8 +265,7 @@ def second_identification(dat, wavlength_solution_matrix, residuals, npix, norde
         channel(pixel)-wavelength map
     """
     # read ThAr emission list (thar_ird2.dat)
-    thar_linelist = (pkg_resources.resource_filename(
-        'pyird', 'data/thar_ird2.dat'))
+    thar_linelist = (importlib.resources.files('pyird').joinpath('data/thar_ird2.dat'))
     wavref = read_linelist(thar_linelist)
 
     search_default = pixel_search_area is None
@@ -345,7 +342,7 @@ def make_weight():
     Note:
         REVIEW: there may be other appropreate weights...
     """
-    path = (pkg_resources.resource_filename('pyird', 'data/IP_fwhms_h.dat'))
+    path = (importlib.resources.files('pyird').joinpath('data/IP_fwhms_h.dat'))
     fwhms = np.loadtxt(path)
     calc_wtmp = lambda fwhm: 1/(fwhm)
     w = []
@@ -362,12 +359,12 @@ def make_weight():
     return w
 
 if __name__ == '__main__':
+    from pyird.plot.order import plot_fitresult_thar
     # Load a Th-Ar spectrum
-    path = (pkg_resources.resource_filename(
-        'pyird', 'data/thar_mmf2_a_H_20210317.fits'))
+    path = (importlib.resources.files('pyird').joinpath('data/thar_mmf2_a_H_20210317.fits'))
     hd = fits.open(path)
     dat = (hd[0].data)
 
     wavlength_solution2, data2 = wavcal_thar(dat)
 
-    plot_refthar(wavlength_solution2, data2, np.shape(dat)[0])
+    plot_fitresult_thar(wavlength_solution2, data2, np.shape(dat)[0])

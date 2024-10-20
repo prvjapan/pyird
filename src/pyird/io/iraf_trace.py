@@ -109,8 +109,8 @@ def read_trace_file_one(filename, finalize=True, y0=None, interp_function=None, 
 
 
 if __name__ == '__main__':
-    import pkg_resources
-    pathA = (pkg_resources.resource_filename('pyird', 'data/samples/aprefA'))
-    pathC = (pkg_resources.resource_filename('pyird', 'data/samples/aprefC'))
+    import importlib
+    pathA = (importlib.resources.files('pyird').joinpath('data/samples/aprefA'))
+    pathC = (importlib.resources.files('pyird').joinpath('data/samples/aprefC'))
     y0, interp_function, xmin, xmax, coeff = read_trace_file([pathA, pathC])
     print(len(y0))

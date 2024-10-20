@@ -3,7 +3,7 @@ from pyird.utils.irdstream import Stream2D
 import pathlib
 
 def test_path_1():
-    basedir = pathlib.Path(__file__).parent.parent.parent
+    basedir = pathlib.Path(__file__).parent.parent.parent.parent
     datadir = basedir / 'data/dark/'
     anadir = basedir / 'data/dark/'
     s2d = Stream2D('targets', datadir, anadir, fitsid = [41018])
@@ -11,7 +11,7 @@ def test_path_1():
     assert s2d.path()[0]==refs
 
 def test_path_2():
-    basedir = pathlib.Path(__file__).parent.parent.parent
+    basedir = pathlib.Path(__file__).parent.parent.parent.parent
     datadir = basedir / 'data/dark/'
     anadir = basedir / 'data/dark/'
     s2d = Stream2D('targets', datadir, anadir)

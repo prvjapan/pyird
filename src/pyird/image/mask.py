@@ -80,7 +80,7 @@ def trace(trace_func, y0, xmin, xmax, coeff, mask_shape=None, inst='IRD', width=
 
 if __name__ == '__main__':
     import numpy as np
-    import pkg_resources
+    import importlib
     from pyird.utils import irdstream
     import pathlib
     import matplotlib.pyplot as plt
@@ -98,7 +98,7 @@ if __name__ == '__main__':
         im = pyf.open(str(datapath))[0].data
 
     # image for calibration
-    pathA = (pkg_resources.resource_filename('pyird', 'data/samples/aprefA'))
+    pathA = (importlib.resources.files('pyird').joinpath('data/samples/aprefA'))
     y0, interp_function, xmin, xmax, coeff = read_trace_file(pathA)
     mask = trace(im, trace_legendre, y0, xmin, xmax, coeff)
 
