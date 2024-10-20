@@ -17,7 +17,7 @@ CLASSIFIERS = [
     "Operating System :: OS Independent",
 ]
 
-INSTALL_REQUIRES = ['matplotlib', 'tqdm', 'scipy', 'sep', 'gpkron', 'pandas', 'astropy', 'astroquery', 'numpy']
+INSTALL_REQUIRES = ['matplotlib', 'tqdm', 'scipy', 'sep', 'gpkron', 'pandas', 'astropy', 'astroquery', 'numpy <2']
 
 # END PROJECT SPECIFIC
 
