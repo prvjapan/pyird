@@ -3,20 +3,21 @@
 import codecs
 import os
 import re
-from setuptools import find_packages, setup
+from setuptools import find_namespace_packages, setup
 
 # PROJECT SPECIFIC
 
 NAME = 'pyird'
-PACKAGES = find_packages(where='src')
+PACKAGES = find_namespace_packages(where='src')
 META_PATH = os.path.join('src', 'pyird', '__init__.py')
 CLASSIFIERS = [
     'Programming Language :: Python',
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Operating System :: OS Independent",
 ]
 
-INSTALL_REQUIRES = ['numpy', 'matplotlib', 'tqdm', 'scipy', 'sep', 'gpkron', 'pandas', 'astropy', 'astroquery']
+INSTALL_REQUIRES = ['matplotlib', 'tqdm', 'scipy', 'sep', 'gpkron', 'pandas', 'astropy', 'astroquery', 'numpy']
 
 # END PROJECT SPECIFIC
 
