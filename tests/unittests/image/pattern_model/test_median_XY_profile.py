@@ -9,9 +9,6 @@ def create_test_data():
     calim0 = np.random.normal(loc=100., scale=10., size=(2048, 2048))
     # Introduce NaNs to simulate a realistic input
     calim0[100:-100, 1500:1505] = np.nan
-    import matplotlib.pyplot as plt
-    plt.imshow(calim0, origin="lower")
-    plt.show()
     return calim0
 
 def test_median_XY_profile_default(create_test_data):

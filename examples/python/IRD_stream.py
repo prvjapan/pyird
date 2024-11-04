@@ -8,17 +8,27 @@ import astropy.io.fits as pyf
 #--------SETTINGS--------#
 basedir = pathlib.Path('~/pyird/data/20210317/').expanduser()
 
-band = 'h' #'h' or 'y'
+band = 'y' #'h' or 'y'
 mmf = 'mmf2' #'mmf1' (comb fiber) or 'mmf2' (star fiber)
-skipLFC = False #if False, uncertainties are output. mmf1 of y band must be reduced first.
+readout_noise_mode = "real" #'real' or 'default'
+
+datadir_flat = basedir/'flat/'
+datadir_dark = basedir/'dark/'
+datadir_thar = basedir/'thar'
+datadir_target = basedir/'target/'
+anadir = basedir/'reduc/'
+
+fitsid_flat_comb = list(range(41704,41804,2)) 
+fitsid_flat_star = (range(41804,41904,2)) 
+fitsid_dark = [41504]
+fitsid_thar = list(range(14632,14732))
+fitsid_target = [41510]
+#-------------------------#
 
 #--------FOR CALIBRATION--------#
 ## FLAT_COMB
-# please change directry names and fits ids
-datadir = basedir/'flat/'
-anadir = basedir/'reduc/'
-flat_comb=irdstream.Stream2D("flat_comb",datadir,anadir)
-flat_comb.fitsid=list(range(41704,41804,2)) 
+flat_comb=irdstream.Stream2D("flat_comb",datadir_flat,anadir)
+flat_comb.fitsid=fitsid_flat_comb
 # aperture extraction
 flat_comb.band=band
 print(flat_comb.band,' band')
@@ -29,17 +39,10 @@ elif band=='y':
     trace_mmf=flat_comb.aptrace(cutrow = 1000,nap=102) 
 trace_mask = trace_mmf.mask()
 
-# apeture mask plot
-import matplotlib.pyplot as plt
-plt.imshow(trace_mmf.mask()) 
-plt.show()
-
 ## HOTPIXEL MASK: 
 # See pyird/io/read_hotpix.py for reading fixed mask (Optional)
 ## DARK
-datadir = basedir/'dark/'
-anadir = basedir/'reduc/'
-dark = irdstream.Stream2D('dark', datadir, anadir,fitsid=[41504]) # Multiple file is ok
+dark = irdstream.Stream2D('dark', datadir_dark, anadir,fitsid=fitsid_dark) # Multiple file is ok
 if band=='h' and dark.fitsid[0]%2==0:
     dark.fitsid_increment()
 median_image = dark.immedian()
@@ -53,13 +56,11 @@ elif mmf=='mmf1':
     trace_mmf.choose_mmf1_aperture() #mmf1 (comb fiber)
 
 ## THAR (ThAr-ThAr)
-datadir = basedir/'thar'
-anadir = basedir/'reduc'
 if band=='h':
     rawtag='IRDAD000'
 elif band=='y':
     rawtag='IRDBD000'
-thar=irdstream.Stream2D("thar",datadir,anadir,rawtag=rawtag,fitsid=list(range(14632,14732))) 
+thar=irdstream.Stream2D("thar",datadir_thar,anadir,rawtag=rawtag,fitsid=fitsid_thar) 
 
 #wavelength calibration
 thar.trace = trace_mmf
@@ -70,9 +71,9 @@ thar.calibrate_wavelength()
 if mmf=='mmf2':
     ## FLAT_STAR
     datadir = basedir/'flat/'
-    anadir = basedir/'reduc/'
-    flat_star=irdstream.Stream2D("flat_star",datadir,anadir)
-    flat_star.fitsid=list(range(41804,41904,2)) 
+    anadir = basedir/'reduc_test/'
+    flat_star=irdstream.Stream2D("flat_star",datadir_flat,anadir)
+    flat_star.fitsid=fitsid_flat_star
     flat_star.trace = trace_mmf
     flat_star.band=band 
     if band == 'h' and flat_star.fitsid[0]%2==0:
@@ -89,10 +90,7 @@ elif mmf=='mmf1':
     df_flatn = flat_comb.apnormalize()
 
 #--------FOR TARGET--------#
-datadir = basedir/'target/'
-anadir = basedir/'reduc/'
-target = irdstream.Stream2D(
-    'targets', datadir, anadir, fitsid=[41510])
+target = irdstream.Stream2D('targets', datadir_target, anadir, fitsid=fitsid_target)
 if band=='h' and target.fitsid[0]%2==0:
     target.fitsid_increment() 
 target.info = True  # show detailed info
@@ -110,14 +108,14 @@ if mmf=='mmf2':
     flat_star.dispcor(master_path=thar.anadir)
 
     # combine & normalize
-    target.normalize1D(master_path=flat_star.anadir,skipLFC=skipLFC)#,flatid=flat_comb.streamid)
+    target.normalize1D(master_path=flat_star.anadir,readout_noise_mode=readout_noise_mode)#,flatid=flat_comb.streamid)
 elif mmf=='mmf1':
     # blaze function
     flat_comb.apext_flatfield(df_flatn,hotpix_mask=hotpix_mask)
     flat_comb.dispcor(master_path=thar.anadir)
 
     # combine & normalize
-    target.normalize1D(master_path=flat_comb.anadir,skipLFC=skipLFC)#,flatid=flat_comb.streamid)
+    target.normalize1D(master_path=flat_comb.anadir,readout_noise_mode=readout_noise_mode)#,flatid=flat_comb.streamid)
 
 """
 #--------FOR RV MEASUREMENTS--------#

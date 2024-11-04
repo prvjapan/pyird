@@ -4,6 +4,35 @@ from astropy.io import fits
 import numpy as np
 
 
+def load_fits_data_header(filen):
+    """loads data and header from fits
+
+    Args:
+        filen (str): filename
+
+    Returns:
+        data, header
+    """
+    hdu = fits.open(filen)[0]
+    data = hdu.data
+    header = hdu.header
+    hdu._close()
+    return data, header
+
+def write_fits_data_header(outpath, header, rsd):
+    """write data to fits
+
+    Args:
+        outpath: path to output file
+        header: header for fits
+        rsd: image data
+    """
+    hdu = fits.PrimaryHDU(rsd, header)
+    hdulist = fits.HDUList([hdu])
+    #hdulist.writeto(self.anadir / extout_noexist, overwrite=True)
+    hdulist.writeto(outpath, overwrite=True)
+    hdu._close()
+
 def loadtermcol():
     tc = ['\033[94m', '\033[91m', '\033[0m']
     return tc
