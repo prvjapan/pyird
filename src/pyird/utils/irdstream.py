@@ -150,7 +150,7 @@ class Stream2D(FitsSet, StreamCommon):
             rawdir: directory where the raw data are
             anadir: directory in which the processed file will put
             fitsid: fitsid list, such as [10301,10303]
-            rawtag:
+            rawtag: prefix of file name, such as "IRDA000", "IRDAD000", or "IRDBD000"
             rotate (boolen): If True, the image is rotated in 90 deg (for old detector). See #80 in GitHub
             inverse (boolen): If True, the image is inversed along y axis. See #80 in GitHub
             detector_artifact (boolen): If True, fill the gaps seen in the old detector. See #80 in GitHub
@@ -299,8 +299,6 @@ class Stream2D(FitsSet, StreamCommon):
         """
         from pyird.image.pattern_model import median_XY_profile
 
-        currentdir = os.getcwd()
-        os.chdir(str(self.anadir))
         self.print_if_info_is_true("clean_pattern: output extension="+extout)
 
         if trace_mask is None:
@@ -332,7 +330,6 @@ class Stream2D(FitsSet, StreamCommon):
 
         self.fitsdir = self.anadir
         self.extension = extout
-        os.chdir(currentdir)
 
     def flatten(
         self, trace_path=None, extout="_fl", extin=None, hotpix_mask=None, width=None, check=False, master_path=None
@@ -348,9 +345,6 @@ class Stream2D(FitsSet, StreamCommon):
             master_path: if this set the path to wavelength reference file with check=True, return wavelength allocated spectrum
 
         """
-
-        currentdir = os.getcwd()
-        os.chdir(str(self.anadir))
 
         y0, xmin, xmax, coeff, mmf, width = self.extract_trace_info(trace_path)
 
@@ -382,23 +376,16 @@ class Stream2D(FitsSet, StreamCommon):
                 im, header = load_fits_data_header(filen)
                 im = self.detector_handling(im, mode="load")
             rawspec, pixcoord, rotim, tl, iys_plot, iye_plot = flatten(
-                im,
-                trace_legendre,
-                y0,
-                xmin,
-                xmax,
-                coeff,
-                inst=self.inst,
-                width=width,
-            )
+                im, trace_legendre, y0, xmin, xmax, coeff, inst=self.inst, width=width
+                )
             rsd = multiorder_to_rsd(rawspec, pixcoord)
             if not hotpix_mask is None:
                 save_path = self.anadir / (
-                    "hotpix_%s_%s.fits" % (self.band, self.trace.mmf)
-                )
+                    "hotpix_%s_%s.fits" % (self.band, mmf)
+                    )
                 rsd = apply_hotpixel_mask(
                     hotpix_mask, rsd, y0, xmin, xmax, coeff, save_path=save_path
-                )
+                    )
             if not check:
                 write_fits_data_header(self.anadir / extout_noexist[i], header, rsd)
             else:
@@ -415,7 +402,6 @@ class Stream2D(FitsSet, StreamCommon):
         self.print_if_info_is_true("flatten (+ hotpix mask): output extension="+extout)
         self.fitsdir = self.anadir
         self.extension = extout
-        os.chdir(currentdir)
 
     def apnormalize(self, rsd=None, hotpix_mask=None, ignore_orders=None, **kwargs_continuum):
         """normalize 2D apertures by 1D functions
@@ -425,24 +411,20 @@ class Stream2D(FitsSet, StreamCommon):
         """
         from pyird.spec.continuum import ContinuumFit
 
+        y0, xmin, xmax, coeff, mmf, width = self.extract_trace_info()
+
         if rsd is None:
             flatfile = self.anadir / (
-                "%s_%s_%s.fits" % (self.streamid, self.band, self.trace.mmf)
+                "%s_%s_%s.fits" % (self.streamid, self.band, mmf)
             )
             rsd, _ = load_fits_data_header(flatfile)
 
         if not hotpix_mask is None:
             save_path = self.anadir / (
-                "hotpix_%s_%s.fits" % (self.band, self.trace.mmf)
+                "hotpix_%s_%s.fits" % (self.band, mmf)
             )
             rsd = apply_hotpixel_mask(
-                hotpix_mask,
-                rsd,
-                self.trace.y0,
-                self.trace.xmin,
-                self.trace.xmax,
-                self.trace.coeff,
-                save_path=save_path,
+                hotpix_mask, rsd, y0, xmin, xmax, coeff, save_path=save_path
             )
 
         continuum_fit = ContinuumFit()
@@ -453,15 +435,8 @@ class Stream2D(FitsSet, StreamCommon):
         if not hotpix_mask is None:
             flat_median[hotpix_mask] = np.nan
         df_onepix = flatten(
-            flat_median,
-            trace_legendre,
-            self.trace.y0,
-            self.trace.xmin,
-            self.trace.xmax,
-            self.trace.coeff,
-            inst=self.inst,
-            onepix=True,
-        )  # ,width=[3,5])
+            flat_median, trace_legendre, y0, xmin, xmax, coeff, inst=self.inst, onepix=True,
+            )  # ,width=[3,5])
         apertures = [int(i.split("ec")[-1]) for i in df_onepix.keys()]
         df_flatn = {}
         for i in apertures:
@@ -490,13 +465,13 @@ class Stream2D(FitsSet, StreamCommon):
             extin = self.extension
 
         if hotpix_mask is None:
-            extout = extout + "_" + self.trace.mmf
+            extout = extout + "_" + mmf
         else:
-            extout = extout + "hp_" + self.trace.mmf
+            extout = extout + "hp_" + mmf
 
         if self.imcomb:
             out_path = self.anadir / (
-                "n%s_%s_%s.fits" % (self.streamid, self.band, self.trace.mmf)
+                "n%s_%s_%s.fits" % (self.streamid, self.band, mmf)
             )
             extout_noexist = [out_path] * (not os.path.exists(out_path))
         else:
@@ -510,21 +485,17 @@ class Stream2D(FitsSet, StreamCommon):
                 filen = self.anadir / extin_noexist[i]
                 im, header = load_fits_data_header(filen)
                 im = self.detector_handling(im, mode="load")
-            df_sum_wap = sum_weighted_apertures(im, df_flatn, y0, xmin, xmax, coeff, width, self.inst)
+            df_sum_wap = sum_weighted_apertures(
+                im, df_flatn, y0, xmin, xmax, coeff, width, self.inst
+                )
             rsd = df_sum_wap.values.T.astype(float)
             if not hotpix_mask is None:
                 save_path = self.anadir / (
-                    "hotpix_%s_%s.fits" % (self.band, self.trace.mmf)
+                    "hotpix_%s_%s.fits" % (self.band, mmf)
                 )
                 rsd = apply_hotpixel_mask(
-                    hotpix_mask,
-                    rsd,
-                    self.trace.y0,
-                    self.trace.xmin,
-                    self.trace.xmax,
-                    self.trace.coeff,
-                    save_path=save_path,
-                )
+                    hotpix_mask, rsd, y0, xmin, xmax, coeff, save_path=save_path
+                    )
             if self.imcomb:
                 rsd = rsd_order_medfilt(rsd)
             # save as fits file without applying rotation/inverse
@@ -553,42 +524,27 @@ class Stream2D(FitsSet, StreamCommon):
         """
         from pyird.spec.wavcal import wavcal_thar
 
-        currentdir = os.getcwd()
-        os.chdir(str(self.anadir))
-
         median_image = self.immedian()
 
         y0, xmin, xmax, coeff, mmf, width = self.extract_trace_info(trace_path)
 
         master_path = "thar_%s_%s.fits" % (self.band, mmf)
-        if not os.path.exists(master_path):
+        if not os.path.exists(self.anadir / master_path):
             filen = self.path()[0]  # header of the first file
             _, header = load_fits_data_header(filen)
             nord = len(y0)
             rawspec, pixcoord, _, _, _, _ = flatten(
-                median_image,
-                trace_legendre,
-                y0,
-                xmin,
-                xmax,
-                coeff,
-                inst=self.inst,
-                width=width,
+                median_image, trace_legendre, y0, xmin, xmax, coeff, inst=self.inst, width=width, 
                 force_rotate=force_rotate,
-            )
+                )
             rsd = multiorder_to_rsd(rawspec, pixcoord)
             w = np.ones(rsd.shape) ##weights for identifying thar
             wavsol, data = wavcal_thar(
-                rsd.T,
-                w,
-                maxiter=maxiter,
-                std_threshold=std_threshold,
+                rsd.T, w, maxiter=maxiter, std_threshold=std_threshold,
             )
             # np.save('thar_%s_%s_final.npy'%(self.band,mmf),data)
             wavsol_2d = wavsol.reshape((npix, nord))
             write_fits_data_header(master_path, header, wavsol_2d)
-
-        os.chdir(currentdir)
 
     def aptrace(self, cutrow=1000, nap=42):
         """extract aperture of trace from a median image of current fitsset
