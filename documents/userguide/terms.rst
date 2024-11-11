@@ -15,9 +15,11 @@ Terms Related to Instruments
   * - Detector Image
     - Note
   * - .. image:: ../figures/IRDA00041704_raw.png
+          :width: 30%  
     - - Y/J-band
       - 51 orders x 2 fibers = 102 apertures
   * - .. image:: ../figures/IRDA00041705_raw.png
+          :width: 30%
     - - H-band
       - 21 orders x 2 fibers = 42 apertures
 

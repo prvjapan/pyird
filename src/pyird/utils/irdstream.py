@@ -528,8 +528,8 @@ class Stream2D(FitsSet, StreamCommon):
 
         y0, xmin, xmax, coeff, mmf, width = self.extract_trace_info(trace_path)
 
-        master_path = "thar_%s_%s.fits" % (self.band, mmf)
-        if not os.path.exists(self.anadir / master_path):
+        master_path = self.anadir / ("thar_%s_%s.fits" % (self.band, mmf))
+        if not os.path.exists(master_path):
             filen = self.path()[0]  # header of the first file
             _, header = load_fits_data_header(filen)
             nord = len(y0)
@@ -681,7 +681,7 @@ class Stream2D(FitsSet, StreamCommon):
                     elif self.band == "y":
                         LFC_path.append(self.anadir / ("w%d_%s.dat" % (id, "m1")))
         if readout_noise_mode == 'default':
-            LFC_path = [None]
+            LFC_path = [None] * len(self.fitsid)
         if readout_noise_mode not in ["default", "real"]:
             warnings.warn(f"Warning: '{readout_noise_mode}' is not a recognized mode. Using 'default' instead.", UserWarning)
             # Set a default behavior or handle the unexpected input accordingly
