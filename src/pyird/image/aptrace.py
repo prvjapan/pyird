@@ -229,6 +229,12 @@ def aptrace(dat, cutrow, nap, plot=True):
 
     Returns:
         parameters of a polynomial to trace apertures
+
+    Note:
+        the apertures begin its search at ``cutrow``, which is the row number of the detector (wavelength direction),
+        and continue in the direction of increasing numbers until it matches the appropriate number of apertures.
+        You may as well change the value of ``cutrow`` if the aperture trace is failed.
+        
     """
     if nap in [42, 102, 104]:
         print("default nap value")
