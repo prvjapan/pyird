@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath('/home/kawahara/ird/pyird'))
 # -- Project information -----------------------------------------------------
 
 project = 'pyird'
-copyright = '2021-2023, Yui Kasagi, Hajime Kawahara, Kento Masuda, Masayuki Kuzuhara'
+copyright = '2021-2024, Yui Kasagi, Hajime Kawahara, Kento Masuda, Masayuki Kuzuhara'
 author = 'Yui Kasagi, Hajime Kawahara, Kento Masuda, Masayuki Kuzuhara'
 
 # The full version, including alpha/beta/rc tags
