@@ -69,7 +69,9 @@ As a result, there is a growing demand for a modern, flexible solution.
 # Key Features
 
 `PyIRD` is designed to perform data reduction semi-automatically by following a general workflow for high-dispersion spectroscopic data reduction, as illustrated in Figure \autoref{fig:reduc_flow}.
+
 ![Flowchart of the reduction process for IRD and REACH data. The reduction process follows from top to bottom of this figure. Texts in the grey boxes represent instance names of each reduction step used in `PyIRD`. \label{fig:reduc_flow}](fig/reduc_flowchart.png)
+
 Users can define a set of FITS-format files using a Python class named `FitsSet`, and functions in the `Stream2D` class are applied to generate the one-dimentional spectrum.
 Since all functions in `PyIRD` are written in Python rather than IRAF's subset preprocessor language (SPP), the package is easy to develop and maintain.
 This also significantly reduces the time required for the reduction process: users only need to execute a single Python script without complex IRAF configuration.
@@ -80,6 +82,7 @@ This feature is particularly important for processing data from faint objects su
 The dominant noise source is the readout pattern from the H2RG detector used in IRD.
 To address this, `PyIRD` models the noise by calculating a median profile for each readout channel and applying a 2D Gaussian Process using `gpkron` [@gpkron2022].
 This innovative method effectively mitigates the readout pattern, as shown in Figure \autoref{fig:pattern}, and improve data quality for faint targets.
+
 ![(Left) Raw image; (Middle) Readout pattern model created by `PyIRD`; (Right) Pattern-corrected image \label{fig:pattern}](fig/clean_pattern.png)
 
 # Acknowledgements
