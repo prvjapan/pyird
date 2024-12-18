@@ -38,4 +38,4 @@ See the following examples how to create 1D spectra from raw data.
 
 License
 ------------------------------
-`PyIRD` is publicly available under the MIT license.
+`PyIRD` is publicly available under the MIT license. For developers, please read [CONTRIBUTING.md](https://github.com/prvjapan/pyird/blob/develop/CONTRIBUTING.md).
