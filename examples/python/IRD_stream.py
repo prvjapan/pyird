@@ -1,9 +1,7 @@
-import numpy as np
 from pyird.utils import irdstream
 import pathlib
 from pyird.image.bias import bias_subtract_image
 from pyird.image.hotpix import identify_hotpix_sigclip
-import astropy.io.fits as pyf
 
 #--------SETTINGS--------#
 basedir = pathlib.Path('~/pyird/data/20210317/').expanduser()
@@ -19,7 +17,7 @@ datadir_target = basedir/'target/'
 anadir = basedir/'reduc/'
 
 fitsid_flat_comb = list(range(41704,41804,2)) 
-fitsid_flat_star = (range(41804,41904,2)) 
+fitsid_flat_star = list(range(41804,41904,2)) 
 fitsid_dark = [41504]
 fitsid_thar = list(range(14632,14732))
 fitsid_target = [41510]
@@ -108,14 +106,14 @@ if mmf=='mmf2':
     flat_star.dispcor(master_path=thar.anadir)
 
     # combine & normalize
-    target.normalize1D(master_path=flat_star.anadir,readout_noise_mode=readout_noise_mode)#,flatid=flat_comb.streamid)
+    target.normalize1D(master_path=flat_star.anadir,readout_noise_mode=readout_noise_mode)
 elif mmf=='mmf1':
     # blaze function
     flat_comb.apext_flatfield(df_flatn,hotpix_mask=hotpix_mask)
     flat_comb.dispcor(master_path=thar.anadir)
 
     # combine & normalize
-    target.normalize1D(master_path=flat_comb.anadir,readout_noise_mode=readout_noise_mode)#,flatid=flat_comb.streamid)
+    target.normalize1D(master_path=flat_comb.anadir,readout_noise_mode=readout_noise_mode)
 
 """
 #--------FOR RV MEASUREMENTS--------#

@@ -54,8 +54,8 @@ comments
 -->
 `PyIRD` is a Python-based pipeline for reducing spectroscopic data obtained with IRD (InfraRed Doppler; @kotani2018) and REACH (Rigorous Exoplanetary Atmosphere Characterization with High dispersion coronagraphy; @kotani2020) on the Subaru Telescope. 
 It is designed to process raw images into one-dimensional spectra in a semi-automatic manner. 
-Unlike traditional methods, it does not rely on IRAF [@tody1986; @tody1993], a software traditionally used for astronomical data reduction. This approach simplifies the workflow while maintaining efficiency and accuracy.
-Additionally, the pipeline includes an updated method for removing readout noise patterns from the detector, enabling efficient extraction of spectra even for faint targets such as brown dwarfs.
+Unlike traditional methods, it does not rely on IRAF [@tody1986; @tody1993], a software used for astronomical data reduction. This approach simplifies the workflow while maintaining efficiency and accuracy.
+Additionally, the pipeline includes an updated method for removing readout noise patterns from raw images, enabling efficient extraction of spectra even for faint targets such as brown dwarfs.
 
 # Statement of need
 
@@ -68,7 +68,7 @@ As a result, there is a growing demand for a modern, flexible solution.
 
 # Key Features
 
-`PyIRD` is designed to perform data reduction semi-automatically by following a general workflow for high-dispersion spectroscopic data reduction, as illustrated in Figure \autoref{fig:reduc_flow}.
+`PyIRD` is designed to perform data reduction semi-automatically by following a general workflow for high-dispersion spectroscopic data reduction, as illustrated in \autoref{fig:reduc_flow}.
 
 ![Flowchart of the reduction process for IRD and REACH data. The reduction process follows from top to bottom of this figure. Texts in the grey boxes represent instance names of each reduction step used in `PyIRD`. \label{fig:reduc_flow}](fig/reduc_flowchart.png)
 
@@ -77,16 +77,17 @@ Since all functions in `PyIRD` are written in Python rather than IRAF's subset p
 This also significantly reduces the time required for the reduction process: users only need to execute a single Python script without complex IRAF configuration.
 For example, reducing data with `PyIRD` typically takes a few tens of minutes to produce one-dimensional spectra from raw data obtained during a single observing night, compared to approximately half a day with traditional IRAF methods.
 
-Moreover, `PyIRD` achieves a higher level of readout noise pattern removal on the detector.
+Moreover, `PyIRD` achieves a higher level of readout noise pattern removal on final results.
 This feature is particularly important for processing data from faint objects such as brown dwarfs, where the astronomical signal is often comparable in strength to systematic noise.
 The dominant noise source is the readout pattern from the H2RG detector used in IRD.
 To address this, `PyIRD` models the noise by calculating a median profile for each readout channel and applying a 2D Gaussian Process using `gpkron` [@gpkron2022].
-This innovative method effectively mitigates the readout pattern, as shown in Figure \autoref{fig:pattern}, and improve data quality for faint targets.
+This innovative method effectively mitigates the readout pattern, as shown in \autoref{fig:pattern}, and improves data quality for faint targets.
 
 ![(Left) Raw image; (Middle) Readout pattern model created by `PyIRD`; (Right) Pattern-corrected image \label{fig:pattern}](fig/clean_pattern.png)
 
 # Acknowledgements
 
 Y.K. acknowledges support from JST SPRING, Grant Number JPMJSP2104 and JSPS KAKENHI grant No. 24K22912.
+Z.G. acknowledges support from Forefront Physics and Mathematics Program to Drive Transformation (FoPM), a World-leading Innovative Graduate Study (WINGS) Program, the University of Tokyo.
 
 # References
