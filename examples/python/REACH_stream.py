@@ -11,16 +11,24 @@ basedir = pathlib.Path('~/pyird/data/20211110_REACH/').expanduser()
 inst = 'REACH'
 band = 'h' #'h' or 'y'
 mmf = 'mmf2' #'mmf1' (comb fiber) or 'mmf2' (star fiber)
-skipLFC = False #if False, uncertainties are output. mmf1 of y band must be reduced first.
+readout_noise_mode = "default" #'real' or 'default'
 
+datadir_flat = basedir/'flat/'
+datadir_dark = basedir/'dark/'
+datadir_thar = basedir/'thar'
+datadir_target = basedir/'target/'
+anadir = basedir/'reduc/'
+
+fitsid_flat_star = list(range(53235,53334,2))
+fitsid_dark = [47269]
+fitsid_thar = list(range(53347,53410,2))
+fitsid_target = [53205]
 
 #--------FOR CALIBRATION--------#
 ## FLAT_STAR
 # please change directry names and fits ids
-datadir = basedir/'flat/'
-anadir = basedir/'reduc/'
-flat_star=irdstream.Stream2D("flat",datadir,anadir,inst=inst)
-flat_star.fitsid=list(range(53235,53334,2))
+flat_star=irdstream.Stream2D("flat",datadir_flat,anadir,inst=inst)
+flat_star.fitsid=fitsid_flat_star
 # aperture extraction
 flat_star.band=band
 print(flat_star.band,' band')
@@ -31,17 +39,10 @@ elif band=='y':
     trace_smf=flat_star.aptrace(cutrow = 600,nap=102) 
 trace_mask = trace_smf.mask()
 
-# apeture mask plot
-import matplotlib.pyplot as plt
-plt.imshow(trace_smf.mask()) 
-plt.show()
-
 ## HOTPIXEL MASK: 
 # See pyird/io/read_hotpix.py for reading fixed mask (Optional)
 ## DARK
-datadir = basedir/'dark/'
-anadir = basedir/'dark/'
-dark = irdstream.Stream2D('dark', datadir, anadir,fitsid=[47269],inst=inst)
+dark = irdstream.Stream2D('dark', datadir_dark, anadir,fitsid=fitsid_dark,inst=inst)
 if band=='h' and dark.fitsid[0]%2==0:
     dark.fitsid_increment()
 median_image = dark.immedian()
@@ -57,15 +58,13 @@ elif mmf=='mmf1':
     trace_smf.mmf1() #mmf1 (comb fiber)
 
 ## THAR
-datadir = basedir/'thar'
-anadir = basedir/'reduc'
 if band=='h':
     rawtag='IRDAD000' #for calib data taken by Gen2
     ignore_orders=None
 elif band=='y':
     rawtag='IRDBD000' #for calib data taken by Gen2
     ignore_orders = list(np.arange(1,32))+list([50,51])
-thar=irdstream.Stream2D("thar",datadir,anadir,fitsid=list(range(53347,53410,2)),inst=inst)#,rawtag=rawtag)#
+thar=irdstream.Stream2D("thar",datadir_thar,anadir,fitsid=fitsid_thar,inst=inst)#,rawtag=rawtag)#
 
 #wavelength calibration
 thar.trace = trace_smf
@@ -83,10 +82,8 @@ flat_star.flatten(hotpix_mask=hotpix_mask)
 df_flatn = flat_star.apnormalize(ignore_orders=ignore_orders)
 
 #--------FOR TARGET--------#
-datadir = basedir/'target/'
-anadir = basedir/'reduc/'
 target = irdstream.Stream2D(
-    'targets', datadir, anadir, fitsid=[53205],inst=inst)
+    'targets', datadir_target, anadir, fitsid=fitsid_target,inst=inst)
 if flat_star.band=='h' and target.fitsid[0]%2==0:
     target.fitsid_increment() 
 target.info = True  # show detailed info
@@ -103,8 +100,8 @@ flat_star.apext_flatfield(df_flatn,hotpix_mask=hotpix_mask)
 flat_star.dispcor(master_path=thar.anadir)
 
 # combine & normalize
-target.normalize1D(master_path=flat_star.anadir,skipLFC=skipLFC)
+target.normalize1D(master_path=flat_star.anadir,readout_noise_mode=readout_noise_mode)
 
 # save noramlized flat for fringe removal
 flat_star.dispcor(master_path=thar.anadir,blaze=False)
-flat_star.normalize1D(master_path=flat_star.anadir,skipLFC=skipLFC)
+flat_star.normalize1D(master_path=flat_star.anadir,readout_noise_mode=readout_noise_mode)

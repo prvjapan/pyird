@@ -1,3 +1,5 @@
+<img src=documents/figures/pyird_logo.png width=70%>
+
 PyIRD
 ===========
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/prvjapan/pyird/blob/develop/LICENSE)
@@ -33,7 +35,9 @@ Examples
 
 See the following examples how to create 1D spectra from raw data.
 - [pyird/examples/python/IRD_stream.py](https://github.com/prvjapan/pyird/blob/master/examples/python/IRD_stream.py) -- for IRD data; read [the docs](https://secondearths.sakura.ne.jp/pyird/tutorials/IRD_stream.html) for the detailed explanation.
-- [pyird/examples/python/REACH_stream.py](https://github.com/prvjapan/pyird/blob/master/examples/python/REACH_stream.py) -- for REACH data
+- [pyird/examples/python/REACH_stream.py](https://github.com/prvjapan/pyird/blob/master/examples/python/REACH_stream.py) -- for REACH data; basically the same as `IRD_stream.py`, but with the variable `inst` set to `REACH` instead.
+
+The raw data for `IRD_stream.py` can be downloaded from here. 
 
 
 License
