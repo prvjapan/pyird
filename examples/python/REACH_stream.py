@@ -11,7 +11,7 @@ basedir = pathlib.Path('~/pyird/data/20211110_REACH/').expanduser()
 inst = 'REACH'
 band = 'h' #'h' or 'y'
 mmf = 'mmf2' #'mmf1' (comb fiber) or 'mmf2' (star fiber)
-readout_noise_mode = "real" #'real' or 'default'
+readout_noise_mode = "default" #'real' or 'default'
 
 datadir_flat = basedir/'flat/'
 datadir_dark = basedir/'dark/'

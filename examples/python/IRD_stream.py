@@ -8,7 +8,7 @@ basedir = pathlib.Path('~/pyird/data/20210317/').expanduser()
 
 band = 'y' #'h' or 'y'
 mmf = 'mmf2' #'mmf1' (comb fiber) or 'mmf2' (star fiber)
-readout_noise_mode = "real" #'real' or 'default'
+readout_noise_mode = "default" #'real' or 'default'
 
 datadir_flat = basedir/'flat/'
 datadir_dark = basedir/'dark/'
@@ -68,8 +68,6 @@ thar.calibrate_wavelength()
 ## FLAT
 if mmf=='mmf2':
     ## FLAT_STAR
-    datadir = basedir/'flat/'
-    anadir = basedir/'reduc_test/'
     flat_star=irdstream.Stream2D("flat_star",datadir_flat,anadir)
     flat_star.fitsid=fitsid_flat_star
     flat_star.trace = trace_mmf
