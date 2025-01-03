@@ -25,7 +25,7 @@ or
 ```
 git clone https://github.com/prvjapan/pyird.git
 cd pyird
-python setup.py install
+pip install .
 ```
 
 Examples
