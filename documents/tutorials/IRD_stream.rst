@@ -5,21 +5,21 @@ This tutorial demonstrates how to reduce raw data to
 wavelength-calibrated 1D spectra. By using the ``Stream2D`` framework,
 you can apply functions to multiple FITS files efficiently.
 
-- :ref:``step0``
-- :ref:``step1``
+- :ref:`step0`
+- :ref:`step1`
 
-  - :ref:``step1-1``
-  - :ref:``step1-2``
-  - :ref:``step1-3``
-  - :ref:``step1-4``
+  - :ref:`step1-1`
+  - :ref:`step1-2`
+  - :ref:`step1-3`
+  - :ref:`step1-4`
 
-- :ref:``step2``
+- :ref:`step2`
 
-  - :ref:``step2-1``
-  - :ref:``step2-2``
-  - :ref:``step2-3``
-  - :ref:``step2-4``
-  - :ref:``step2-5``
+  - :ref:`step2-1`
+  - :ref:`step2-2`
+  - :ref:`step2-3`
+  - :ref:`step2-4`
+  - :ref:`step2-5`
 
 .. _step0:
 
