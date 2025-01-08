@@ -21,8 +21,8 @@ It is designed to process raw images into one-dimensional spectra in a semi-auto
 Data Access
 """""""""""""""
 
-The raw data used in the tutorial (IRD_stream.py) can be downloaded from here.
-The data size is approximately 7GB in total. 
+The raw data used in the tutorial (IRD_stream.py) can be downloaded from the `Zenodo repository <https://zenodo.org/records/14614004>`_.
+The total file size after extraction is approximately 7 GB.
 
 .. toctree::
    :maxdepth: 2
