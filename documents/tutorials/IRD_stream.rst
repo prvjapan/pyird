@@ -5,18 +5,21 @@ This tutorial demonstrates how to reduce raw data to
 wavelength-calibrated 1D spectra. By using the ``Stream2D`` framework,
 you can apply functions to multiple FITS files efficiently.
 
-- :ref:`step0`
-- :ref:`step1`
-    - :ref:`step1-1`
-    - :ref:`step1-2` 
-    - :ref:`step1-3`
-    - :ref:`step1-4`
-- :ref:`step2`
-    - :ref:`step2-1`
-    - :ref:`step2-2`
-    - :ref:`step2-3`
-    - :ref:`step2-4`
-    - :ref:`step2-5`
+- :ref:``step0``
+- :ref:``step1``
+
+  - :ref:``step1-1``
+  - :ref:``step1-2``
+  - :ref:``step1-3``
+  - :ref:``step1-4``
+
+- :ref:``step2``
+
+  - :ref:``step2-1``
+  - :ref:``step2-2``
+  - :ref:``step2-3``
+  - :ref:``step2-4``
+  - :ref:``step2-5``
 
 .. _step0:
 
@@ -83,17 +86,17 @@ analyze.
 Ensure that the ``readout_noise_mode`` is set to either ‘real’ or
 ‘default’.
 
--  ``readout_noise_mode = 'real'``: Need to reduce the dataset with
-   ``band = 'y'`` and ``mmf = 'mmf1'`` at first.
+- ``readout_noise_mode = 'real'``: Need to reduce the dataset with
+  ``band = 'y'`` and ``mmf = 'mmf1'`` at first.
 
-   -  With this setting, uncertainties and signal-to-noise ratio at each
-      wavelength will be included in the output files (**nw…_m?.dat*\*
-      and \**ncw…_m?.dat**).
-   -  Those values are based on the readout noise (RN) calculated using
-      the comb spectrum (in mmf1) of the Y/J band.
+  - With this setting, uncertainties and signal-to-noise ratio at each
+    wavelength will be included in the output files (**nw…_m?.dat**
+    and **ncw…_m?.dat**).
+  - Those values are based on the readout noise (RN) calculated using
+    the comb spectrum (in mmf1) of the Y/J band.
 
--  ``readout_noise_mode = 'default'``: Uses a default readout noise (RN)
-   value (RN=12 :math:`e^{-}`).
+- ``readout_noise_mode = 'default'``: Uses a default readout noise (RN)
+  value (RN=12 :math:`e^{-}`).
 
 .. _step1:
 
@@ -107,11 +110,11 @@ Step 1: Preprocessing the Calibration Dataset
 Step 1-1: Identifying Apertures
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  The ``aptrace`` function is used to identify apertures.
--  Number of apertures (``nap``): 42 for H band, 102 for Y/J band.
--  These apertures are identified in the FLAT_COMB data.
--  If your observation was performed with a single fiber, set ``nap`` to
-   half the default value.
+- The ``aptrace`` function is used to identify apertures.
+- Number of apertures (``nap``): 42 for H band, 102 for Y/J band.
+- These apertures are identified in the FLAT_COMB data.
+- If your observation was performed with a single fiber, set ``nap`` to
+  half the default value.
 
 .. code:: ipython3
 
@@ -162,10 +165,10 @@ Step 1-1: Identifying Apertures
 .. image:: IRD_stream_files/IRD_stream_11_5.png
 
 
--  Define ‘trace_mask’ to mask light from both fibers.
--  Aperture width is 6 pixels (from -2 to +4) for IRD data and 5 pixels
-   (from -2 to 3) for REACH data by default. You can change it
-   ``.width`` instance of trace_mmf.
+- Define ‘trace_mask’ to mask light from both fibers.
+- Aperture width is 6 pixels (from -2 to +4) for IRD data and 5 pixels
+  (from -2 to 3) for REACH data by default. You can change it ``.width``
+  instance of trace_mmf.
 
 .. code:: ipython3
 
@@ -177,8 +180,8 @@ Step 1-1: Identifying Apertures
     100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 42/42 [00:00<00:00, 92.66it/s]
 
 
--  Reduce apertures in the mask to extract the spectrum from the desired
-   fiber
+- Reduce apertures in the mask to extract the spectrum from the desired
+  fiber
 
 .. code:: ipython3
 
@@ -192,11 +195,11 @@ Step 1-1: Identifying Apertures
 Step 1-2: Removing hotpixels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  There are two options for creating the hotpixel mask.
--  This tutorial introduces one method using dark data.
--  Refer to
-   `pyird.io.read_hotpix <https://secondearths.sakura.ne.jp/pyird/pyird/pyird.io.html#module-pyird.io.read_hotpix>`_
-   module for an alternative approach without dark data.
+- There are two options for creating the hotpixel mask.
+- This tutorial introduces one method using dark data.
+- Refer to
+  `pyird.io.read_hotpix <https://secondearths.sakura.ne.jp/pyird/pyird/pyird.io.html#module-pyird.io.read_hotpix>`_
+  module for an alternative approach without dark data.
 
 .. code:: ipython3
 
@@ -234,10 +237,10 @@ Step 1-2: Removing hotpixels
 Step 1-3: Wavelength Calibration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  Wavelength calibration is performed by using reference frames
-   (Thrium-Argon).
--  You do not need to manually identify emission lines;
-   ``calibrate_wavelength`` automatically references the line list!
+- Wavelength calibration is performed by using reference frames
+  (Thrium-Argon).
+- You do not need to manually identify emission lines;
+  ``calibrate_wavelength`` automatically references the line list!
 
 .. code:: ipython3
 
@@ -304,14 +307,14 @@ Step 1-3: Wavelength Calibration
 Step 1-4: Creating a Normalized Flat
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  This process similar to
-   `hdsis_ecf <https://github.com/chimari/hds_iraf>`_ for
-   HDS/Subaru data to reduce the fringe appearing in a spectrum.
--  In the preparation of this process, we create the normalized flat by
-   using ``apnormalize``.
--  After applying ``flatten``, **‘{stream_id}_{band}_{mmf}.fits’**
-   (e.g., flat_star_h_m2.fits) is created in anadir, containing the
-   extracted spectrum of flat data.
+- This process similar to
+  `hdsis_ecf <https://github.com/chimari/hds_iraf>`_ for HDS/Subaru
+  data to reduce the fringe appearing in a spectrum.
+- In the preparation of this process, we create the normalized flat by
+  using ``apnormalize``.
+- After applying ``flatten``, **‘{stream_id}_{band}_{mmf}.fits’**
+  (e.g., flat_star_h_m2.fits) is created in anadir, containing the
+  extracted spectrum of flat data.
 
 .. code:: ipython3
 
@@ -443,13 +446,13 @@ Step 2-1: Removing Noise Pattern on the Detector
 Step 2-2: Aperture Extraction & Flat Fielding
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  The ``apext_flatfield`` function extracts each order while applying
-   flat fielding.
--  This process requires the flat spectrum normalized in each pixel
-   within an aperture (i.e., df_flatn).
--  After this process, \**’IRDA000…_flnhp.fits’*\* (when ``hotpix_mask``
-   is set) or \**’IRDA000…_fln.fits’*\* (when ``hotpix_mask = None``) is
-   created.
+- The ``apext_flatfield`` function extracts each order while applying
+  flat fielding.
+- This process requires the flat spectrum normalized in each pixel
+  within an aperture (i.e., df_flatn).
+- After this process, **’IRDA000…_flnhp.fits’** (when
+  ``hotpix_mask`` is set) or **’IRDA000…_fln.fits’** (when
+  ``hotpix_mask = None``) is created.
 
 .. code:: ipython3
 
@@ -503,12 +506,12 @@ Step 2-2: Aperture Extraction & Flat Fielding
 Step 2-3: Assigning Wavelength to the Extracted Spectrum
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  The ``dispcor`` function assigns wavelength solution to the extracted
-   spectrum.
--  Please change the ``extin`` option to ``extin='_flnhp'`` or
-   ``extin='_fln'`` depending on the previous process.
--  After this process, \**’w…_m?.dat’*\* is created, with data format:
-   ``$1: Wavelength [nm]``, ``$2: Order``, ``$3: Counts``.
+- The ``dispcor`` function assigns wavelength solution to the extracted
+  spectrum.
+- Please change the ``extin`` option to ``extin='_flnhp'`` or
+  ``extin='_fln'`` depending on the previous process.
+- After this process, **’w…_m?.dat’** is created, with data format:
+  ``$1: Wavelength [nm]``, ``$2: Order``, ``$3: Counts``.
 
 .. code:: ipython3
 
@@ -529,9 +532,9 @@ Step 2-3: Assigning Wavelength to the Extracted Spectrum
 Step 2-4: Creating the Blaze Function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  The blaze function is created from FLAT spectrum to ‘’normalize’’ the
-   spectra.
--  After this process, \**’wblaze_{band}_{mmf}.dat’*\* is created.
+- The blaze function is created from FLAT spectrum to ‘’normalize’’ the
+  spectra.
+- After this process, **’wblaze_{band}_{mmf}.dat’** is created.
 
 .. code:: ipython3
 
@@ -603,20 +606,20 @@ Step 2-4: Creating the Blaze Function
 Step 2-5: Normalizing the Spectra
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  Normalize the target spectrum by dividing it by the blaze function.
--  After ``normalize1D``, the normalized spectrum (**nw…_m?.dat\ **) and
-   the order-combined spectrum (**\ ncw…_m?.dat**) are created.
+- Normalize the target spectrum by dividing it by the blaze function.
+- After ``normalize1D``, the normalized spectrum (**nw…_m?.dat**)
+  and the order-combined spectrum (**ncw…_m?.dat**) are created.
 
-   -  Data formats are:
+  - Data formats are:
 
-      -  Normalized (**nw**): ``$1: Wavelength [nm]``, ``$2: Order``,
-         ``$3: Counts``, ``$4: S/N``, ``$5: Uncertainties``
-      -  Order-combined (**ncw**): ``$1: Wavelength [nm]``,
-         ``$2: Counts``, ``$3: S/N``, ``$4: Uncertainties``
+    - Normalized (**nw**): ``$1: Wavelength [nm]``, ``$2: Order``,
+      ``$3: Counts``, ``$4: S/N``, ``$5: Uncertainties``
+    - Order-combined (**ncw**): ``$1: Wavelength [nm]``, ``$2: Counts``,
+      ``$3: S/N``, ``$4: Uncertainties``
 
--  For the order-combined spectra: There are overlapping wavelengths at
-   the edges of orders, so we “normalize” by summing up the flux in
-   these regions to improve the signal-to-noise ratio.
+- For the order-combined spectra: There are overlapping wavelengths at
+  the edges of orders, so we “normalize” by summing up the flux in these
+  regions to improve the signal-to-noise ratio.
 
 .. code:: ipython3
 
