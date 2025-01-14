@@ -275,6 +275,11 @@ def second_identification(dat, wavlength_solution_matrix, residuals, npix, norde
     
     for order_tmp in range(1,norder+1):
         dat_order = dat[order_tmp - 1, :]
+        # filter nan values at order edges
+        nanind = np.where(np.isnan(dat_order))[0]
+        nanind_small_edge = nanind[nanind < 1900].max()
+        nanind_large_edge = nanind[nanind > 1900].min()
+        # median filter
         filtered_dat = medfilt(dat_order, kernel_size=kernel_size)
         wavlength_solution_order = wavlength_solution_matrix[:, order_tmp - 1]
         wavref_order = wavref[(min(wavlength_solution_order) <= wavref) & (wavref <= max(wavlength_solution_order))]
@@ -286,8 +291,10 @@ def second_identification(dat, wavlength_solution_matrix, residuals, npix, norde
             pixel_search_area = 2 + int(wav_dependence * first_ident_quality)
         for wavref_tmp in wavref_order:
             ind_wavref_neighbor = np.searchsorted(wavlength_solution_order, wavref_tmp)
-            ind_low = max(ind_wavref_neighbor - pixel_search_area, 0)
-            ind_upp = min(ind_wavref_neighbor + pixel_search_area + 1, npix)
+            ind_low = max(ind_wavref_neighbor - pixel_search_area, nanind_small_edge + 1)
+            ind_upp = min(ind_wavref_neighbor + pixel_search_area + 1, nanind_large_edge)
+            if ind_low >= ind_upp:
+                continue
             # add wavelengths of a distinct peak to the list
             filtered_local_peak = np.nanmax(filtered_dat[ind_low:ind_upp])
             if filtered_local_peak > np.nanpercentile(filtered_dat[filtered_dat>0], detect_level): 
