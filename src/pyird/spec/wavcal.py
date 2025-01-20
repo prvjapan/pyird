@@ -208,7 +208,7 @@ def identify_channel_mode(dat):
         orders = np.arange(158, 107, -1)
         print('YJ band')
     else:        
-        raise ValueError("Cannot identify H or YJ mode.")
+        raise ValueError("Cannot identify H or YJ mode. norder=", norder)
     return npix, norder, orders, channelfile
 
 def first_identification(dat, channelfile, pixel_search_area=5, kernel_size=3):

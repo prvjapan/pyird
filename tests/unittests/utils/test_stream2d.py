@@ -104,6 +104,61 @@ def test_write_df_spec_wav(tmp_path):
     assert len(wspec) == 4
     assert list(wspec.columns) == ["wav", "order", "flux"]
 
+def test_fitsid_increment():
+    stream = setup_stream2d()
+    stream.not_ignore_warning = False 
+    val = stream.fitsid[0]
+    stream.fitsid_increment()
+    assert stream.fitsid[0] == val+1
+
+def test_fitsid_decrement():
+    stream = setup_stream2d()
+    stream.not_ignore_warning = False 
+    val = stream.fitsid[0]
+    stream.fitsid_increment()
+    stream.fitsid_decrement()
+    assert stream.fitsid[0] == val
+    
+def test_fitsid_decrement_value_error_for_no_incremented():
+    stream = setup_stream2d()
+    stream.not_ignore_warning = True
+    with pytest.raises(ValueError):
+        stream.fitsid_decrement()
+
+def test_fitsid_increment_value_error_for_double_increment():
+    stream = setup_stream2d()
+    stream.not_ignore_warning = False
+    stream.fitsid_increment()
+    with pytest.raises(ValueError):
+        stream.fitsid_increment()
+
+def setup_stream2d_band(band):
+    basedir = pathlib.Path(__file__).parent.parent.parent.parent
+    datadir = basedir / 'data/dark/'
+    anadir = basedir / 'data/dark/'
+    s2d = Stream2D('targets', datadir, anadir, fitsid = [41018], band=band, not_ignore_warning=False)
+    return s2d
+
+
+def test_fitsid_sets_band_at_stream2d_h():
+    stream = setup_stream2d_band("h")
+    assert stream.fitsid[0] == 41019
+    assert stream.band == "h"
+
+def test_fitsid_sets_band_at_stream2d_y():
+    stream = setup_stream2d_band("y")
+    assert stream.fitsid[0] == 41018
+    assert stream.band == "y"
+
+def test_fitsid_sets_band_at_stream2d_h_increment_error():
+    stream = setup_stream2d_band("h")
+    with pytest.raises(ValueError):
+        stream.fitsid_increment()
+    
+
+    
+        
 if __name__ == '__main__':
     test_path_1()
     test_path_2()
+    
