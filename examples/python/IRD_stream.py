@@ -1,6 +1,3 @@
-import sys
-sys.path.insert(0, '/Users/yuikasagi/git/pyird/src')
-
 from pyird.utils import irdstream
 import pathlib
 from pyird.image.bias import bias_subtract_image
