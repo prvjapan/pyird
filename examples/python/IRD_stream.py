@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, '/Users/yuikasagi/git/pyird/src')
+
 from pyird.utils import irdstream
 import pathlib
 from pyird.image.bias import bias_subtract_image
@@ -6,7 +9,7 @@ from pyird.image.hotpix import identify_hotpix_sigclip
 #--------SETTINGS--------#
 basedir = pathlib.Path('~/pyird/data/20210317/').expanduser()
 
-band = 'y' #'h' or 'y'
+band = 'h' #'h' or 'y'
 mmf = 'mmf2' #'mmf1' (comb fiber) or 'mmf2' (star fiber)
 readout_noise_mode = "default" #'real' or 'default'
 
@@ -14,7 +17,7 @@ datadir_flat = basedir/'flat/'
 datadir_dark = basedir/'dark/'
 datadir_thar = basedir/'thar'
 datadir_target = basedir/'target/'
-anadir = basedir/'reduc/'
+anadir = basedir/'reduc_v1.1_py310/'
 
 fitsid_flat_comb = list(range(41704,41804,2)) 
 fitsid_flat_star = list(range(41804,41904,2)) 
@@ -32,7 +35,7 @@ flat_comb.band=band
 print(flat_comb.band,' band')
 if band=='h' and flat_comb.fitsid[0]%2==0:
     flat_comb.fitsid_increment() 
-    trace_mmf=flat_comb.aptrace(cutrow = 1200,nap=42) 
+    trace_mmf=flat_comb.aptrace(cutrow = 1500,nap=42) 
 elif band=='y':
     trace_mmf=flat_comb.aptrace(cutrow = 1000,nap=102) 
 trace_mask = trace_mmf.mask()
