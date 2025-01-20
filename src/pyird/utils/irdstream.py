@@ -189,13 +189,13 @@ class Stream2D(FitsSet, StreamCommon):
             rotate (boolen): If True, the image is rotated in 90 deg (for old detector). See #80 in GitHub
             inverse (boolen): If True, the image is inversed along y axis. See #80 in GitHub
             detector_artifact (boolen): If True, fill the gaps seen in the old detector. See #80 in GitHub
-            band: band of the data, "y" or "h"
+            band: band of the data, "y" or "h", requires fitsid
             not_ignore_warning: If True and files for fitsid do not exist, raise a ValueError (default: True)
         """
         FitsSet.__init__(self, rawtag, rawdir, extension="")
         StreamCommon.__init__(self, streamid, rawdir, anadir, inst)
         self.not_ignore_warning = not_ignore_warning
-        
+
         self.imcomb = False
         self.rotate = rotate
         self.inverse = inverse
@@ -217,6 +217,8 @@ class Stream2D(FitsSet, StreamCommon):
 
     def init_band(self, band):
         """initialize band"""
+        if self.fitsid is None:
+            raise ValueError("band option requires fitsid")
         if band not in ("y", "h"):
             raise AttributeError("band must be 'y' or 'h'")
         self.band = band

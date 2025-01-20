@@ -154,11 +154,21 @@ def test_fitsid_sets_band_at_stream2d_h_increment_error():
     stream = setup_stream2d_band("h")
     with pytest.raises(ValueError):
         stream.fitsid_increment()
+
+def test_stream2d_no_fitsid_but_band_option():
+    basedir = pathlib.Path(__file__).parent.parent.parent.parent
+    datadir = basedir / 'data/dark/'
+    anadir = basedir / 'data/dark/'
+    with pytest.raises(ValueError):
+        s2d = Stream2D('targets', datadir, anadir, band="h", not_ignore_warning=False)
     
+
+
+
 
     
         
 if __name__ == '__main__':
     test_path_1()
     test_path_2()
-    
+    test_stream2d_no_fitsid_but_band_option()
