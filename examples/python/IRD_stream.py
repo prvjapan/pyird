@@ -9,7 +9,7 @@ from pyird.image.hotpix import identify_hotpix_sigclip
 #--------SETTINGS--------#
 basedir = pathlib.Path('~/pyird/data/20210317/').expanduser()
 
-band = 'h' #'h' or 'y'
+band = 'y' #'h' or 'y'
 mmf = 'mmf2' #'mmf1' (comb fiber) or 'mmf2' (star fiber)
 readout_noise_mode = "default" #'real' or 'default'
 
@@ -17,7 +17,7 @@ datadir_flat = basedir/'flat/'
 datadir_dark = basedir/'dark/'
 datadir_thar = basedir/'thar'
 datadir_target = basedir/'target/'
-anadir = basedir/'reduc_v1.1_py310/'
+anadir = basedir/'reduc/'
 
 fitsid_flat_comb = list(range(41704,41804,2)) 
 fitsid_flat_star = list(range(41804,41904,2)) 
