@@ -636,9 +636,10 @@ class Stream2D(FitsSet, StreamCommon):
         from pyird.utils.aperture import TraceAperture
 
         inst = self.inst
+        band = self.band
 
         flatmedian = self.immedian()
-        if nap == 42 or nap == 21:
+        if band=='h':
             flatmedian = flatmedian[::-1, ::-1]
 
         if self.detector_artifact:
