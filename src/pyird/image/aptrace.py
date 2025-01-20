@@ -83,7 +83,7 @@ def set_aperture(dat, cutrow, nap, plot=True):
     if plot == True:
         # Plot to confirm the selected aperture
         pixels = np.arange(0, len(onerow_masked))
-        plot_crosssection(pixels, onerow_masked, peakind_cut)
+        plot_crosssection(pixels, onerow_masked, peakind_cut, dat, cutrow)
     return peakind_cut, cutrow
 
 
