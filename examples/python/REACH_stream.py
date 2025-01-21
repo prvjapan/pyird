@@ -38,6 +38,7 @@ if band=='h' and flat_star.fitsid[0]%2==0:
 elif band=='y':
     trace_smf=flat_star.aptrace(cutrow = 600,nap=102) 
 trace_mask = trace_smf.mask()
+trace_smf.choose_aperture(fiber=mmf)
 
 ## HOTPIXEL MASK: 
 # See pyird/io/read_hotpix.py for reading fixed mask (Optional)
@@ -50,12 +51,6 @@ for data in dark.rawpath:
     im = pyf.open(str(data))[0].data
 im_subbias = bias_subtract_image(im)
 hotpix_mask = identify_hotpix_sigclip(im_subbias)
-
-# reduce mmf1 or mmf2
-if mmf=='mmf2':
-    trace_smf.mmf2() #mmf2 (star fiber)
-elif mmf=='mmf1':
-    trace_smf.mmf1() #mmf1 (comb fiber)
 
 ## THAR
 if band=='h':

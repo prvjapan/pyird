@@ -32,10 +32,11 @@ flat_comb.band=band
 print(flat_comb.band,' band')
 if band=='h' and flat_comb.fitsid[0]%2==0:
     flat_comb.fitsid_increment() 
-    trace_mmf=flat_comb.aptrace(cutrow = 1200,nap=42) 
+    trace_mmf=flat_comb.aptrace(cutrow = 1500,nap=42) 
 elif band=='y':
     trace_mmf=flat_comb.aptrace(cutrow = 1000,nap=102) 
 trace_mask = trace_mmf.mask()
+trace_mmf.choose_aperture(fiber=mmf)
 
 ## HOTPIXEL MASK: 
 # See pyird/io/read_hotpix.py for reading fixed mask (Optional)
@@ -46,12 +47,6 @@ if band=='h' and dark.fitsid[0]%2==0:
 median_image = dark.immedian()
 im_subbias = bias_subtract_image(median_image)
 hotpix_mask = identify_hotpix_sigclip(im_subbias)
-
-# reduce mmf1 or mmf2
-if mmf=='mmf2':
-    trace_mmf.choose_mmf2_aperture() #mmf2 (star fiber)
-elif mmf=='mmf1':
-    trace_mmf.choose_mmf1_aperture() #mmf1 (comb fiber)
 
 ## THAR (ThAr-ThAr)
 if band=='h':

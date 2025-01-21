@@ -48,13 +48,38 @@ class TraceAperture(object):
             inst=self.inst,
             width=self.width,
         )
+    
+    def choose_aperture(self, fiber):
+        """choose apertures of mmf1 (comb fiber) or mmf2 (star fiber)
+
+        Args:
+            fiber:  fiber type (mmf1 or mmf2)
+
+        Returns:
+            updated variables (y0, xmin, xmax, coeff)
+
+        """
+        if len(self.y0) in [21, 51, 52]:
+            self.set_single_mmf(fiber)
+        else:
+            if fiber == "mmf1":
+                self.choose_odd_aperture()
+            elif fiber == "mmf2":
+                self.choose_even_aperture()
+            else:
+                raise ValueError("fiber should be mmf1 or mmf2")
 
     def mmf2(self):
-        warn_msg = "Deprecated Use `choose_mmf2_aperture` instead"
+        warn_msg = "Deprecated Use `choose_aperture(fiber='mmf2')` instead"
         warnings.warn(warn_msg, FutureWarning)
-        self.choose_mmf2_aperture()
+        self.choose_aperture(fiber="mmf2")
 
     def choose_mmf2_aperture(self):
+        warn_msg = "Deprecated Use `choose_aperture(fiber='mmf2')` instead"
+        warnings.warn(warn_msg, FutureWarning)
+        self.choose_aperture(fiber="mmf2")
+
+    def choose_even_aperture(self):
         """choose apertures for mmf2 (star fiber)
 
         Returns:
@@ -69,11 +94,16 @@ class TraceAperture(object):
         self.mmf = "m2"
 
     def mmf1(self):
-        warn_msg = "Deprecated Use `choose_mmf1_aperture` instead"
+        warn_msg = "Deprecated Use `choose_aperture(fiber='mmf1')` instead"
         warnings.warn(warn_msg, FutureWarning)
-        self.choose_mmf1_aperture()
+        self.choose_aperture(fiber="mmf1")
 
     def choose_mmf1_aperture(self):
+        warn_msg = "Deprecated Use `choose_aperture(fiber='mmf1')` instead"
+        warnings.warn(warn_msg, FutureWarning)
+        self.choose_aperture(fiber="mmf1")
+
+    def choose_odd_aperture(self):
         """choose apertures for mmf1 (comb fiber)
 
         Returns:
@@ -91,3 +121,17 @@ class TraceAperture(object):
         if len(self.y0) in [21, 51, 52]:
             msg = "Looks a single MMF on the detector. Choosing a mmf aperture may have trouble."
             warnings.warn(msg, UserWarning)
+
+    def set_single_mmf(self, fiber):
+        """set mmf1 or mmf2 for single mmf
+
+        Returns:
+            updated variables (mmf) while not reducing the number of apertures
+
+        """
+        if fiber == "mmf1":
+            self.mmf = "m1"
+        elif fiber == "mmf2":
+            self.mmf = "m2"
+        else:
+            raise ValueError("fiber should be mmf1 or mmf2")
