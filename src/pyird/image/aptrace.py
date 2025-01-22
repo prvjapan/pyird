@@ -65,13 +65,13 @@ def set_aperture(dat, cutrow, nap, ign_ord=[], plot=True):
     while ((len(peakind_cut) != nap) or prange) and cutrow_lim:
         onerow_masked, peakind_cut = cross_section(dat, cutrow, nap)
         # mask peaks for selected apertures
-        if len(ign_ord)>1:
+        if len(ign_ord)>0:
             mask = np.ones_like(peakind_cut, dtype=bool)
             mask[np.array(ign_ord)-1] = False
             peakind_cut = np.array(peakind_cut)[mask]
-        if nap <= 42:  # h band
+        if nap in [21, 42]:  # h band
             prange = (peakind_cut[-1] > 1500) or (peakind_cut[0] > 40)
-        elif nap > 42:  # yj band
+        elif nap in [51, 102]:  # yj band
             prange = (peakind_cut[0] < 250) or (peakind_cut[-1] < 2000)
         cutrow_lim = (cutrow > cutrow_min) and (cutrow < cutrow_max)
         cutrow += 1

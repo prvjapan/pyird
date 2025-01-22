@@ -570,6 +570,7 @@ class Stream2D(FitsSet, StreamCommon):
         self,
         trace_path=None,
         channelfile_path=None,
+        ign_ord=[],
         maxiter=30,
         std_threshold=0.001,
         npix=2048,
@@ -581,6 +582,7 @@ class Stream2D(FitsSet, StreamCommon):
         Args:
             trace_path: path to the trace file
             channelfile_path: path to the channel file
+            ign_ord: orders to be ignored
             maxiter: maximum number of iterations
             std_threshold: When the std of fitting residuals reaches this value, the iteration is terminated.
             npix: number of pixels
@@ -619,6 +621,7 @@ class Stream2D(FitsSet, StreamCommon):
                 maxiter=maxiter,
                 std_threshold=std_threshold,
                 channelfile_path=channelfile_path,
+                ign_ord=ign_ord,
             )
             # np.save('thar_%s_%s_final.npy'%(self.band,mmf),data)
             wavsol_2d = wavsol.reshape((npix, nord))
