@@ -43,7 +43,7 @@ def cross_section(dat, nrow, nap):
     return onerow_masked, peakind_cut
 
 
-def set_aperture(dat, cutrow, nap, plot=True):
+def set_aperture(dat, cutrow, nap, ign_ord=[], plot=True):
     """search aperture
 
     Args:
@@ -64,11 +64,15 @@ def set_aperture(dat, cutrow, nap, plot=True):
     prange = False
     while ((len(peakind_cut) != nap) or prange) and cutrow_lim:
         onerow_masked, peakind_cut = cross_section(dat, cutrow, nap)
-        # print('cross-section: row ',cutrow)
-        if nap == 42:  # h band
-            prange = (peakind_cut[-1] > 1500) or (peakind_cut[1] > 40)
-        elif nap >= 102:  # yj band
-            prange = (peakind_cut[0] < 250) or (peakind_cut[-2] < 2000)
+        # mask peaks for selected apertures
+        if len(ign_ord)>1:
+            mask = np.ones_like(peakind_cut, dtype=bool)
+            mask[np.array(ign_ord)-1] = False
+            peakind_cut = np.array(peakind_cut)[mask]
+        if nap <= 42:  # h band
+            prange = (peakind_cut[-1] > 1500) or (peakind_cut[0] > 40)
+        elif nap > 42:  # yj band
+            prange = (peakind_cut[0] < 250) or (peakind_cut[-1] < 2000)
         cutrow_lim = (cutrow > cutrow_min) and (cutrow < cutrow_max)
         cutrow += 1
     if not cutrow_lim:
@@ -218,13 +222,14 @@ def fit_ord(x, y0, data):
     return p1
 
 
-def aptrace(dat, cutrow, nap, plot=True):
+def aptrace(dat, cutrow, nap, ign_ord=[], plot=True):
     """trace apertures by a polynomial function.
 
     Args:
         dat: flat data
         cutrow: row number used to set aperture
         nap: number of total apertures to be traced
+        ign_ord: orders to be ignored, using when nap is set to a non-default value
         plot: show figure of traced apertures
 
     Returns:
@@ -236,17 +241,17 @@ def aptrace(dat, cutrow, nap, plot=True):
         You may as well change the value of ``cutrow`` if the aperture trace is failed.
         
     """
-    if nap in [42, 102, 104]:
+    if nap in [42, 102]:
         print("default nap value")
-    elif nap in [21, 51, 52]:
+    elif nap in [21, 51]:
         warnings.warn("Looks a single fiber aperture on the detector.", UserWarning)
     else:
         warnings.warn(
-            "nap is not default value. default: nap = 42 for H / 102 or 104 for YJ.",
+            "nap is not default value. default: nap = 42 for H / 102 for YJ.",
             UserWarning,
         )
 
-    peakind_cut, row = set_aperture(dat, cutrow, nap, plot=plot)
+    peakind_cut, row = set_aperture(dat, cutrow, nap, ign_ord=ign_ord, plot=plot)
 
     # Trace each peak
     x, y, y0 = [], [], []

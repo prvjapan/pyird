@@ -80,17 +80,22 @@ def test_sigmaclip():
 
 # Test identify_channel_mode
 def test_identify_channel_mode_h():
-    sample_spec_h = sample_data(norder=21)
-    npix, norder, orders, channelfile = identify_channel_mode(sample_spec_h)
-    assert npix == 2048
-    assert norder == 21
+    norder = 21
+    #sample_spec_h = sample_data(norder=norder)
+    orders, channelfile = identify_channel_mode(norder)
     assert len(orders) == norder
 
 def test_identify_channel_mode_y():
-    sample_spec_y = sample_data(norder=51)
-    npix, norder, orders, channelfile = identify_channel_mode(sample_spec_y)
-    assert npix == 2048
-    assert norder == 51
+    norder = 51
+    #sample_spec_y = sample_data(norder=norder)
+    orders, channelfile = identify_channel_mode(norder)
+    assert len(orders) == norder
+
+def test_identify_channel_mode_free():
+    norder = 21
+    sample_spec_free = sample_data(norder=norder)
+    channelfile_path = (importlib.resources.files('pyird').joinpath('data/channel_H.list')) 
+    orders, channelfile = identify_channel_mode(20, channelfile_path=channelfile_path)
     assert len(orders) == norder
 
 # Test first_identification

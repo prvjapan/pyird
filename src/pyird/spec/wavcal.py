@@ -10,7 +10,7 @@ from scipy.signal import medfilt
 
 import importlib
 
-def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, std_threshold=0.005):
+def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, std_threshold=0.005, channelfile_path=None):
     """wavelegth calibration for ThAr spectrum.
 
     Args:
@@ -20,6 +20,7 @@ def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, std_threshold=0.005):
         Nx: order of the fitting function with respect to the aperture number
         maxiter: maximum number of iterations
         std_threshold: When the std of fitting residuals reaches this value, the iteration is terminated.
+        channelfile_path: path to the channel file
         
     Returns:
         final results of the wavlength solution
@@ -29,7 +30,8 @@ def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, std_threshold=0.005):
         >>> wavlength_solution, data = wavcal_thar(thar)
     """
 
-    npix, norder, orders, channelfile = identify_channel_mode(dat)
+    norder, npix = np.shape(dat)
+    orders, channelfile = identify_channel_mode(norder, channelfile_path)
 
     if W.shape != dat.T.shape:
         raise ValueError('The shape of weight matrix does not match the shape of the data.')
@@ -186,7 +188,7 @@ def sigmaclip(data, wavlength_solution, N=3):
             n += 1
     return residuals, drop_ind
 
-def identify_channel_mode(dat):
+def identify_channel_mode(norder, channelfile_path=None):
     """identify the channel model based on data shape
 
     Args:
@@ -196,20 +198,52 @@ def identify_channel_mode(dat):
         diffraction orders and the reference channel-wavelength map file
     """
     # Load a channel list
-    norder = np.shape(dat)[0]
-    npix = np.shape(dat)[1]
-    norder_h = 21
-    if norder == norder_h:
+    if norder == 21:
         channelfile = (importlib.resources.files('pyird').joinpath('data/channel_H.list')) 
         orders = np.arange(104, 83, -1)
-        print('H band')
-    elif norder > norder_h:
+        print("H band")
+    elif norder == 51:
         channelfile = (importlib.resources.files('pyird').joinpath('data/channel_YJ.list'))
         orders = np.arange(158, 107, -1)
-        print('YJ band')
-    else:        
-        raise ValueError("Cannot identify H or YJ mode. norder=", norder)
-    return npix, norder, orders, channelfile
+        print("YJ band")
+    else:
+        if channelfile_path is None:
+            raise ValueError("Cannot identify H or YJ mode. Please define the channel file for norder=", norder)
+        else:
+            orders, channelfile = check_channelfile(channelfile_path)
+
+    return orders, channelfile
+
+def check_channelfile(channelfile_path):
+    """check the channel file format and set orders
+    
+    Args:
+        channelfile_path: path to the channel file (user-defined)
+    """
+    # read the channel file assuming it has the same format as data/chennel_?.lst
+    try:
+        df_pixwavmap_ref = pd.read_csv(channelfile_path)
+    except:
+        raise ValueError("The channel file format does not match that of data/channel_?.list.")
+    
+    # identify the band based on the wavelength range
+    wav = df_pixwavmap_ref["WAVELENGTH"]
+    if wav[0] > 1400:
+        band = "h"
+        order_default = np.arange(1, 22)
+        orders = np.arange(104, 83, -1)
+        print("H band")
+    elif wav[0] < 1400:
+        band = "y"
+        order_default = np.arange(1, 52)
+        orders = np.arange(158, 107, -1)
+        print("YJ band")
+
+    # set orders
+    order_ref = df_pixwavmap_ref["ORDER"].unique()
+    mask_orders = np.isin(order_default, order_ref)
+    orders = orders[mask_orders]
+    return orders, channelfile_path
 
 def first_identification(dat, channelfile, pixel_search_area=5, kernel_size=3):
     """map pixels to wavelengths by using the previously identified data with ecidentify(IRAF)

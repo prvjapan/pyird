@@ -569,6 +569,7 @@ class Stream2D(FitsSet, StreamCommon):
     def calibrate_wavelength(
         self,
         trace_path=None,
+        channelfile_path=None,
         maxiter=30,
         std_threshold=0.001,
         npix=2048,
@@ -579,6 +580,7 @@ class Stream2D(FitsSet, StreamCommon):
 
         Args:
             trace_path: path to the trace file
+            channelfile_path: path to the channel file
             maxiter: maximum number of iterations
             std_threshold: When the std of fitting residuals reaches this value, the iteration is terminated.
             npix: number of pixels
@@ -616,12 +618,13 @@ class Stream2D(FitsSet, StreamCommon):
                 w,
                 maxiter=maxiter,
                 std_threshold=std_threshold,
+                channelfile_path=channelfile_path,
             )
             # np.save('thar_%s_%s_final.npy'%(self.band,mmf),data)
             wavsol_2d = wavsol.reshape((npix, nord))
             write_fits_data_header(master_path, header, wavsol_2d)
 
-    def aptrace(self, cutrow=1000, nap=42):
+    def aptrace(self, cutrow=1000, nap=42, ign_ord=[]):
         """extract aperture of trace from a median image of current fitsset
 
         Args:
@@ -651,7 +654,7 @@ class Stream2D(FitsSet, StreamCommon):
                     63 + i * 128 + 2 : 63 + i * 128 + 3, :
                 ]
 
-        y0, xmin, xmax, coeff = aptrace(flatmedian, cutrow, nap)
+        y0, xmin, xmax, coeff = aptrace(flatmedian, cutrow, nap, ign_ord)
 
         return TraceAperture(trace_legendre, y0, xmin, xmax, coeff, inst)
 
