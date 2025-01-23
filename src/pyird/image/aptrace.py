@@ -50,11 +50,15 @@ def set_aperture(dat, cutrow, nap, ign_ord=[], plot=True):
         dat: flat data
         cutrow: row number used to set aperture
         nap: number of total apertures to be traced
+        ign_ord: orders to be ignored
         plot: show figure of selected apertures
 
     Returns:
         peak position in the cross section at cutrow
     """
+    if len(ign_ord) >= 30:
+       raise ValueError("length of ign_ord should be < 30.")
+
     # Search peaks in the cross section at cutrow
     # cutrow is selected so that the number of peaks and nap match
     cutrow_min = 500

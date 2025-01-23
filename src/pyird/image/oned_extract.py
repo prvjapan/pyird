@@ -49,7 +49,7 @@ def flatten(
         width_str = width[0]
         width_end = width[1]
 
-    if len(y0) < 21 or force_rotate:  # h band or forces rotation
+    if len(y0) <= 21 or force_rotate:  # h band or forces rotation
         rotim = np.copy(im[::-1, ::-1])
     else:
         rotim = np.copy(im)
