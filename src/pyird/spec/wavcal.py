@@ -10,7 +10,7 @@ from scipy.signal import medfilt
 
 import importlib
 
-def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, std_threshold=0.005):
+def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, std_threshold=0.005, channelfile_path=None, ign_ord=[]):
     """wavelegth calibration for ThAr spectrum.
 
     Args:
@@ -20,6 +20,8 @@ def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, std_threshold=0.005):
         Nx: order of the fitting function with respect to the aperture number
         maxiter: maximum number of iterations
         std_threshold: When the std of fitting residuals reaches this value, the iteration is terminated.
+        channelfile_path: path to the channel file
+        ign_ord: orders to be ignored
         
     Returns:
         final results of the wavlength solution
@@ -29,15 +31,16 @@ def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, std_threshold=0.005):
         >>> wavlength_solution, data = wavcal_thar(thar)
     """
 
-    npix, norder, orders, channelfile = identify_channel_mode(dat)
+    norder, npix = np.shape(dat)
+    orders, channelfile, order_ref = identify_channel_mode(norder, channelfile_path, ign_ord)
 
     if W.shape != dat.T.shape:
         raise ValueError('The shape of weight matrix does not match the shape of the data.')
 
     #----- 1st identification by using the prepared channel file -----#
     # map pixels to wavelengths
-    df_pixwavmap_obs = first_identification(dat, channelfile)
-    data = pixel_df_to_wav_mat(df_pixwavmap_obs,0,norder) # convert wavelength matrix
+    df_pixwavmap_obs = first_identification(dat, channelfile, order_ref)
+    data = pixel_df_to_wav_mat(df_pixwavmap_obs, order_ref) # convert wavelength matrix
 
     # initialize pixel matrix
     pixels = np.arange(1, npix+1, 1)
@@ -55,34 +58,34 @@ def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, std_threshold=0.005):
 
     #----- 2nd identification by using the ThAr line list -----#
     # map pixels to wavelengths
-    df_pixwavmap_obs = second_identification(dat, wavlength_solution_matrix, residuals, npix, norder)
-    data = pixel_df_to_wav_mat(df_pixwavmap_obs,0,norder) # convert to wavelength matrix
+    df_pixwavmap_obs = second_identification(dat, wavlength_solution_matrix, residuals, npix, norder, order_ref)
+    data = pixel_df_to_wav_mat(df_pixwavmap_obs,order_ref) # convert to wavelength matrix
 
     #----- Iterations -----#
     print("Start iterations of ThAr fitting:")
     wavlength_solution, data = iterate_fitting(
-                    X, Y, df_pixwavmap_obs, W, Ni, Nx, maxiter, std_threshold, npix, norder)
+                    X, Y, df_pixwavmap_obs, W, Ni, Nx, maxiter, std_threshold, npix, norder, order_ref)
             
     # plot result from the final iteration
     plot_fitresult_thar(wavlength_solution, data, norder)
     return wavlength_solution, data
 
-def pixel_df_to_wav_mat(df_pixwavmap, j, l, npix=2048):
+def pixel_df_to_wav_mat(df_pixwavmap, order_ref, npix=2048):
     """conversion channel-wavelength data to wavelength matrix.
 
     Args:
         df_pixwavmap: channel-wavelength data
-        npix: number of detector pixels in y direction
+        order_ref: conventional orders
 
     Returns:
         channel-wavelength matrix (nipx x norder)
     """
-    mat = np.zeros((npix, l-j))
-    m0 = j+1
+    l_ord = len(order_ref)
+    mat = np.zeros((npix, l_ord))
     for i in range(len(df_pixwavmap)):
         order, pixel, wav = df_pixwavmap.iloc[i].values
-        order = order - m0
-        mat[pixel, order] = wav
+        idx_order = np.where(order_ref==order)[0][0]
+        mat[pixel, idx_order] = wav
     return mat
 
 def fit_polynomial(XY, Ni, Nx, params, poly='chebyshev'):
@@ -186,37 +189,76 @@ def sigmaclip(data, wavlength_solution, N=3):
             n += 1
     return residuals, drop_ind
 
-def identify_channel_mode(dat):
+def identify_channel_mode(norder, channelfile_path=None, ign_ord=[]):
     """identify the channel model based on data shape
 
     Args:
         dat: ThAr spectrum (norder x npix matrix)
+        channelfile_path: path to the channel file
+        ign_ord: orders to be ignored
 
     Returns:
-        diffraction orders and the reference channel-wavelength map file
+        diffraction orders, the reference channel-wavelength map file, and conventional orders
     """
     # Load a channel list
-    norder = np.shape(dat)[0]
-    npix = np.shape(dat)[1]
-    norder_h = 21
-    if norder == norder_h:
+    if norder == 21:
         channelfile = (importlib.resources.files('pyird').joinpath('data/channel_H.list')) 
         orders = np.arange(104, 83, -1)
-        print('H band')
-    elif norder > norder_h:
+        order_ref = np.arange(1, 22)
+        print("H band")
+    elif norder == 51:
         channelfile = (importlib.resources.files('pyird').joinpath('data/channel_YJ.list'))
         orders = np.arange(158, 107, -1)
-        print('YJ band')
-    else:        
-        raise ValueError("Cannot identify H or YJ mode. norder=", norder)
-    return npix, norder, orders, channelfile
+        order_ref = np.arange(1, 52)
+        print("YJ band")
+    else:
+        if channelfile_path is None:
+            raise ValueError("Cannot identify H or YJ mode. Please define the channel file for norder=", norder)
+        else:
+            orders, channelfile, order_ref = check_channelfile(channelfile_path, ign_ord)
 
-def first_identification(dat, channelfile, pixel_search_area=5, kernel_size=3):
+    return orders, channelfile, order_ref
+
+def check_channelfile(channelfile_path, ign_ord):
+    """check the channel file format and set orders
+    
+    Args:
+        channelfile_path: path to the channel file (user-defined)
+        ign_ord: orders to be ignored
+    """
+    # read the channel file assuming it has the same format as data/chennel_?.lst
+    try:
+        df_pixwavmap_ref = pd.read_csv(channelfile_path)
+    except:
+        raise ValueError("The channel file format does not match that of data/channel_?.list.")
+    
+    # identify the band based on the wavelength range
+    wav = df_pixwavmap_ref["WAVELENGTH"]
+    if wav[0] > 1400:
+        band = "h"
+        order_default = np.arange(1, 22)
+        orders = np.arange(104, 83, -1)
+        print("H band")
+    elif wav[0] < 1400:
+        band = "y"
+        order_default = np.arange(1, 52)
+        orders = np.arange(158, 107, -1)
+        print("YJ band")
+
+    # set orders
+    mask = np.ones_like(order_default, dtype=bool)
+    mask[np.array(ign_ord)-1] = False
+    order_ref = order_default[mask]
+    orders = order_default[mask]
+    return orders, channelfile_path, order_ref
+
+def first_identification(dat, channelfile, order_ref, pixel_search_area=5, kernel_size=3):
     """map pixels to wavelengths by using the previously identified data with ecidentify(IRAF)
 
     Args:
         dat: ThAr spectrum (norder x npix matrix)
         channelfile: reference channel-wavelength map
+        order_ref: conventional orders
         pixel_search_area: pixel area to search peaks around a ThAr emission in a reference spectrum
         kernel_size: kernel size for median filter
 
@@ -231,7 +273,8 @@ def first_identification(dat, channelfile, pixel_search_area=5, kernel_size=3):
     for k, order_tmp in enumerate(df_pixwavmap_ref['ORDER']):
         if order_tmp < 0: # order=-7 in channel_YJ.list (?)
             continue
-        dat_order = dat[order_tmp - 1, :]
+        idx_order_tmp = np.where(order_ref == order_tmp)[0][0]
+        dat_order = dat[idx_order_tmp, :]
         filtered_dat = medfilt(dat_order, kernel_size=kernel_size)
         # search peaks in the current spectrum
         ind_low = df_pixwavmap_ref['CHANNEL'][k] - pixel_search_area
@@ -248,7 +291,7 @@ def first_identification(dat, channelfile, pixel_search_area=5, kernel_size=3):
         df_pixwavmap_obs = pd.concat([df_pixwavmap_obs, df_tmp], ignore_index=True)
     return df_pixwavmap_obs
 
-def second_identification(dat, wavlength_solution_matrix, residuals, npix, norder, pixel_search_area=None, kernel_size=3,detect_level=80):
+def second_identification(dat, wavlength_solution_matrix, residuals, npix, norder, order_ref, pixel_search_area=None, kernel_size=3,detect_level=80):
     """detect additional ThAr lines in the observed data with referencing the line list
 
     Args:
@@ -257,6 +300,7 @@ def second_identification(dat, wavlength_solution_matrix, residuals, npix, norde
         residuals: residuals between data and wavelength solution
         npix: number of pixels
         norder: number of orders
+        order_ref: conventional orders
         pixel_search_area: pixel area to search peaks around a ThAr emission in a line list
         kernel_size: kernel size for median filter
         detect_level: determine the lower limit of what percentage of the top data should be detected as peaks
@@ -273,15 +317,16 @@ def second_identification(dat, wavlength_solution_matrix, residuals, npix, norde
     # update pixel-wavelength mapping list
     df_pixwavmap = pd.DataFrame([], columns=['ORDER', 'CHANNEL', 'WAVELENGTH'])
     
-    for order_tmp in range(1,norder+1):
-        dat_order = dat[order_tmp - 1, :]
+    for order_tmp in order_ref:
+        idx_order_tmp = np.where(order_ref == order_tmp)[0][0]
+        dat_order = dat[idx_order_tmp, :]
         # filter nan values at order edges
         nanind = np.where(np.isnan(dat_order))[0]
         nanind_small_edge = nanind[nanind < 1900].max()
         nanind_large_edge = nanind[nanind > 1900].min()
         # median filter
         filtered_dat = medfilt(dat_order, kernel_size=kernel_size)
-        wavlength_solution_order = wavlength_solution_matrix[:, order_tmp - 1]
+        wavlength_solution_order = wavlength_solution_matrix[:, idx_order_tmp]
         wavref_order = wavref[(min(wavlength_solution_order) <= wavref) & (wavref <= max(wavlength_solution_order))]
 
         if search_default:
@@ -305,7 +350,7 @@ def second_identification(dat, wavlength_solution_matrix, residuals, npix, norde
                 df_pixwavmap = pd.concat([df_pixwavmap, df_tmp], ignore_index=True)
     return df_pixwavmap
 
-def iterate_fitting(X, Y, df_pixwavmap, W, Ni, Nx, maxiter, std_threshold, npix, norder, Nsigma=1.5):
+def iterate_fitting(X, Y, df_pixwavmap, W, Ni, Nx, maxiter, std_threshold, npix, norder, order_ref, Nsigma=1.5):
     """iterate the fitting until the std of residuals become lower than std_threshold or the number of iteration become maxiter 
 
     Args:
@@ -319,6 +364,7 @@ def iterate_fitting(X, Y, df_pixwavmap, W, Ni, Nx, maxiter, std_threshold, npix,
         std_threshold: When the std of fitting residuals reaches this value, the iteration is terminated.
         npix: number of pixels
         norder: number of orders
+        order_ref: conventional orders
         Nsigma: the number of stds to use for both the lower and upper clipping limit
 
     Returns:
@@ -330,7 +376,7 @@ def iterate_fitting(X, Y, df_pixwavmap, W, Ni, Nx, maxiter, std_threshold, npix,
         # reject duplicated channel
         df_pixwavmap = df_pixwavmap[~df_pixwavmap.duplicated(keep=False, subset='CHANNEL')]
         df_pixwavmap = df_pixwavmap.reset_index(drop=True)
-        data = pixel_df_to_wav_mat(df_pixwavmap,0,norder)
+        data = pixel_df_to_wav_mat(df_pixwavmap,order_ref)
         # fit again
         coeffs = fit_wav_solution((X, Y), data, W, Ni, Nx)
         wavlength_solution = fit_polynomial((X, Y), Ni, Nx, coeffs)

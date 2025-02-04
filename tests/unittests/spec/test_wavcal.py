@@ -34,7 +34,7 @@ def sample_xy():
 
 # Test pixel_df_to_wav_mat
 def test_pixel_df_to_wav_mat(sample_pixwavmap):
-    mat = pixel_df_to_wav_mat(sample_pixwavmap, j=0, l=2, npix=30)
+    mat = pixel_df_to_wav_mat(sample_pixwavmap, order_ref=[1, 2], npix=30)
     assert mat.shape == (30, 2)
     assert mat[10, 0] == 5000
     assert mat[15, 0] == 5005
@@ -80,22 +80,27 @@ def test_sigmaclip():
 
 # Test identify_channel_mode
 def test_identify_channel_mode_h():
-    sample_spec_h = sample_data(norder=21)
-    npix, norder, orders, channelfile = identify_channel_mode(sample_spec_h)
-    assert npix == 2048
-    assert norder == 21
+    norder = 21
+    orders, channelfile, order_ref = identify_channel_mode(norder)
     assert len(orders) == norder
+    assert len(order_ref) == norder
 
 def test_identify_channel_mode_y():
-    sample_spec_y = sample_data(norder=51)
-    npix, norder, orders, channelfile = identify_channel_mode(sample_spec_y)
-    assert npix == 2048
-    assert norder == 51
+    norder = 51
+    orders, channelfile, order_ref = identify_channel_mode(norder)
     assert len(orders) == norder
+    assert len(order_ref) == norder
+
+def test_identify_channel_mode_free():
+    norder = 20
+    channelfile_path = (importlib.resources.files('pyird').joinpath('data/channel_H.list')) 
+    orders, channelfile, order_ref = identify_channel_mode(norder, channelfile_path=channelfile_path, ign_ord=[21])
+    assert len(orders) == norder
+    assert len(order_ref) == norder
 
 # Test first_identification
 def test_first_identification():
     sample_spec = sample_data(norder=21)
     channelfile = (importlib.resources.files('pyird').joinpath('data/channel_H.list')) 
-    df_pixwavmap_obs = first_identification(sample_spec, channelfile)
+    df_pixwavmap_obs = first_identification(sample_spec, channelfile, order_ref=np.arange(1,22))
     assert isinstance(df_pixwavmap_obs, pd.DataFrame)
