@@ -77,12 +77,10 @@ def flatten(
         for j, ix in enumerate(x[i]):
             if onepix:
                 for k in range(-width_str, width_end):
-                    if k < 0:
-                        iys = np.max([0, tl_int[j] + k])
-                        iye = np.max([0, tl_int[j] + k + 1])
-                    else:
-                        iys = np.min([ny - 1, tl_int[j] + k])
-                        iye = np.min([ny - 1, tl_int[j] + k + 1])
+                    iys = tl_int[j] + k
+                    iye = tl_int[j] + k + 1
+                    iys = np.clip(iys, 0, ny - 1)
+                    iye = np.clip(iye, 0, ny - 1)
                     # At the ends of the aperture partial pixels are used. (cf. IRAF apall)
                     apsum = (
                         rotim[ix, iys] * (1 - tl_decimal[j])
@@ -90,8 +88,8 @@ def flatten(
                     )
                     df_onepix["ec%d" % (k)].loc[i + 1, ix + 1] = apsum
             else:
-                iys = np.max([0, tl_int[j] - width_str])
-                iye = np.min([ny - 1, tl_int[j] + width_end + 1])
+                iys = np.clip(tl_int[j] - width_str, 0, ny - 1)
+                iye = np.clip(tl_int[j] + width_end + 1, 0, ny - 1)
                 # At the ends of the aperture partial pixels are used. (cf. IRAF apall)
                 apsum = (
                     np.sum(rotim[ix, iys + 1 : iye])

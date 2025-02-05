@@ -212,7 +212,7 @@ class Stream2D(FitsSet, StreamCommon):
         else:
             print("No fitsid yet.")
 
-        if band is not None:
+        if (band is not None) and (rawtag=="IRDA000"):
             self.init_band(band)
 
     def init_band(self, band):
@@ -701,7 +701,7 @@ class Stream2D(FitsSet, StreamCommon):
                     self.anadir
                     / ("%s_%s_%s.fits" % (self.streamid, self.band, self.trace.mmf))
                 ]
-                datset.fitsid = self.streamid
+                datset.fitsid = [self.streamid]
         else:
             inputs = self.extpath(extin, string=False, check=True)
             datset.extension = "_%s" % (self.trace.mmf)
