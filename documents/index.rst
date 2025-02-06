@@ -17,6 +17,9 @@ It is designed to process raw images into one-dimensional spectra in a semi-auto
    :caption: Tutorial:
 
    tutorials/IRD_stream.rst
+   tutorials/aptrace_flat_star.rst
+   tutorials/plot_spec.rst
+   tutorials/other_settings.rst
 
 Data Access
 """""""""""""""
