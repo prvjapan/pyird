@@ -26,10 +26,10 @@ def trace_legendre(x, y0, xmin, xmax, coeff):
 
 
 if __name__ == '__main__':
-    import pkg_resources
+    import importlib
     from pyird.io.iraf_trace import read_trace_file
     import numpy as np
 
-    pathC = (pkg_resources.resource_filename('pyird', 'data/samples/aprefC'))
-    path_c = (pkg_resources.resource_filename('pyird', 'data/samples/apref_c'))
+    pathC = (importlib.resources.files('pyird').joinpath('data/samples/aprefC'))
+    path_c = (importlib.resources.files('pyird').joinpath('data/samples/apref_c'))
     y0, interp_function, xmin, xmax, coeff = read_trace_file([pathC, path_c])

@@ -1,13 +1,29 @@
-Read Noise Pattern Model
+Readout Noise Pattern Model
 ============================
 
-What is the read noise pattern?
+What is the readout noise pattern?
 --------------------------------
 
-.. image:: results.png
+Raw (left), the readout pattern model using ``median_XY_profile`` (middle), and its pattern-corrected image (right).
 
+.. image:: ../figures/clean_pattern.png
 
+Divide into `channel cubes` and `eo tensor`
+--------------------------------------------
 
-.. code:: python
+- channel cube:
+    - The H2RG detector has 32 channels.
+    - The readout direction is opposite in even and odd channels.
+- eo tensor:
+    - There also exist a strong dependence of noise pattern on even or odd *pixel* numbers.
+
+.. image:: ../figures/channelcube_eotensor.png
+
+Create a pattern model
+-----------------------
+
+- 2d-gp
+- median
+- stripe
 	  
 	  

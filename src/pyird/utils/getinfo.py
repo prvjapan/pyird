@@ -23,6 +23,7 @@ def get_radec(name):
     namex = result_table['MAIN_ID'][0]  # .decode('utf-8')
     ra = result_table['RA'][0]
     dec = result_table['DEC'][0]
+
     c = SkyCoord(str(ra)+' '+str(dec), unit=(u.hourangle, u.deg))
     ra = c.ra.degree
     dec = c.dec.degree

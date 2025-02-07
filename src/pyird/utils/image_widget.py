@@ -49,7 +49,7 @@ class image_1Dand2D(ttk.Frame):
     def title_emission_position(self):
         self.winfo_toplevel().title("%s band, Order %d; Red 'x's are emission like signal, Blue 'x's are bad pixel."%(self.band,self.order))
 
-    def show_spec_to_image(self,rsd,wav,mask,pixcoord,rotim,iys_plot,iye_plot,wavcal_path=None,hotpix_mask=None,**kwargs):
+    def show_spec_to_image(self,rsd,wav,mask,pixcoord,rotim,iys_plot,iye_plot,master_path=None,hotpix_mask=None,**kwargs):
         """figures of 1d spectrum and 2d detector image
 
         Args:
@@ -58,7 +58,7 @@ class image_1Dand2D(ttk.Frame):
             mask: mask of trace lines
             pixcoord, iys_plot, iye_plot: pixel coordinate of x and y direction
             rotim: rotated image (intend to align trace orientation)
-            wavcal_path: path to master file of the wavelength calibration
+            master_path: path to master file of the wavelength calibration
             hotpix_mask: hotpixel mask
         """
 
@@ -70,7 +70,7 @@ class image_1Dand2D(ttk.Frame):
 
         ## 1D spectrum
         rsd_ord = np.nan_to_num(rsd[:,self.order-1],0)
-        if wavcal_path is None: # x axis will be 'pixels'
+        if master_path is None: # x axis will be 'pixels'
             ax1.plot(rsd_ord)
             text=ax1.text(0,0, "", va="bottom", ha="left")
             ax1.set(xlabel='pixel')
@@ -116,16 +116,16 @@ class image_1Dand2D(ttk.Frame):
         ## plot 'x' when a key is pressed
         def onkey(event):
             xi = event.xdata
-            cmap = plt.cm.get_cmap("Set1",9)
+            cmap = plt.get_cmap("Set1",9)
             color = cmap(int(xi*1e2)%9)
             rsd_ord = np.nan_to_num(rsd[:,self.order-1],0)
-            if wavcal_path is not None:
+            if master_path is not None:
                 wav_ord = wav[:,self.order-1]
                 xi = np.where(np.abs(wav_ord-float(xi))==min(np.abs(wav_ord-float(xi))))[0][0] #'searchsorted' doesn't work
-                tx = 'key=%s, xdata=%.3f, order=%d, wavcal=%s, pix=%.1f' % (event.key, event.xdata,self.order,bool(wavcal_path),int(xi))
+                tx = 'key=%s, xdata=%.3f, order=%d, wavcal=%s, pix=%.1f' % (event.key, event.xdata,self.order,bool(master_path),int(xi))
                 ax1.scatter(wav_ord[xi],rsd_ord[xi],color=color,marker='x',s=5,lw=12)
             else:
-                tx = 'key=%s, xdata=%.3f, order=%d, wavcal=%s' % (event.key, event.xdata,self.order,bool(wavcal_path))
+                tx = 'key=%s, xdata=%.3f, order=%d, wavcal=%s' % (event.key, event.xdata,self.order,bool(master_path))
                 ax1.scatter(int(xi),rsd_ord[xi],color=color,marker='x',s=5,lw=12)
             ax2.scatter(int(xi),mask[self.order-1][int(xi)],color=color,marker='x',s=5,lw=12)
             text.set_text(tx)
@@ -138,7 +138,7 @@ class image_1Dand2D(ttk.Frame):
         canvas = self.draw_canvas(fig)
         self.title_spec_to_image()
 
-    def show_emission_position(self,stream2D,rsd,wav,mask,pixcoord,rotim,iys_plot,iye_plot,wavcal_path=None,hotpix_mask=None,fit=True,**kwargs):
+    def show_emission_position(self,stream2D,rsd,wav,mask,pixcoord,rotim,iys_plot,iye_plot,master_path=None,hotpix_mask=None,fit=True,**kwargs):
         """detect emissions on the spectrum and detector image of an arbitral aperture.
 
         Args:
@@ -148,7 +148,7 @@ class image_1Dand2D(ttk.Frame):
             mask: mask of trace lines
             pixcoord, iys_plot, iye_plot: pixel coordinate of x and y direction
             rotim: rotated image (intend to align trace orientation)
-            wavcal_path: path to master file of the wavelength calibration
+            master_path: path to master file of the wavelength calibration
             hotpix_mask: hotpixel mask
         """
         xmin, xmax = stream2D.trace.xmin, stream2D.trace.xmax
@@ -242,7 +242,7 @@ class image_1Dand2D(ttk.Frame):
         ## plot spectrum of an order
         ax2=fig.add_subplot(212)
         ax3=ax2.twiny()
-        if wavcal_path is not None:
+        if master_path is not None:
             ax2.plot(wav[:,j],np.nan_to_num(rsd[:,j],0),alpha=0.5)
             #for i in range(len(skylike_ord)):
             #    ax2.vlines(wav[int(skylike_ord[i]),j],0,10000,color='pink',alpha=0.5)

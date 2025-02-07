@@ -49,8 +49,8 @@ hotpix_mask = identify_hotpix_sigclip(im_subbias)
 ###########################
 ### SELECT mmf2 or mmf1 ###
 ###########################
-trace_mmf.mmf2() #mmf2 (star fiber)
-#trace_mmf.mmf1() #mmf1 (comb fiber)
+trace_mmf.choose_mmf2_aperture() #mmf2 (star fiber)
+#trace_mmf.choose_mmf1_aperture() #mmf1 (comb fiber)
 
 # load ThAr raw image
 datadir = basedir/'thar'
@@ -99,7 +99,7 @@ orders=[10,12] # orders to be plotted
 #######################
 
 ## Values needed for plotting
-rsd,wav,mask,pixcoord,rotim,iys_plot,iye_plot = target.flatten_check(extin='_cp',wavcal_path=wavcal_path)
+rsd,wav,mask,pixcoord,rotim,iys_plot,iye_plot = target.flatten(extin='_cp',check=True,master_path=wavcal_path)
 
 ## show 1d spectrum and 2d image
 for order in orders:
@@ -107,7 +107,7 @@ for order in orders:
     ## draw window
     root = tk.Tk()
     window = image_1Dand2D(root,order=order,band=flat.band)
-    window.show_spec_to_image(rsd,wav,mask,pixcoord,rotim,iys_plot,iye_plot,wavcal_path=wavcal_path,hotpix_mask=hotpix_mask,**params)
+    window.show_spec_to_image(rsd,wav,mask,pixcoord,rotim,iys_plot,iye_plot,master_path=wavcal_path,hotpix_mask=hotpix_mask,**params)
 root.mainloop()
 
 """## show positions of emissions on a detector image

@@ -46,40 +46,42 @@ The path of the bias-removed fits is returned. Note that the path has been moved
 	  target.data([2,3])
 
 
-Getting started
------------------------
+Tutorials of the Pipeline
+--------------------------
 
 We recommend to look at,
 pyird/examples/python/IRD_stream.py
-for an example of H.
+for an example of the whole reduction process of the H band data.
 
 .. code:: sh
 
 	  python IRD_stream.py
 
 Please change the fits IDs when you try (or ask Kasagi for the data set).
-The tutorial and detailed explanation can be found `IRD stream <https://secondearths.sakura.ne.jp/pyird/tutorials/IRD_stream.html>`.
+The tutorial and detailed explanation can be found `IRD stream <https://secondearths.sakura.ne.jp/pyird/tutorials/IRD_stream.html>`_.
 
-And,
+If you are a developer, please cut the feature/hogehoge from the develop branch and pull request when you merge it into develop.
+
+
+Old examples
+-----------------------
+
 pyird/samples/IRD_TWINS/irdreductH.py
-for another example of H.
+is another example of H.
+
+**Unlike IRD_stream, this example code partially uses IRAF.**
 
 .. code:: sh
 
 	  python irdreductH.py
 
-Try it! The data set is `here <http://secondearths.sakura.ne.jp/obs/binary/IRD_TWINS.tar.gz>`_ (about 1GB)
+The data set is `here <http://secondearths.sakura.ne.jp/obs/binary/IRD_TWINS.tar.gz>`_ (about 1GB)
 
-If you are a developer, please cut the feature/hogehoge from the develop branch and pull request when you merge it into develop. (Kawahara will also operate in this way after 4/7)
 
-Example of what to prepare
------------------------------------
-
-*(The followings are for irdreductH.py. If you follow the pipeline of IRD_stream.py, please read them only as a reference.)*
-
- - fitsid.py -- Define the stream. If you define everything here first, you won't have to look at the observation log as often.
- irdreductH.py, irdreductYJ.py -- Single code for primary processing.
- aperture (created with iraf's aparl). See below.
+- fitsid.py -- Define the stream. If you define everything here first, you won't have to look at the observation log as often.
+- irdreductH.py, irdreductYJ.py -- Single code for primary processing.
+The aperture mask need to be created with iraf's apall befor running the code. 
+See below for examples how to use each functions.
 
 Example: remove bias in stream ("r" is rotated for H, not needed for YJ)
 
@@ -103,4 +105,4 @@ Example: Define a set of fits (single file)
 
 .. code:: python
 
-	  combined_flat=fitsset.FitsSet("combined_flat_rb",
+	  combined_flat=fitsset.FitsSet("combined_flat_rb", anadir)
