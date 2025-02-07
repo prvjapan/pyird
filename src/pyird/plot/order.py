@@ -53,22 +53,31 @@ def plot_compare_used_thar(data1,wavsol1_2d,data2):
     ax.set(title='Comparison of used ThAr emission lines',xlabel='pixels', ylabel='wavelength [nm]')
     plt.show()
 
-def plot_crosssection(pixels,flux,peakind):
+def plot_crosssection(pixels,flux,peakind,dat,cutrow):
     """show an image of flux at any one row extracted on a 2D detector.
 
     Args:
         pixels: detector pixels (column direction on detector)
         flux: flux counts
         peakind: indexes of detected peaks
+        dat: 2D detector image
+        cutrow: row number used to set aperture
     """
-    fig=plt.figure(figsize=(12, 8))
-    ax=fig.add_subplot(111)
+    fig, axs = plt.subplots(1, 2, figsize=(15, 5))
 
-    ax.plot(pixels,flux,alpha=0.5,label="counts at a selected row")
-    ax.plot(pixels[peakind],flux[peakind],'x',label="peaks")
+    axs[0].plot(pixels,flux,alpha=0.5,label="counts at 'cutrow'\n(red line in right panel)")
+    axs[0].plot(pixels[peakind],flux[peakind],'x',label="peaks")
 
-    ax.legend()
-    ax.set(title="Apertures are detected!",xlabel="pixels",ylabel="counts")
+    axs[0].legend()
+    axs[0].set(title="Apertures are detected!",xlabel="pixels",ylabel="counts")
+
+    axs[1].imshow(dat,origin="lower",vmin=0,vmax=np.median(dat)*3)
+    axs[1].axhline(y=cutrow, color='r', linestyle='--', label="cutrow")
+    axs[1].plot(pixels[peakind], np.ones(len(peakind))*cutrow, 'x', color='tab:orange')
+
+    axs[1].legend()
+    axs[1].set(title="Detector image",xlabel="pixels",ylabel="pixels")
+
     plt.show()
 
 def plot_tracelines(x, y, npix=2048):

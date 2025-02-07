@@ -5,7 +5,7 @@ Terms Related to Instruments
 ------------------------------
 
 - ``band``: Y/J-band detector or H-band detector
-    - The origin of the detector images below is at the lower right.
+    - The origin of the detector images below is at the lower left.
     - If the images in your data set are rotated in different orientation, use the ``rotate`` and/or ``inverse`` instance in ``Stream2D``. 
 
 .. list-table:: IRD Detectors

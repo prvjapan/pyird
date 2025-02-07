@@ -10,7 +10,7 @@ PyIRD
 `PyIRD` is a Python-based pipeline for reducing spectroscopic data obtained with [IRD](https://ird.mtk.nao.ac.jp/IRDpub/index_tmp.html) and [REACH](https://secondearths.sakura.ne.jp/reach/) on the Subaru Telescope. 
 It is designed to process raw images into one-dimensional spectra in a semi-automatic manner. 
 Unlike traditional methods, it does not rely on IRAF (Tody et al. [1986](https://ui.adsabs.harvard.edu/abs/1986SPIE..627..733T/abstract), [1993](https://ui.adsabs.harvard.edu/abs/1993ASPC...52..173T/abstract)), a software traditionally used for astronomical data reduction. This approach simplifies the workflow while maintaining efficiency and accuracy.
-Additionally, the pipeline includes an updated method for removing readout noise patterns from the detector, enabling efficient extraction of spectra even for faint targets such as brown dwarfs.
+Additionally, the pipeline includes an updated method for removing readout noise patterns from raw images, enabling efficient extraction of spectra even for faint targets such as brown dwarfs.
 
 
 Install

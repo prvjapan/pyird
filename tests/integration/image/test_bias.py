@@ -13,7 +13,7 @@ def test_rmbias():
     channel_cube = image_to_channel_cube(a)
     c, b = bias_subtract(channel_cube)
     image_rmbias = channel_cube_to_image(c)
-    assert np.std(image_rmbias) < np.std(a)
+    assert np.mean(image_rmbias) < np.mean(a)
 
 
 if __name__ == '__main__':
