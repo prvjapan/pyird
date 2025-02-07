@@ -599,6 +599,7 @@ class Stream2D(FitsSet, StreamCommon):
 
         master_path = self.anadir / ("thar_%s_%s.fits" % (self.band, mmf))
         if not os.path.exists(master_path):
+            self.print_if_info_is_true("Creating a new ThAr file: " + str(master_path))
             filen = self.path()[0]  # header of the first file
             _, header = load_fits_data_header(filen)
             nord = len(y0)
@@ -667,8 +668,8 @@ class Stream2D(FitsSet, StreamCommon):
         Args:
             extin: extension of input files
             prefix: prefix for output files
-            master: master file for the wavelength calibrated ThAr file
             master_path: path to the directory containing the master ThAr file
+            blaze: set True for blaze function
 
         """
         from pyird.utils.datset import DatSet
@@ -681,6 +682,7 @@ class Stream2D(FitsSet, StreamCommon):
             master_path = master_path / (
                 "thar_%s_%s.fits" % (self.band, self.trace.mmf)
             )
+        self.print_if_info_is_true("Allocate wavelengths based on the ThAr file: " + str(master_path))
 
         extin = extin + "_" + self.trace.mmf
 

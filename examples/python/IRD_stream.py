@@ -49,6 +49,7 @@ if band=='h':
 elif band=='y':
     rawtag='IRDBD000'
 thar=irdstream.Stream2D("thar", datadir_thar, anadir, rawtag=rawtag, fitsid=fitsid_thar, band=band) 
+thar.info = True
 
 #wavelength calibration
 thar.trace = trace_mmf
