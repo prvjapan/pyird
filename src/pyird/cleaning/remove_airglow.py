@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 def load_oliva15():
     """
     Returns:
-        wav_all in nm
+        all wavlengths of airglow lines in nm
     """
     file_tb1 = resources.files('pyird').joinpath('data/Oliva+15_table1.dat')
     file_tb2 = resources.files('pyird').joinpath('data/Oliva+15_table2.dat')
@@ -20,7 +20,15 @@ def load_oliva15():
 
 def wav_around_airglow(wav_obs, wav_airglow, mask_width=0.035):
     """
-    Note:
+    Args:
+        wav_obs: wavelengths for observed data
+        wav_airglow: wavlengths of airglow mask
+        mask_width: masking width in nm
+    
+    Returns:
+        index for wav_obs that matches {wavelengths in wav_airglow} +/- {mask_width}
+
+    Notes:
         O2 bandhead features cannot masked by this method.
     """
     ind_mask = []
@@ -30,6 +38,15 @@ def wav_around_airglow(wav_obs, wav_airglow, mask_width=0.035):
     return ind_mask
 
 def df_mask_airglow(df_obs, ind_mask, plot=False):
+    """
+    Args:
+        df_obs: pandas DataFrame 
+        ind_mask: index for masking
+        plot: if True, plot before and after masked spectra
+
+    Returns:
+        masked DataFrame
+    """
     df_masked = df_obs.drop(ind_mask)
     if plot:
         fig, ax = plt.subplots()
