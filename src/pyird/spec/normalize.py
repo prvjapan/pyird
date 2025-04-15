@@ -281,8 +281,8 @@ class SpectrumNormalizer(ContinuumFit, FluxUncertainty):
         flux_sum = df_head['flux'].values + flux_tail_interp
         continuum_sum = df_head['continuum'].values + continuum_tail_interp
 
-        sn_ratio_sum = sn_ratio_interp
         uncertainty_ratio_square_sum = np.sqrt(df_head['tmp_uncertainty'].values**2 + tmp_uncertainty**2)
+        sn_ratio_sum = flux_sum / uncertainty_ratio_square_sum
 
         data = np.array([df_head['wav'].values, flux_sum, continuum_sum, sn_ratio_sum, uncertainty_ratio_square_sum]).T
         df_tmp = pd.DataFrame(data, columns=df_interp.columns)

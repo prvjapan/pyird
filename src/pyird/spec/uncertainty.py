@@ -127,7 +127,9 @@ class FluxUncertainty():
         for i in range(len(wav_head)):
             if (wav_head[i] == wav_tail).any():
                 print('Found an equal value!')
-                sn_ratio[i] = df_tail['sn_ratio'].values[wav_tail == wav_head[i]] 
+                ind_tmp = np.where(wav_tail == wav_head[i])
+                sn_ratio[i] = df_tail['sn_ratio'].values[ind_tmp[0][0]] 
+                tmp_uncertainty[i] = df_tail['uncertainty'].values[ind_tmp[0][0]]
             else:
                 sn_ratio[i] = np.nan
 

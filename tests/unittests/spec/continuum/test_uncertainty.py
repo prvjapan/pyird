@@ -48,19 +48,19 @@ def test_calc_uncertainty():
     assert df_continuum['uncertainty'][0] == expected_uncertainty
 
 def test_calc_uncertainty_overlap_region():
-    def make_mock_df(len_df):
+    def make_mock_df(len_df, snr=10):
         wavelength = np.linspace(1500, 1600, len_df)
         flux = np.ones(len(wavelength))
         continuum = np.ones(len(wavelength))
-        tmp_uncertainty = 0.01 * np.ones(len(wavelength))
-        sn_ratio = 10 * np.ones(len(wavelength))
+        tmp_uncertainty =  np.ones(len(wavelength))/snr
+        sn_ratio = snr * np.ones(len(wavelength))
         data = {'wav': wavelength, 'flux': flux, 'continuum': continuum, 'sn_ratio': sn_ratio, 'uncertainty': tmp_uncertainty}
         df = pd.DataFrame.from_dict(data)
         return df
     len_head = 101
     len_tail = 200
     df_head = make_mock_df(len_head)
-    df_tail = make_mock_df(len_tail)
+    df_tail = make_mock_df(len_tail, snr=20)
 
     flux_uncertainty = FluxUncertainty()
     sn_ratio, tmp_uncertainty = flux_uncertainty.calc_uncertainty_overlap_region(df_head, df_tail)
@@ -70,6 +70,6 @@ def test_calc_uncertainty_overlap_region():
 
 
 if __name__ == '__main__':
-    test_determine_readout_noise()
-    test_calc_uncertainty()
+    #test_determine_readout_noise()
+    #test_calc_uncertainty()
     test_calc_uncertainty_overlap_region()
