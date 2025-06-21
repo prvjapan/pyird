@@ -10,7 +10,7 @@ def test_aperture_real_case():
     xmax=np.array([1999, 1999, 1999, 1999, 1999, 1999, 1999, 1999, 1999, 1999, 1999, 1999, 1999, 1999, 1999, 1999, 1999, 1999, 1999, 1999])
     coeff=[np.array([ 1.00000000e+00, -4.24474857e-08,  1.43754930e-08]), np.array([ 1.00000000e+00, -1.50951790e-08, -1.47497638e-08]), np.array([1.00000000e+00, 9.85897478e-08, 1.10251354e-07]), np.array([1.00000000e+00, 9.85897478e-08, 1.10251354e-07]), np.array([1.00000000e+00, 9.85897478e-08, 1.10251354e-07]), np.array([ 1.00000000e+00,  1.94637642e-08, -1.63696642e-07]), np.array([ 1.00000000e+00,  1.94637642e-08, -1.63696642e-07]), np.array([ 1.00000000e+00,  1.94637642e-08, -1.63696642e-07]), np.array([ 1.00000000e+00,  1.94637642e-08, -1.63696642e-07]), np.array([ 1.00000000e+00,  1.94637642e-08, -1.63696642e-07]), np.array([ 1.00000000e+00, -6.44062833e-08,  1.82082310e-07]), np.array([ 1.00000000e+00, -6.44062833e-08,  1.82082310e-07]), np.array([ 1.00000000e+00, -6.44062833e-08,  1.82082310e-07]), np.array([ 1.00000000e+00, -6.44062833e-08,  1.82082310e-07]), np.array([ 1.00000000e+00, -6.44062833e-08,  1.82082310e-07]), np.array([ 1.00000000e+00, -6.44062833e-08,  1.82082310e-07]), np.array([ 1.00000000e+00, -6.44062833e-08,  1.82082310e-07]), np.array([ 1.00000000e+00, -6.44062833e-08,  1.82082310e-07]), np.array([ 1.00000000e+00, -6.44062833e-08,  1.82082310e-07]), np.array([ 1.00000000e+00, -6.44062833e-08,  1.82082310e-07])]
 
-    ta = TraceAperture(trace_legendre, y0, xmin, xmax, coeff,'IRD')
+    ta = TraceAperture(trace_legendre, y0, xmin, xmax, coeff, inst='IRD', mask_shape=(2048, 2048))
 #    ta.trace_function = trace_legendre
     #import matplotlib.pyplot as plt
     #plt.imshow(ta.mask())
@@ -25,7 +25,8 @@ def trace_aperture():
         xmin=[i for i in range(100)],
         xmax=[i for i in range(100)],
         coeff=[1 for i in range(100)],
-        inst=None
+        inst="REACH",
+        mask_shape=(2048, 2048)
     )
 
 def test_invalid_fiber_type(trace_aperture):

@@ -18,6 +18,8 @@ class TraceAperture(object):
             xmin:  xmin
             xmax:  xmax
             coeff:  polinomial coeff
+            inst: instrument (IRD or REACH or IRCS)
+            mask_shape: shape of mask
 
         """
         self.trace_function = trace_function
