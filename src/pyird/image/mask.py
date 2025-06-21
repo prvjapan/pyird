@@ -39,8 +39,8 @@ def trace(trace_func, y0, xmin, xmax, coeff, mask_shape=None, inst='IRD', width=
        xmax: xmax
        coeff: coefficients
        mask_shape: (optional) shape of mask, c.f. np.shape(image)
-       inst: IRD or REACH
-       width: list of aperture widths ([width_start,width_end])
+       inst: IRD or REACH or IRCS
+       width: list of aperture widths to create aperture mask ([width_start,width_end])
 
     Returns:
        mask image (same shape as im)
@@ -65,6 +65,9 @@ def trace(trace_func, y0, xmin, xmax, coeff, mask_shape=None, inst='IRD', width=
         elif inst=='REACH':
             width_str = 2
             width_end = 3
+        elif inst=='IRCS':
+            width_str = 4
+            width_end = 4
     else:
         width_str = width[0]
         width_end = width[1]

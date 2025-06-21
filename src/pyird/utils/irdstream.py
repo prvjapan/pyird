@@ -449,7 +449,8 @@ class Stream2D(FitsSet, StreamCommon):
             if not check:
                 write_fits_data_header(self.anadir / extout_noexist[i], header, rsd)
             else:
-                mask_shape = (2048, 2048)
+                npix = im.shape[0]
+                mask_shape = (npix, npix)#(2048, 2048)
                 trace_mask = np.zeros(mask_shape)
                 for i in range(len(y0)):
                     trace_mask[i, xmin[i] : xmax[i] + 1] = tl[i]
@@ -628,7 +629,7 @@ class Stream2D(FitsSet, StreamCommon):
             wavsol_2d = wavsol.reshape((npix, nord))
             write_fits_data_header(master_path, header, wavsol_2d)
 
-    def aptrace(self, cutrow=1000, nap=42, ign_ord=[]):
+    def aptrace(self, cutrow=1000, nap=42, ign_ord=[], width=None):
         """extract aperture of trace from a median image of current fitsset
 
         Args:
@@ -649,6 +650,8 @@ class Stream2D(FitsSet, StreamCommon):
         if band=='h':
             flatmedian = flatmedian[::-1, ::-1]
 
+        npix = flatmedian.shape[0]
+
         if self.detector_artifact:
             for i in range(0, 16):
                 flatmedian[63 + i * 128 : 63 + i * 128 + 1, :] = flatmedian[
@@ -660,7 +663,7 @@ class Stream2D(FitsSet, StreamCommon):
 
         y0, xmin, xmax, coeff = aptrace(flatmedian, cutrow, nap, ign_ord)
 
-        return TraceAperture(trace_legendre, y0, xmin, xmax, coeff, inst)
+        return TraceAperture(trace_legendre, y0, xmin, xmax, coeff, inst, mask_shape=(npix, npix))
 
     def dispcor(self, extin="_fl", prefix="w", master_path=None, blaze=True):
         """dispersion correct and resample spectra

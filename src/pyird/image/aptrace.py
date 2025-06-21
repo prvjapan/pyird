@@ -20,7 +20,7 @@ def cross_section(dat, nrow, nap):
     """
     onerow = dat[nrow]
     # search peaks
-    heights = np.arange(50, 0, -5) * np.median(onerow)
+    heights = np.arange(50, 0, -5) * np.abs(np.median(onerow))
     i = 0
     diffstd = 100
     peakind = []
@@ -61,8 +61,12 @@ def set_aperture(dat, cutrow, nap, ign_ord=[], plot=True):
 
     # Search peaks in the cross section at cutrow
     # cutrow is selected so that the number of peaks and nap match
-    cutrow_min = 500
-    cutrow_max = 1550
+    npix = dat.shape[0]
+    cutrow_min = int(500 * npix/2048)
+    cutrow_max = int(1550 * npix/2048)
+    if (cutrow < cutrow_min) or (cutrow_max < cutrow):
+        raise ValueError('Error: please set the value of "cutrow" between %d and %d.' % (cutrow_min, cutrow_max))
+    
     peakind_cut = []
     cutrow_lim = True
     prange = False
@@ -86,7 +90,6 @@ def set_aperture(dat, cutrow, nap, ign_ord=[], plot=True):
         )
         raise ValueError("Error: %d apertures could not be found." % (nap))
 
-        return
     print("cross-section: row ", cutrow)
     if plot == True:
         # Plot to confirm the selected aperture
@@ -251,22 +254,22 @@ def aptrace(dat, cutrow, nap, ign_ord=[], plot=True):
         warnings.warn("Looks a single fiber aperture on the detector.", UserWarning)
     else:
         warnings.warn(
-            "nap is not default value. default: nap = 42 for H / 102 for YJ.",
+            '"nap" is not default value. default: nap = 42 for H / 102 for YJ if you analyse IRD or REACH data.',
             UserWarning,
         )
 
     peakind_cut, row = set_aperture(dat, cutrow, nap, ign_ord=ign_ord, plot=plot)
 
     # Trace each peak
+    npix = dat.shape[0]
     x, y, y0 = [], [], []
     for peakind in tqdm(peakind_cut):
-        x_ord, y_ord, y0_ord = trace_pix(dat, row, peakind)
+        x_ord, y_ord, y0_ord = trace_pix(dat, row, peakind, npix=npix)
         x.append(list(x_ord))
         y.append(list(y_ord))
         y0.append(y0_ord)
     if plot == True:
-        plot_tracelines(x, y)
-
+        plot_tracelines(x, y, npix=npix)
     # Fit each aperture
     coeff = []
     xmin, xmax = [], []

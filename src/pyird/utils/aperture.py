@@ -9,7 +9,7 @@ __all__ = ["TraceAperture"]
 class TraceAperture(object):
     """aperture instance for trace class"""
 
-    def __init__(self, trace_function, y0, xmin, xmax, coeff, inst):
+    def __init__(self, trace_function, y0, xmin, xmax, coeff, inst, mask_shape):
         """initialization
 
         Args:
@@ -25,10 +25,16 @@ class TraceAperture(object):
         self.xmin = xmin
         self.xmax = xmax
         self.coeff = coeff
-        self.mmf = "mmf12"
         self.inst = inst
+        if inst in ["IRD", "REACH"]:
+            self.mmf = "mmf12"
+        elif inst in ["IRCS"]:
+            self.mmf = "ec" # echelle mode
+        else:
+            raise ValueError('Error: please set "inst" to either "IRD", "REACH", or "IRCS"')
         self.info = False
         self.width = None
+        self.mask_shape = mask_shape
 
     def mask(self):
         """mask image
@@ -47,6 +53,7 @@ class TraceAperture(object):
             self.coeff,
             inst=self.inst,
             width=self.width,
+            mask_shape=self.mask_shape,
         )
     
     def choose_aperture(self, fiber):
