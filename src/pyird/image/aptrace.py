@@ -98,7 +98,7 @@ def set_aperture(dat, cutrow, nap, ign_ord=[], plot=True):
     return peakind_cut, cutrow
 
 
-def trace_pix(dat, cutrow, peakind, npix=2048):
+def trace_pix(dat, cutrow, peakind, npix=2048, trace_lim=[0, 1]):
     """trace apertures
 
     Args:
@@ -106,6 +106,7 @@ def trace_pix(dat, cutrow, peakind, npix=2048):
         cutrow: row number used to set aperture
         peakind: aperture (peak position) in the cross section at cutrow
         npix: number of pixels
+        trace_lim: limit of the difference between pixels in the traced aperture
 
     Returns:
         traced pixel data
@@ -136,7 +137,7 @@ def trace_pix(dat, cutrow, peakind, npix=2048):
         df_tmp = pd.DataFrame([data], columns=["row", "column"])
         traceind2d = pd.concat([traceind2d, df_tmp], ignore_index=True)
     ind = peakind
-    for nrow in range(cutrow - 1, 0, -1):
+    for nrow in range(cutrow - 1, -1, -1):
         ind_new = set_newind(dat, nrow, ind)
         if ind_new == -1:
             continue
@@ -150,7 +151,7 @@ def trace_pix(dat, cutrow, peakind, npix=2048):
     traceind2d = traceind2d.sort_values("row", ignore_index=True)
     row = traceind2d.row.values
     column = traceind2d.column.values
-    diff = np.diff(column, prepend=column[0] - 2)
+    diff = np.diff(column, prepend=column[0] - 1)
     if peakind < 40:
         useind = (
             ((0 <= diff) & (diff <= 1))
@@ -164,7 +165,7 @@ def trace_pix(dat, cutrow, peakind, npix=2048):
             & ~((column > 2020) & (row > cutrow))
         )
     else:
-        useind = ((0 <= diff) & (diff <= 1)) & (row < 2000)
+        useind = ((trace_lim[0] <= diff) & (diff <= trace_lim[1])) & (row < 2000)
     x_ord = row[useind]
     y_ord = column[useind]
 

@@ -198,7 +198,7 @@ class Stream2D(FitsSet, StreamCommon):
 
         self.imcomb = False
         self.rotate = rotate
-        self.inverse = inverse
+        self.inverse = inverse or (inst == "IRCS")
         self.detector_artifact = detector_artifact
 
         self.tocsvargs = {"header": False, "index": False, "sep": " "}
