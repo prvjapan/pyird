@@ -5,21 +5,23 @@ PyIRD includes test code to ensure the maintainability of the package, using the
 
 How to run tests
 ^^^^^^^^^^^^^^^^^
-To run tests, execute the following command in the root directory of the repository:
+To run the tests, make sure that `pytest` is installed in your Python environment.
+Then, run the following commands from the root directory of the repository:
 
 .. code-block:: bash
 
    pytest tests/unittests
    pytest tests/integration
 
-or, 
+Or, 
 
 .. code-block:: bash
 
    cd tests/unittests
    pytest
 
-Note that tests in ``tests/unittests`` are automatically executed by GitHub Actions when a pull request is made to the develop or master branch.
+
+Tests in ``tests/unittests`` are automatically run by GitHub Actions on pull requests to develop or master.
 
 Unit tests
 """"""""""""
