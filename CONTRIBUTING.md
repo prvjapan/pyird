@@ -54,10 +54,13 @@ All contributions must include tests to ensure stability and functionality:
 - Verify that all tests pass locally before submitting your Pull Request.  
 - Use a testing framework of `pytest`.
 
+See also [docs](https://secondearths.sakura.ne.jp/pyird/developers/pytest.html).
+
 ### Example: Running tests with `pytest`:
 
 ```bash
-pytest tests/
+pytest tests/unittests
+pytest tests/integration
 ```
 
 ---
