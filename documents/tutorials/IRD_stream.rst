@@ -33,8 +33,7 @@ Step 0: Settings
 Directory Structure
 ~~~~~~~~~~~~~~~~~~~
 
-First, create a ``datadir`` for the raw data and ``anadir`` for storing
-the output.
+First, specify the path to the raw data directory (``datadir``) and the output directory (``anadir``).
 
 This tutorial assumes the following directory structure:
 
@@ -71,6 +70,7 @@ Specify the Data to be Analyzed
 
 Please change the following variables based on the data you want to
 analyze.
+The sample data can be downloaded from the `Zenodo repository <https://zenodo.org/records/14614004>`_
 
 .. code:: ipython3
 
@@ -111,8 +111,8 @@ Step 1: Preprocessing the Calibration Dataset
 
 .. _step1-1:
 
-Step 1-1: Identifying Apertures
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Step 1-1: Identifying Apertures (Spectral Orders)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - The ``aptrace`` function is used to identify apertures.
 - Number of apertures (``nap``): 42 for H band, 102 for Y/J band.
@@ -638,5 +638,5 @@ Step 2-5: Normalizing the Spectra
 
 This concludes the data reduction process!
 
-See ``TUTORIAL: Output Spectra`` page for detailed explanations of
+See :doc:`./plot_spec` page for detailed explanations of
 output spectra.

@@ -1,8 +1,12 @@
 Names and Terms of IRD/REACH data
 ==================================
 
-Terms Related to Instruments
-------------------------------
+For information about each instrument, visit
+`IRD official page <https://ird.mtk.nao.ac.jp/IRDpub/index_tmp.html>`_
+or `REACH official page <https://secondearths.sakura.ne.jp/reach/>`_.
+
+Terms Related to IRD/REACH
+--------------------------------
 
 - ``band``: Y/J-band detector or H-band detector
     - The origin of the detector images below is at the lower left.
@@ -28,6 +32,23 @@ Terms Related to Instruments
     - mmf2 (or star-fiber): A fiber to inject the light of a star.
 
 - ``smf``: Single Mode Fiber used for REACH
+
+Naming Conventions for Observed Data with IRD/REACH
+--------------------------------------------------------------
+
+Each exposure taken with IRD and REACH produces a pair of FITS files: one for the Y/J-band detector and the other for the H-band detector. 
+
+The prefix of each file name varies depending on the observation mode:
+
+- ``IRDA``: Data obtained via Gen2, the observation control system of the Subaru Telescope.
+    - The *even-numbered* FITS file (e.g., ``IRDA00041510.fits``) contains the Y/J-band data.
+    - The *odd-numbered* FITS file (e.g., ``IRDA00041511.fits``) contains the H-band data.
+
+- ``IRDBD`` or ``IRDAD``: Data obtained directly from the detector PC, mainly used for calibration purposes.
+    - ``IRDBDxxxxxxxx.fits``: Y/J-band data
+    - ``IRDADxxxxxxxx.fits``: H-band data 
+
+.. _terms-calibration:
 
 Names of Calibration Dataset
 -----------------------------
