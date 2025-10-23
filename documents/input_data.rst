@@ -3,7 +3,7 @@ Input Data
 
 .. image:: ./figures/reduc_flowchart.png
 
-This page describes the input data required for the data reduction process.  
+This page describes the input data required for the data reduction process (shown in the green boxes in the image above).  
 Please also refer to :doc:`./userguide/terms` for the naming conventions of observation data and detailed explanations of calibration datasets.
 
 - Flat_comb  
