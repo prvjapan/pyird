@@ -32,7 +32,7 @@ The total file size after extraction is approximately 7 GB.
    :caption: Userguide:
 
    userguide.rst
-
+   developers.rst
 
 .. toctree::
    :maxdepth: 1
