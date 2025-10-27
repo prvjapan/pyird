@@ -206,31 +206,64 @@ class Stream2D(FitsSet, StreamCommon):
         self.detector_artifact = detector_artifact
 
         self.tocsvargs = {"header": False, "index": False, "sep": " "}
-        if fitsid is not None:
-            self.fitsid = fitsid
-            if (rawtag == "IRDA000" and fitsid[0] % 2 == 0) or (rawtag == "IRDBD000"):
-                self.band = "y"
-            else:
-                self.band = "h"
-        else:
-            print("No fitsid yet.")
 
-        if (band is not None) and (rawtag=="IRDA000"):
-            self.init_band(band)
-            print(f"Processing {self.band} band")
+        self.fitsid = fitsid
+        self.band = None
 
-        if self.fitsid is not None:
-            print("Processing fitsid:", fitsid)
+        if inst in ["IRD", "REACH"]:
+            self.init_band_IRD(rawtag, band)
+        elif inst == "IRCS":
+            # Not the band name — "h" is assumed as the detector configuration for IRCS data in PyIRD.
+            # This naming convention may change in the future.
+            self.band = "h"
+        print(f"Processing {self.band} band")
 
-    def init_band(self, band):
-        """initialize band"""
         if self.fitsid is None:
-            raise ValueError("band option requires fitsid")
-        if band not in ("y", "h"):
-            raise AttributeError("band must be 'y' or 'h'")
-        self.band = band
-        if self.band == "h" and self.fitsid[0] % 2 == 0:
-            self.fitsid_increment()
+            print("No fitsid yet.")
+        else:
+            print("Processing fitsid:", self.fitsid)
+
+    def init_band_IRD(self, rawtag, band):
+        """initialize band for IRD/REACH data
+        
+        Args:
+            rawtag: prefix of file name, such as "IRDA000", "IRDAD000", or "IRDBD000
+            band: band of the data, "y" or "h", requires fitsid
+        """
+        if rawtag == "IRDBD000":
+            if band is not None and band != "y":
+                raise ValueError("band must be 'y' for IRDBD000")
+            self.band = "y"
+
+        elif rawtag == "IRDAD000":
+            if band is not None and band != "h":
+                raise ValueError("band must be 'y' for IRDAD000")
+            self.band = "h"
+
+        elif rawtag == "IRDA000":
+            if self.fitsid is None:
+                if band is not None:
+                    raise ValueError("band option requires fitsid")
+            else:
+                first = int(self.fitsid[0]) # fitsid of the first file
+                if band is None:
+                    self.band = "y" if (first % 2 == 0) else "h"
+                else:
+                    if band not in ("y", "h"):
+                        raise AttributeError("band must be 'y' or 'h'")
+                    self.band = band
+                    expected_parity = 0 if self.band == "y" else 1
+                    if (first % 2) != expected_parity:
+                        if self.band == "y" and (first % 2 == 1):
+                            raise ValueError(
+                                "For rawtag='IRDA000', band='y' corresponds to fitsid with EVEN numbers.\n"
+                                f"You set band={self.band} and fitsid starting with {first} (ODD number).\n"
+                                "- To analyze h band: set band='h'.\n"
+                                "- To analyze y band: specify fitsid ±1 accordingly.\n"
+                                "- Does your filename start with IRDAD or IRDBD? Then set rawtag='IRDAD' or 'IRDBD'."
+                            )
+                        if self.band == "h" and (first % 2 == 0):
+                            self.fitsid_increment()
 
     def detector_handling(self, img, mode="load"):
         """apply rotation and/or inverse to image
