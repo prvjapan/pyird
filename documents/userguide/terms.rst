@@ -33,6 +33,8 @@ Terms Related to IRD/REACH
 
 - ``smf``: Single Mode Fiber used for REACH
 
+.. _terms-filename:
+
 Naming Conventions for Observed Data with IRD/REACH
 --------------------------------------------------------------
 

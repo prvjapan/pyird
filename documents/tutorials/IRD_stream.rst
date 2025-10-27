@@ -77,13 +77,6 @@ The sample data can be downloaded from the `Zenodo repository <https://zenodo.or
     band = 'h' #'h' or 'y'
     mmf = 'mmf2' #'mmf1' (comb fiber) or 'mmf2' (star fiber)
     readout_noise_mode = 'default'
-    
-    # file numbers of fits files (last five digits)
-    fitsid_flat_comb = list(range(41704,41804,2)) 
-    fitsid_flat_star = list(range(41804,41904,2)) 
-    fitsid_dark = [41504]
-    fitsid_thar = list(range(14632,14732))
-    fitsid_target = [41510]
 
 **Note**:
 
@@ -101,6 +94,20 @@ Ensure that the ``readout_noise_mode`` is set to either ‘real’ or
 
 - ``readout_noise_mode = 'default'``: Uses a default readout noise (RN)
   value (RN=12 :math:`e^{-}`).
+
+Please also specify the ``fitsid`` corresponding to the file you wish to analyze. For files starts with 'IRDA000', set even-numbered fitsid values. 
+
+By default, the ``band`` parameter determines which band's data to process. However, the pipeline is designed to safely handle cases where you also change the FITS IDs accordingly (to an odd number) when reducing the H-band data with ``band='h'``. See also :ref:`terms-filename`.
+
+.. code:: ipython3
+
+    # file numbers of fits files (last five digits)
+    fitsid_flat_comb = list(range(41704,41804,2)) 
+    fitsid_flat_star = list(range(41804,41904,2)) 
+    fitsid_dark = [41504]
+    fitsid_thar = list(range(14632,14732))
+    fitsid_target = [41510]
+
 
 .. _step1:
 
