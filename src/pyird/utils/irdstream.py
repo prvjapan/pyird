@@ -74,7 +74,7 @@ class StreamCommon:
             print("fitsid is incremented.")
 
     def fitsid_decrement(self):
-        """Decrease fits id +1."""
+        """Decrease fits id -1."""
         if self.fitsid_already_increment:
             for i in range(0, len(self.fitsid)):
                 self.fitsid[i] = self.fitsid[i] - 1
@@ -217,6 +217,7 @@ class Stream2D(FitsSet, StreamCommon):
 
         if (band is not None) and (rawtag=="IRDA000"):
             self.init_band(band)
+            print(f"Processing {self.band} band")
 
         if self.fitsid is not None:
             print("Processing fitsid:", fitsid)
