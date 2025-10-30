@@ -105,7 +105,7 @@ class ContinuumFit():
 
         if order_fit_itr == self.max_order_fit:
             warnings.warn(
-                f"Continuum fitting reached the maximum polynomial order ({self.max_order_fit})."
+                f"Continuum fitting reached the maximum polynomial order ({self.max_order_fit}).\n"
                 "          Please check the fitted continuum — it may indicate overfitting.",
                 UserWarning
             )

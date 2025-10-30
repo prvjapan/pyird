@@ -71,7 +71,7 @@ class StreamCommon:
             self.rawpath = self.path(string=False, check=True)
             self.band = "h"
             self.fitsid_already_increment = True
-            print("fitsid incremented: ", self.fitsid)
+            print("fitsid is incremented.")
 
     def fitsid_decrement(self):
         """Decrease fits id +1."""
@@ -80,7 +80,7 @@ class StreamCommon:
                 self.fitsid[i] = self.fitsid[i] - 1
             self.rawpath = self.path(string=False, check=True)
             self.fitsid_already_increment = False
-            print("fitsid decremented: ", self.fitsid)
+            print("fitsid is decremented.")
         else:
             raise ValueError("fitsid is not incremented yet.")
 
