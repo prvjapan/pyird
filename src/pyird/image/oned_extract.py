@@ -148,7 +148,7 @@ def sum_weighted_apertures(im, df_flatn, y0, xmin, xmax, coeff, width, inst):
             .loc[2 : len(df_flatn["ec%d" % (i)]) - 1]
             .values.astype(float)
         )
-        print("pixel = %d, Mean = %.5f" % (i, flatn_mean))
+        print(f"Pixel offset from aperture center = {i:1d} | Mean counts along aperture = {flatn_mean:.5f}")
         df_ecf["ec%d" % (i)] = (
             df_onepix["ec%d" % (i)] / df_flatn["ec%d" % (i)]
         ) * flatn_mean  # cf) hdsis_ecf

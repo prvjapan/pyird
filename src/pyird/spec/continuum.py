@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.polynomial import legendre
 import pandas as pd
+import warnings
     
 __all__ = ["ContinuumFit"]
 
@@ -102,10 +103,15 @@ class ContinuumFit():
                 df_continuum.loc[order,pixels] = continuum_ord_interp
                 order += 1
 
-        if order_fit_itr==self.max_order_fit:
-            print(f'WARNING: order_fit reaches the maximum value of {self.max_order_fit}.')
+        if order_fit_itr == self.max_order_fit:
+            warnings.warn(
+                f"Continuum fitting reached the maximum polynomial order ({self.max_order_fit})."
+                "          Please check the fitted continuum — it may indicate overfitting.",
+                UserWarning
+            )
         else:
-            print(f'continuum is fitted with order_fit = {order_fit_itr}.')
+            print(f"Continuum successfully fitted with polynomial order = {order_fit_itr}.")
+
 
         return df_continuum
 

@@ -35,7 +35,8 @@ def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, std_threshold=0.005, channelfile
     orders, channelfile, order_ref = identify_channel_mode(norder, channelfile_path, ign_ord)
 
     if W.shape != dat.T.shape:
-        raise ValueError('The shape of weight matrix does not match the shape of the data.')
+        raise ValueError(f"Shape mismatch: weight matrix W has shape {W.shape}, "
+                         f"but expected {dat.T.shape} (npix x norder).")
 
     #----- 1st identification by using the prepared channel file -----#
     # map pixels to wavelengths
@@ -53,8 +54,7 @@ def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, std_threshold=0.005, channelfile
 
     # calculate std of residuals
     residuals = calculate_residuals(data, wavlength_solution)
-    print('standard deviation of residuals (1st identification) = %.5f' %
-          np.std(residuals))
+    print(f"Std. of wavelength-data residuals after initial identification: {np.std(residuals):.5f}")
 
     #----- 2nd identification by using the ThAr line list -----#
     # map pixels to wavelengths
@@ -62,7 +62,8 @@ def wavcal_thar(dat, W, Ni=5, Nx=4, maxiter=10, std_threshold=0.005, channelfile
     data = pixel_df_to_wav_mat(df_pixwavmap_obs,order_ref) # convert to wavelength matrix
 
     #----- Iterations -----#
-    print("Start iterations of ThAr fitting:")
+    print("Starting ThAr fitting iterations:")
+    print(f"    Target: std <= {std_threshold:.5f} or max iteration = {maxiter}")
     wavlength_solution, data = iterate_fitting(
                     X, Y, df_pixwavmap_obs, W, Ni, Nx, maxiter, std_threshold, npix, norder, order_ref)
             
@@ -190,7 +191,7 @@ def sigmaclip(data, wavlength_solution, N=3):
     return residuals, drop_ind
 
 def identify_channel_mode(norder, channelfile_path=None, ign_ord=[]):
-    """identify the channel model based on data shape
+    """identify the channel mode based on data shape
 
     Args:
         dat: ThAr spectrum (norder x npix matrix)
@@ -205,17 +206,18 @@ def identify_channel_mode(norder, channelfile_path=None, ign_ord=[]):
         channelfile = (importlib.resources.files('pyird').joinpath('data/channel_H.list')) 
         orders = np.arange(104, 83, -1)
         order_ref = np.arange(1, 22)
-        print("H band")
+        print("Channel mode identified: H band (21 orders).")
     elif norder == 51:
         channelfile = (importlib.resources.files('pyird').joinpath('data/channel_YJ.list'))
         orders = np.arange(158, 107, -1)
         order_ref = np.arange(1, 52)
-        print("YJ band")
+        print("Channel mode identified: YJ band (51 orders).")
     else:
         if channelfile_path is None:
-            raise ValueError("Cannot identify H or YJ mode. Please define the channel file for norder=", norder)
+            raise ValueError(f"Cannot identify H or YJ mode automatically (norder={norder}). Please specify a channel file.")
         else:
             orders, channelfile, order_ref = check_channelfile(channelfile_path, ign_ord)
+            print(f"Channel mode determined from custom channel file: {channelfile_path}")
 
     return orders, channelfile, order_ref
 
@@ -383,7 +385,7 @@ def iterate_fitting(X, Y, df_pixwavmap, W, Ni, Nx, maxiter, std_threshold, npix,
         wavlength_solution_matrix = wavlength_solution.reshape(npix, norder)
         residuals, drop_ind = sigmaclip(data.T, wavlength_solution_matrix.T,N=Nsigma)
         std = np.std(residuals)
-        print("#",iter,"standard dev=",std)
+        print(f"    # {iter} std = {std:.5f}")
         iter += 1
         if len(drop_ind) != 0:
             df_pixwavmap = df_pixwavmap.drop(df_pixwavmap.index[drop_ind])

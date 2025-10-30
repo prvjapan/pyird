@@ -16,18 +16,22 @@ datadir_thar = basedir/'thar'
 datadir_target = basedir/'target/'
 anadir = basedir/'reduc/'
 
-fitsid_flat_comb = list(range(41704,41804,2)) 
-fitsid_flat_star = list(range(41804,41904,2)) 
-fitsid_dark = [41504]
-fitsid_thar = list(range(14632,14732))
-fitsid_target = [41510]
+# last 5 digits of FITS file numbers: [start, end file number]
+flat_comb_id = [41704, 41803]  # flat image for comb
+flat_star_id = [41804, 41903]  # flat image for star/target
+dark_id = [41504, 41505] # dark image
+thar_id = [14632, 14731] # ThAr image
+target_id = [41510, 41511] # target image
 #-------------------------#
 
 #--------FOR CALIBRATION--------#
 ## FLAT_COMB
-flat_comb=irdstream.Stream2D("flat_comb", datadir_flat, anadir, fitsid=fitsid_flat_comb, band=band)
+flat_comb=irdstream.Stream2D("flat_comb", 
+                             datadir_flat, 
+                             anadir, 
+                             fitsid=list(range(flat_comb_id[0], flat_comb_id[-1], 2)), 
+                             band=band)
 # aperture extraction
-print(flat_comb.band,' band')
 if band=='h':
     trace_mmf=flat_comb.aptrace(cutrow = 1300,nap=42) 
 elif band=='y':
@@ -38,7 +42,11 @@ trace_mmf.choose_aperture(fiber=mmf)
 ## HOTPIXEL MASK: 
 # See pyird/io/read_hotpix.py for reading fixed mask (Optional)
 ## DARK
-dark = irdstream.Stream2D('dark', datadir_dark, anadir, fitsid=fitsid_dark, band=band) # Multiple file is ok
+dark = irdstream.Stream2D('dark', 
+                          datadir_dark, 
+                          anadir, 
+                          fitsid=list(range(dark_id[0], dark_id[-1], 2)), 
+                          band=band) # Multiple file is ok
 median_image = dark.immedian()
 im_subbias = bias_subtract_image(median_image)
 hotpix_mask = identify_hotpix_sigclip(im_subbias)
@@ -48,7 +56,12 @@ if band=='h':
     rawtag='IRDAD000'
 elif band=='y':
     rawtag='IRDBD000'
-thar=irdstream.Stream2D("thar", datadir_thar, anadir, rawtag=rawtag, fitsid=fitsid_thar, band=band) 
+thar=irdstream.Stream2D("thar", 
+                        datadir_thar, 
+                        anadir, 
+                        rawtag=rawtag, 
+                        fitsid=list(range(thar_id[0], thar_id[-1]+1)), 
+                        band=band) 
 thar.info = True
 
 #wavelength calibration
@@ -59,7 +72,11 @@ thar.calibrate_wavelength()
 ## FLAT
 if mmf=='mmf2':
     ## FLAT_STAR
-    flat_star=irdstream.Stream2D("flat_star", datadir_flat, anadir, fitsid=fitsid_flat_star, band=band)
+    flat_star=irdstream.Stream2D("flat_star", 
+                                 datadir_flat, 
+                                 anadir, 
+                                 fitsid=list(range(flat_star_id[0], flat_star_id[-1], 2)), 
+                                 band=band)
     flat_star.trace = trace_mmf
     flat_star.clean_pattern(trace_mask=trace_mask, extin='', extout='_cp', hotpix_mask=hotpix_mask)
     flat_star.imcomb = True # median combine
@@ -73,7 +90,11 @@ elif mmf=='mmf1':
     df_flatn = flat_comb.apnormalize()
 
 #--------FOR TARGET--------#
-target = irdstream.Stream2D('targets', datadir_target, anadir, fitsid=fitsid_target, band=band)
+target = irdstream.Stream2D('targets', 
+                            datadir_target, 
+                            anadir, 
+                            fitsid=list(range(target_id[0], target_id[-1], 2)), 
+                            band=band)
 target.info = True  # show detailed info
 target.trace = trace_mmf
 # clean pattern

@@ -87,7 +87,7 @@ def set_aperture(dat, cutrow, nap, ign_ord=[], plot=True):
         raise ValueError("Error: %d apertures could not be found." % (nap))
 
         return
-    print("cross-section: row ", cutrow)
+    print(f"Successfully detected the required number of apertures on detector row {cutrow}.")
     if plot == True:
         # Plot to confirm the selected aperture
         pixels = np.arange(0, len(onerow_masked))
@@ -246,12 +246,13 @@ def aptrace(dat, cutrow, nap, ign_ord=[], plot=True):
         
     """
     if nap in [42, 102]:
-        print("default nap value")
+        print("Searching for apertures using the default nap value.")
     elif nap in [21, 51]:
-        warnings.warn("Looks a single fiber aperture on the detector.", UserWarning)
+        print(f"Searching for apertures using nap = {nap}.")
+        print("This nap value assumes a single-fiber aperture configuration on the detector.")
     else:
         warnings.warn(
-            "nap is not default value. default: nap = 42 for H / 102 for YJ.",
+            "nap is not set to a default value for IRD/REACH. default values: nap = 42 for H / 102 for YJ.",
             UserWarning,
         )
 
