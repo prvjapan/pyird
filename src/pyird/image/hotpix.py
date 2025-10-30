@@ -88,7 +88,7 @@ def identify_hotpix_sigclip(im,sigma=4,maxiters=5,frac=0.005):
     ind_frac = np.argmin(np.abs(results[:,1]-frac))
     si_use = si_list[ind_frac]
     hotpix_mask,frac_masked = sigmaclip(im,si_use)
-    print('hotpix mask = %.2f percent'%(frac_masked*100))
+    print(f"{frac_masked * 100:.2f}% of pixels flagged in hot-pixel mask.")
 
     return hotpix_mask
 
