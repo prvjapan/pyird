@@ -33,9 +33,9 @@ flat_comb=irdstream.Stream2D("flat_comb",
                              band=band)
 # aperture extraction
 if band=='h':
-    trace_mmf=flat_comb.aptrace(cutrow = 1300,nap=42) 
+    trace_mmf=flat_comb.aptrace(search_start_row=1300, num_aperture=42) 
 elif band=='y':
-    trace_mmf=flat_comb.aptrace(cutrow = 1000,nap=102) 
+    trace_mmf=flat_comb.aptrace(search_start_row=1000, num_aperture=102) 
 trace_mask = trace_mmf.mask()
 trace_mmf.choose_aperture(fiber=mmf)
 

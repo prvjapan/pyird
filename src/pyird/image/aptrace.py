@@ -7,13 +7,13 @@ import warnings
 from pyird.plot.order import plot_crosssection, plot_tracelines
 
 
-def cross_section(dat, nrow, nap):
+def cross_section(dat, nrow, num_aperture):
     """extract cross section in row direction and search peaks.
 
     Args:
         dat: flat data
         nrow: row number to be extracted
-        nap: number of total apertures to be traced
+        num_aperture: number of total apertures to be traced
 
     Returns:
         masked data and peaks at the cross section
@@ -24,7 +24,7 @@ def cross_section(dat, nrow, nap):
     i = 0
     diffstd = 100
     peakind = []
-    while (len(peakind) < nap or (diffstd > 10)) and (i < len(heights)):
+    while (len(peakind) < num_aperture or (diffstd > 10)) and (i < len(heights)):
         height = heights[i]
         peakind, _ = find_peaks(onerow, height=height, distance=5)
         diffstd = np.std(np.diff(peakind)[::2])
@@ -43,65 +43,66 @@ def cross_section(dat, nrow, nap):
     return onerow_masked, peakind_cut
 
 
-def set_aperture(dat, cutrow, nap, ign_ord=[], plot=True):
+def set_aperture(dat, search_start_row, num_aperture, ign_ord=[], plot=True):
     """search aperture
 
     Args:
         dat: flat data
-        cutrow: row number used to set aperture
-        nap: number of total apertures to be traced
+        search_start_row: starting row number to search apertures
+        num_aperture: number of total apertures to be traced
         ign_ord: orders to be ignored
         plot: show figure of selected apertures
 
     Returns:
-        peak position in the cross section at cutrow
+        peak position in the cross section at search_row
     """
     if len(ign_ord) >= 30:
        raise ValueError("length of ign_ord should be < 30.")
 
-    # Search peaks in the cross section at cutrow
-    # cutrow is selected so that the number of peaks and nap match
-    cutrow_min = 500
-    cutrow_max = 1550
+    # Search peaks in the cross section at search_row
+    # search_row is selected so that the number of peaks and num_aperture match
+    search_row_min = 500
+    search_row_max = 1550
     peakind_cut = []
-    cutrow_lim = True
+    search_row_lim = True
     prange = False
-    while ((len(peakind_cut) != nap) or prange) and cutrow_lim:
-        onerow_masked, peakind_cut = cross_section(dat, cutrow, nap)
+    search_row = search_start_row
+    while ((len(peakind_cut) != num_aperture) or prange) and search_row_lim:
+        onerow_masked, peakind_cut = cross_section(dat, search_row, num_aperture)
         # mask peaks for selected apertures
         if len(ign_ord)>0:
             mask = np.ones_like(peakind_cut, dtype=bool)
             mask[np.array(ign_ord)-1] = False
             peakind_cut = np.array(peakind_cut)[mask]
-        if nap in [21, 42]:  # h band
+        if num_aperture in [21, 42]:  # h band
             prange = (peakind_cut[-1] > 1500) or (peakind_cut[0] > 40)
-        elif nap in [51, 102]:  # yj band
+        elif num_aperture in [51, 102]:  # yj band
             prange = (peakind_cut[0] < 250) or (peakind_cut[-1] < 2000)
-        cutrow_lim = (cutrow > cutrow_min) and (cutrow < cutrow_max)
-        cutrow += 1
-    if not cutrow_lim:
+        search_row_lim = (search_row > search_row_min) and (search_row < search_row_max)
+        search_row += 1
+    if not search_row_lim:
         warnings.warn(
-            'Please change "cutrow" or "nap" or confirm the orientation of the image.',
+            'Please change "search_row" or "num_aperture" or confirm the orientation of the image.',
             UserWarning,
         )
-        raise ValueError("Error: %d apertures could not be found." % (nap))
+        raise ValueError("Error: %d apertures could not be found." % (num_aperture))
 
         return
-    print(f"Successfully detected the required number of apertures on detector row {cutrow}.")
+    print(f"Successfully detected the required number of apertures on detector row {search_row}.")
     if plot == True:
         # Plot to confirm the selected aperture
         pixels = np.arange(0, len(onerow_masked))
-        plot_crosssection(pixels, onerow_masked, peakind_cut, dat, cutrow)
-    return peakind_cut, cutrow
+        plot_crosssection(pixels, onerow_masked, peakind_cut, dat, search_row)
+    return peakind_cut, search_row
 
 
-def trace_pix(dat, cutrow, peakind, npix=2048):
+def trace_pix(dat, search_row, peakind, npix=2048):
     """trace apertures
 
     Args:
         dat: flat data of an order
-        cutrow: row number used to set aperture
-        peakind: aperture (peak position) in the cross section at cutrow
+        search_row: row number used to set aperture
+        peakind: aperture (peak position) in the cross section at search_row
         npix: number of pixels
 
     Returns:
@@ -122,7 +123,7 @@ def trace_pix(dat, cutrow, peakind, npix=2048):
 
     traceind2d = pd.DataFrame([])
     ind = peakind
-    for nrow in range(cutrow, npix):
+    for nrow in range(search_row, npix):
         ind_new = set_newind(dat, nrow, ind)
         if ind_new == -1:
             continue
@@ -133,7 +134,7 @@ def trace_pix(dat, cutrow, peakind, npix=2048):
         df_tmp = pd.DataFrame([data], columns=["row", "column"])
         traceind2d = pd.concat([traceind2d, df_tmp], ignore_index=True)
     ind = peakind
-    for nrow in range(cutrow - 1, 0, -1):
+    for nrow in range(search_row - 1, 0, -1):
         ind_new = set_newind(dat, nrow, ind)
         if ind_new == -1:
             continue
@@ -152,13 +153,13 @@ def trace_pix(dat, cutrow, peakind, npix=2048):
         useind = (
             ((0 <= diff) & (diff <= 1))
             & (row < 2000)
-            & ~((column < 25) & (row < cutrow))
+            & ~((column < 25) & (row < search_row))
         )  ## check!!
     elif peakind > 2000:
         useind = (
             ((0 <= diff) & (diff <= 1))
             & (row < 2000)
-            & ~((column > 2020) & (row > cutrow))
+            & ~((column > 2020) & (row > search_row))
         )
     else:
         useind = ((0 <= diff) & (diff <= 1)) & (row < 2000)
@@ -226,37 +227,37 @@ def fit_ord(x, y0, data):
     return p1
 
 
-def aptrace(dat, cutrow, nap, ign_ord=[], plot=True):
+def aptrace(dat, search_start_row, num_aperture, ign_ord=[], plot=True):
     """trace apertures by a polynomial function.
 
     Args:
         dat: flat data
-        cutrow: row number used to set aperture
-        nap: number of total apertures to be traced
-        ign_ord: orders to be ignored, using when nap is set to a non-default value
+        search_start_row: starting row number to search apertures
+        num_aperture: number of total apertures to be traced
+        ign_ord: orders to be ignored, using when num_aperture is set to a non-default value
         plot: show figure of traced apertures
 
     Returns:
         parameters of a polynomial to trace apertures
 
     Note:
-        the apertures begin its search at ``cutrow``, which is the row number of the detector (wavelength direction),
+        the apertures begin its search at ``search_row``, which is the row number of the detector (wavelength direction),
         and continue in the direction of increasing numbers until it matches the appropriate number of apertures.
-        You may as well change the value of ``cutrow`` if the aperture trace is failed.
+        You may as well change the value of ``search_row`` if the aperture trace is failed.
         
     """
-    if nap in [42, 102]:
-        print("Searching for apertures using the default nap value.")
-    elif nap in [21, 51]:
-        print(f"Searching for apertures using nap = {nap}.")
-        print("This nap value assumes a single-fiber aperture configuration on the detector.")
+    if num_aperture in [42, 102]:
+        print("Searching for apertures using the default num_aperture value.")
+    elif num_aperture in [21, 51]:
+        print(f"Searching for apertures using num_aperture = {num_aperture}.")
+        print("This num_aperture value assumes a single-fiber aperture configuration on the detector.")
     else:
         warnings.warn(
-            "nap is not set to a default value for IRD/REACH. default values: nap = 42 for H / 102 for YJ.",
+            "num_aperture is not set to a default value for IRD/REACH. default values: num_aperture = 42 for H / 102 for YJ.",
             UserWarning,
         )
 
-    peakind_cut, row = set_aperture(dat, cutrow, nap, ign_ord=ign_ord, plot=plot)
+    peakind_cut, row = set_aperture(dat, search_start_row, num_aperture, ign_ord=ign_ord, plot=plot)
 
     # Trace each peak
     x, y, y0 = [], [], []
@@ -291,9 +292,9 @@ if __name__ == "__main__":
     dat = dat[::-1, ::-1]
 
     # Trace aperture
-    cutrow = 1205
-    nap = 42
-    y0, xmin, xmax, coeff = aptrace(dat, cutrow, nap)
+    search_start_row = 1205
+    num_aperture = 42
+    y0, xmin, xmax, coeff = aptrace(dat, search_start_row, num_aperture)
 
     # Plot to confirm traced aperture
     x_fit = []

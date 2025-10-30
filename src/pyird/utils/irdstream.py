@@ -15,6 +15,10 @@ import tqdm
 import os
 import warnings
 
+from pyird.utils.decorators import deprecate_kwargs, rename_kwargs
+import functools
+rename_12_20 = functools.partial(deprecate_kwargs, since="v1.2", remove_in="v2.0")
+
 __all__ = ["StreamCommon", "Stream1D", "Stream2D"]
 
 
@@ -642,13 +646,14 @@ class Stream2D(FitsSet, StreamCommon):
             self.print_if_info_is_true(
                 "Created a new file of the ThAr spectrum with a wavelength solution: " + str(master_path)
                 )
-            
-    def aptrace(self, cutrow=1000, nap=42, ign_ord=[]):
+
+    @rename_12_20({"cutrow":"search_start_row", "nap":"num_aperture"})
+    def aptrace(self, search_start_row=1000, num_aperture=42, ign_ord=[]):
         """extract aperture of trace from a median image of current fitsset
 
         Args:
-            cutrow: cutting criterion
-            nap: number of apertures, nap = 42 ## 42 for H band, 102 for YJ band
+            search_start_row: starting row number to search apertures
+            num_aperture: number of apertures, num_aperture = 42 ## 42 for H band, 102 for YJ band
 
         Returns:
             TraceAperture instance
@@ -675,7 +680,7 @@ class Stream2D(FitsSet, StreamCommon):
                     63 + i * 128 + 2 : 63 + i * 128 + 3, :
                 ]
 
-        y0, xmin, xmax, coeff = aptrace(flatmedian, cutrow, nap, ign_ord)
+        y0, xmin, xmax, coeff = aptrace(flatmedian, search_start_row, num_aperture, ign_ord)
 
         return TraceAperture(trace_legendre, y0, xmin, xmax, coeff, inst)
 
