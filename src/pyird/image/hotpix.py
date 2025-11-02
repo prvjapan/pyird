@@ -13,6 +13,9 @@ def identify_hotpix(im, threshold=10.0):
     Returns:
        hotpix_mask: hot pixel mask
        obj: sep object
+
+    Notes:
+        See also issue #121 for a comparison among `identify_hotpix`, `identify_hotpix_sigclip`, and another method.
     """
     from sep import Background, extract, mask_ellipse
     try:
@@ -65,6 +68,9 @@ def identify_hotpix_sigclip(im,sigma=4,maxiters=5,frac=0.005):
 
     Returns:
        hotpix_mask: hot pixel mask
+
+    Notes:
+        See also issue #121 for a comparison among `identify_hotpix`, `identify_hotpix_sigclip`, and another method.
     """
     from astropy.stats import SigmaClip
     import itertools

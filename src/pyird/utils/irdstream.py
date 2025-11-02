@@ -169,6 +169,8 @@ class StreamCommon:
 
 
 class Stream2D(FitsSet, StreamCommon):
+    """Class for processing 2D spectral images and reducing them to 1D spectra.
+    """
     def __init__(
         self,
         streamid,
@@ -889,6 +891,8 @@ class Stream2D(FitsSet, StreamCommon):
 
 
 class Stream1D(DatSet):
+    """Class for post-processing 1D spectra.
+    """
     def __init__(
         self, streamid, rawdir, anadir, fitsid=None, prefix="", extension="", inst="IRD"
     ):

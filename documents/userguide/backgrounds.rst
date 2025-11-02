@@ -1,9 +1,9 @@
-Userguide
+Background
 ==============
 
 .. toctree::
    :maxdepth: 1
-   :caption: Userguide of pyird
+   :caption: Background and Principles of Pipeline Design
 	     
    userguide/pattern.rst
    userguide/terms.rst
