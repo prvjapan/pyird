@@ -54,25 +54,36 @@ comments
 -->
 `PyIRD` is a Python-based pipeline for reducing spectroscopic data obtained with IRD (InfraRed Doppler; @kotani2018) and REACH (Rigorous Exoplanetary Atmosphere Characterization with High dispersion coronagraphy; @kotani2020) on the Subaru Telescope. 
 It is designed to process raw images into one-dimensional spectra in a semi-automatic manner. 
-Unlike traditional methods, it does not rely on IRAF [@tody1986; @tody1993], a software used for astronomical data reduction. This approach simplifies the workflow while maintaining efficiency and accuracy.
+Unlike traditional methods, it does not rely on `IRAF` [@tody1986; @tody1993], a software used for astronomical data reduction. This approach simplifies the workflow while maintaining efficiency and accuracy.
 Additionally, the pipeline includes an updated method for removing readout noise patterns from raw images, enabling efficient extraction of spectra even for faint targets such as brown dwarfs.
 
 # Statement of need
 
-The reduction of high-dispersion spectroscopic data has traditionally been performed using IRAF, one of the most widely used software tools for astronomical data reduction and analysis.
-However, the National Optical Astronomy Observatories (NOAO) officially ceased its development and maintenance in 2013.
-As a result, there is a growing demand for a modern, flexible solution.
+The reduction of high-dispersion spectroscopic data has traditionally been performed using `IRAF`, one of the most widely used software tools for astronomical data reduction and analysis.
+Although the National Optical Astronomy Observatory (NOAO) officially ceased development and maintenance of `IRAF` in 2013, community-based maintenance has continued. 
+However, the official IRAF community distribution and the Space Telescope Science Institute (STScI) have both recommended that researchers transition away from `IRAF` due to its legacy architecture and lack of institutional support [@iraf_community; @stsci2018].
 
-`PyIRD` addresses this need and has already been utilized in several papers [@kawashima2024; @kawahara2024; @tomoyoshi2024]. 
+In recent years, several open-source, Python-based pipelines for the reduction of near-infrared echelle spectrographs have been developed.
+Some pipelines utilize `PyRAF`, a Python interface to IRAF, such as `WARP` for the WINERED spectrograph [@Hamano2024], while others, including `PLP` for IGRINS [@Sim2014] and `PypeIt` [@pypeit:joss_pub], do not rely on PyRAF or IRAF-based components.
+While these pipelines provide general frameworks or instrument-specific solutions, `PyIRD` is designed to offer a simple pipeline optimized for IRD and REACH data reduction.
+Furthermore, recent advances combining adaptive optics with these instruments have enabled high-resolution spectroscopic observations of faint companions orbiting bright main-sequence stars.
+To support such observations, `PyIRD` implements improved detector noise reduction to extract high-quality spectra from these faint targets.
+
+Together, these developments underscore the need for actively maintained, scalable, and flexible software for high-resolution spectroscopic data reduction.
+`PyIRD` addresses this need by providing a modern, Python-based pipeline and has already been utilized in several studies [@kasagi2024; @kawashima2024; @kawahara2024; @tomoyoshi2024]. 
 
 
 # Key Features
 
-`PyIRD` is designed to perform data reduction semi-automatically by following a general workflow for high-dispersion spectroscopic data reduction, as illustrated in \autoref{fig:reduc_flow}.
+`PyIRD` performs semi-automatic data reduction by following a general workflow for high-dispersion spectroscopic data, as illustrated in \autoref{fig:reduc_flow}.
+It primarily utilizes `Astropy` [@astropy:2022], `NumPy` [@harris2020array], `SciPy` [@2020SciPy-NMeth], and `pandas` [@reback2020pandas].
 
 ![Flowchart of the reduction process for IRD and REACH data. The reduction process follows from top to bottom of this figure. Texts in the grey boxes represent instance names of each reduction step used in `PyIRD`. \label{fig:reduc_flow}](fig/reduc_flowchart.png)
 
-Users can define a set of FITS-format files using a Python class named `FitsSet`, and functions in the `Stream2D` class are applied to generate the one-dimentional spectrum.
+To simplify the handling of a large number of input FITS-format files, `PyIRD` introduces a Python class called `FitsSet`.
+Once initialized with parameters such as the file IDs and the directory containing those files, `FitsSet` automatically organizes and manages the input files and their metadata.
+It also allows users to apply reduction functions collectively to a specified list of FITS IDs, enabling efficient and consistent data processing through the `Stream2D` class.
+
 Since all functions in `PyIRD` are written in Python rather than IRAF's subset preprocessor language (SPP), the package is easy to develop and maintain.
 This also significantly reduces the time required for the reduction process: users only need to execute a single Python script without complex IRAF configuration.
 For example, reducing data with `PyIRD` typically takes a few tens of minutes to produce one-dimensional spectra from raw data obtained during a single observing night, compared to approximately half a day with traditional IRAF methods.
