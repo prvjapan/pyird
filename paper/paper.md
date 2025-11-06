@@ -61,7 +61,10 @@ Additionally, the pipeline includes an updated method for removing readout noise
 
 The reduction of high-dispersion spectroscopic data has traditionally been performed using `IRAF`, one of the most widely used software tools for astronomical data reduction and analysis.
 Although the National Optical Astronomy Observatory (NOAO) officially ceased development and maintenance of `IRAF` in 2013, community-based maintenance has continued. 
-However, the official IRAF community distribution and the Space Telescope Science Institute (STScI) have both recommended that researchers transition away from `IRAF` due to its legacy architecture and lack of institutional support [@iraf_community; @stsci2018].
+However, the official IRAF community distribution[^iraf_community] and the Space Telescope Science Institute (STScI)[^stsci] have both recommended that researchers transition away from `IRAF` due to its legacy architecture and lack of institutional support.
+
+[^iraf_community]: IRAF Community Distribution website: https://iraf-community.github.io/
+[^stsci]: STScI Newsletter (2018), "Removing the Institute’s Dependence on IRAF: You Can Do It Too": https://www.stsci.edu/contents/newsletters/2018-volume-35-issue-03/removing-the-institutes-dependence-on-iraf-you-can-do-it-too
 
 In recent years, several open-source, Python-based pipelines for the reduction of near-infrared echelle spectrographs have been developed.
 Some pipelines utilize `PyRAF`, a Python interface to IRAF, such as `WARP` for the WINERED spectrograph [@Hamano2024], while others, including `PLP` for IGRINS [@Sim2014] and `PypeIt` [@pypeit:joss_pub], do not rely on PyRAF or IRAF-based components.
@@ -70,7 +73,7 @@ Furthermore, recent advances combining adaptive optics with these instruments ha
 To support such observations, `PyIRD` implements improved detector noise reduction to extract high-quality spectra from these faint targets.
 
 Together, these developments underscore the need for actively maintained, scalable, and flexible software for high-resolution spectroscopic data reduction.
-`PyIRD` addresses this need by providing a modern, Python-based pipeline and has already been utilized in several studies [@kasagi2024; @kawashima2024; @kawahara2024; @tomoyoshi2024]. 
+`PyIRD` addresses this need by providing a modern, Python-based pipeline and has already been utilized in several studies [@kasagi2025; @kawashima2024; @kawahara2024; @tomoyoshi2024]. 
 
 
 # Key Features
