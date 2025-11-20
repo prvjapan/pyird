@@ -40,4 +40,4 @@ Please also refer to :doc:`./userguide/terms` for the naming conventions of obse
 
         - ✅ IRD  
         - ✅ REACH  
-        - ☑️ CHARIS (available on the develop branch)
+        - ☑️ IRCS (available on the develop branch)
