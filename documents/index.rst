@@ -49,7 +49,7 @@ It is designed to process raw images into one-dimensional spectra in a semi-auto
 License & Attribution
 ---------------------
 
-Copyright 2021-2024, 
+Copyright 2021-2025, 
 Contributors:
 
 - `Yui Kasagi <https://yuikasagi.com>`_ (maintainer), 
