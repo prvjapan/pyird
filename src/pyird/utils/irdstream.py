@@ -15,6 +15,10 @@ import tqdm
 import os
 import warnings
 
+from pyird.utils.decorators import deprecate_kwargs, rename_kwargs
+import functools
+rename_12_20 = functools.partial(deprecate_kwargs, since="v1.2", remove_in="v2.0")
+
 __all__ = ["StreamCommon", "Stream1D", "Stream2D"]
 
 
@@ -67,16 +71,16 @@ class StreamCommon:
             self.rawpath = self.path(string=False, check=True)
             self.band = "h"
             self.fitsid_already_increment = True
-            print("fitsid incremented: ", self.fitsid)
+            print("fitsid is incremented.")
 
     def fitsid_decrement(self):
-        """Decrease fits id +1."""
+        """Decrease fits id -1."""
         if self.fitsid_already_increment:
             for i in range(0, len(self.fitsid)):
                 self.fitsid[i] = self.fitsid[i] - 1
             self.rawpath = self.path(string=False, check=True)
             self.fitsid_already_increment = False
-            print("fitsid decremented: ", self.fitsid)
+            print("fitsid is decremented.")
         else:
             raise ValueError("fitsid is not incremented yet.")
 
@@ -117,7 +121,7 @@ class StreamCommon:
         for i in range(len(self.path())):
             if self.path(check=False)[i].exists():
                 os.remove(self.extpath(extension, check=False, string=True)[i])
-                print("rm old " + self.extpath(extension, check=False, string=True)[i])
+                print("rmoved old " + self.extpath(extension, check=False, string=True)[i])
 
     def check_existence(self, extin, extout):
         """check files do not exist or not.
@@ -153,7 +157,7 @@ class StreamCommon:
 
     def remove_bias(self, rot=None):
         """set extension when loading an image whose bias is removed by IRD_bias_sub.py"""
-        self.print_if_info_is_true("remove_bias: files=" + str(self.rawpath))
+        self.print_if_info_is_true("Performing remove_bias: files=" + str(self.rawpath))
         if rot == "r":
             print("180 degree rotation applied.")
         self.fitsdir = self.anadir
@@ -165,6 +169,8 @@ class StreamCommon:
 
 
 class Stream2D(FitsSet, StreamCommon):
+    """Class for processing 2D spectral images and reducing them to 1D spectra.
+    """
     def __init__(
         self,
         streamid,
@@ -202,28 +208,64 @@ class Stream2D(FitsSet, StreamCommon):
         self.detector_artifact = detector_artifact
 
         self.tocsvargs = {"header": False, "index": False, "sep": " "}
-        if fitsid is not None:
-            print("fitsid:", fitsid)
-            self.fitsid = fitsid
-            if (rawtag == "IRDA000" and fitsid[0] % 2 == 0) or (rawtag == "IRDBD000"):
-                self.band = "y"
-            else:
-                self.band = "h"
-        else:
-            print("No fitsid yet.")
 
-        if (band is not None) and (rawtag=="IRDA000"):
-            self.init_band(band)
+        self.fitsid = fitsid
+        self.band = None
 
-    def init_band(self, band):
-        """initialize band"""
+        if inst in ["IRD", "REACH"]:
+            self.init_band_IRD(rawtag, band)
+        elif inst == "IRCS":
+            # Not the band name — "h" is assumed as the detector configuration for IRCS data in PyIRD.
+            # This naming convention may change in the future.
+            self.band = "h"
+        print(f"Processing {self.band} band")
+
         if self.fitsid is None:
-            raise ValueError("band option requires fitsid")
-        if band not in ("y", "h"):
-            raise AttributeError("band must be 'y' or 'h'")
-        self.band = band
-        if self.band == "h" and self.fitsid[0] % 2 == 0:
-            self.fitsid_increment()
+            print("No fitsid yet.")
+        else:
+            print("Processing fitsid:", self.fitsid)
+
+    def init_band_IRD(self, rawtag, band):
+        """initialize band for IRD/REACH data
+        
+        Args:
+            rawtag: prefix of file name, such as "IRDA000", "IRDAD000", or "IRDBD000
+            band: band of the data, "y" or "h", requires fitsid
+        """
+        if rawtag == "IRDBD000":
+            if band is not None and band != "y":
+                raise ValueError("band must be 'y' for IRDBD000")
+            self.band = "y"
+
+        elif rawtag == "IRDAD000":
+            if band is not None and band != "h":
+                raise ValueError("band must be 'y' for IRDAD000")
+            self.band = "h"
+
+        elif rawtag == "IRDA000":
+            if self.fitsid is None:
+                if band is not None:
+                    raise ValueError("band option requires fitsid")
+            else:
+                first = int(self.fitsid[0]) # fitsid of the first file
+                if band is None:
+                    self.band = "y" if (first % 2 == 0) else "h"
+                else:
+                    if band not in ("y", "h"):
+                        raise AttributeError("band must be 'y' or 'h'")
+                    self.band = band
+                    expected_parity = 0 if self.band == "y" else 1
+                    if (first % 2) != expected_parity:
+                        if self.band == "y" and (first % 2 == 1):
+                            raise ValueError(
+                                "For rawtag='IRDA000', band='y' corresponds to fitsid with EVEN numbers.\n"
+                                f"You set band={self.band} and fitsid starting with {first} (ODD number).\n"
+                                "- To analyze h band: set band='h'.\n"
+                                "- To analyze y band: specify fitsid ±1 accordingly.\n"
+                                "- Does your filename start with IRDAD or IRDBD? Then set rawtag='IRDAD' or 'IRDBD'."
+                            )
+                        if self.band == "h" and (first % 2 == 0):
+                            self.fitsid_increment()
 
     def detector_handling(self, img, mode="load"):
         """apply rotation and/or inverse to image
@@ -281,7 +323,12 @@ class Stream2D(FitsSet, StreamCommon):
         e = self.extension
         if not extension is None:
             self.extension = extension
-        print("median combine: ", self.extension)
+            self.print_if_info_is_true(
+                f"Performing median combine for images with extension '{self.extension}'."
+                )
+        else:
+            self.print_if_info_is_true("Performing median combine for raw images.")
+
         imall = []
         for path in tqdm.tqdm(self.path(string=True, check=True)):
             img, _ = load_fits_data_header(path)
@@ -354,7 +401,7 @@ class Stream2D(FitsSet, StreamCommon):
         """
         from pyird.image.pattern_model import median_XY_profile
 
-        self.print_if_info_is_true("clean_pattern: output extension=" + extout)
+        self.print_if_info_is_true("[STEP] Performing clean_pattern: output extension=" + extout)
 
         if trace_mask is None:
             trace_mask = self.trace.mask()
@@ -410,6 +457,8 @@ class Stream2D(FitsSet, StreamCommon):
 
         """
 
+        self.print_if_info_is_true("[STEP] Performing flatten...")
+
         y0, xmin, xmax, coeff, mmf, width = self.extract_trace_info(trace_path)
 
         if extin is None:
@@ -428,7 +477,7 @@ class Stream2D(FitsSet, StreamCommon):
             extin_noexist = self.extpath(extin, string=False, check=False)
             extout_noexist = self.extpath(extout, string=False, check=False)
 
-        for i in tqdm.tqdm(range(len(extout_noexist))):
+        for i, extout_i in tqdm.tqdm(enumerate(extout_noexist)):
             if self.imcomb:
                 im = self.immedian()  # median combine
                 filen = self.path()[0]  # header of the first file
@@ -459,9 +508,7 @@ class Stream2D(FitsSet, StreamCommon):
                     wav = []
                 return rsd, wav, trace_mask, pixcoord, rotim, iys_plot, iye_plot
 
-        self.print_if_info_is_true(
-            "flatten (+ hotpix mask): output extension=" + extout
-        )
+            self.print_if_info_is_true("Created " + str(extout_i))
         self.fitsdir = self.anadir
         self.extension = extout
 
@@ -474,6 +521,8 @@ class Stream2D(FitsSet, StreamCommon):
             dictionary of pandas DataFrames of extracted and normalized spectra in each pixel
         """
         from pyird.spec.continuum import ContinuumFit
+
+        self.print_if_info_is_true("[STEP] Performing apnormalize...")
 
         y0, xmin, xmax, coeff, mmf, width = self.extract_trace_info()
 
@@ -525,6 +574,8 @@ class Stream2D(FitsSet, StreamCommon):
         """
         from pyird.spec.rsdmat import rsd_order_medfilt
         from pyird.image.oned_extract import sum_weighted_apertures
+
+        self.print_if_info_is_true("[STEP] Performing apext_flatfield...")
 
         y0, xmin, xmax, coeff, mmf, width = self.extract_trace_info()
 
@@ -593,13 +644,14 @@ class Stream2D(FitsSet, StreamCommon):
         """
         from pyird.spec.wavcal import wavcal_thar
 
+        self.print_if_info_is_true("[STEP] Performing calibrate_wavelength...")
+
         median_image = self.immedian()
 
         y0, xmin, xmax, coeff, mmf, width = self.extract_trace_info(trace_path)
 
         master_path = self.anadir / ("thar_%s_%s.fits" % (self.band, mmf))
         if not os.path.exists(master_path):
-            self.print_if_info_is_true("Creating a new ThAr file: " + str(master_path))
             filen = self.path()[0]  # header of the first file
             _, header = load_fits_data_header(filen)
             nord = len(y0)
@@ -627,13 +679,17 @@ class Stream2D(FitsSet, StreamCommon):
             # np.save('thar_%s_%s_final.npy'%(self.band,mmf),data)
             wavsol_2d = wavsol.reshape((npix, nord))
             write_fits_data_header(master_path, header, wavsol_2d)
+            self.print_if_info_is_true(
+                "Created a new file of the ThAr spectrum with a wavelength solution: " + str(master_path)
+                )
 
-    def aptrace(self, cutrow=1000, nap=42, ign_ord=[]):
+    @rename_12_20({"cutrow":"search_start_row", "nap":"num_aperture"})
+    def aptrace(self, search_start_row=1000, num_aperture=42, ign_ord=[]):
         """extract aperture of trace from a median image of current fitsset
 
         Args:
-            cutrow: cutting criterion
-            nap: number of apertures, nap = 42 ## 42 for H band, 102 for YJ band
+            search_start_row: starting row number to search apertures
+            num_aperture: number of apertures, num_aperture = 42 ## 42 for H band, 102 for YJ band
 
         Returns:
             TraceAperture instance
@@ -641,6 +697,8 @@ class Stream2D(FitsSet, StreamCommon):
         """
         from pyird.image.aptrace import aptrace
         from pyird.utils.aperture import TraceAperture
+
+        self.print_if_info_is_true("[STEP] Performing aptrace...")
 
         inst = self.inst
         band = self.band
@@ -658,7 +716,7 @@ class Stream2D(FitsSet, StreamCommon):
                     63 + i * 128 + 2 : 63 + i * 128 + 3, :
                 ]
 
-        y0, xmin, xmax, coeff = aptrace(flatmedian, cutrow, nap, ign_ord)
+        y0, xmin, xmax, coeff = aptrace(flatmedian, search_start_row, num_aperture, ign_ord)
 
         return TraceAperture(trace_legendre, y0, xmin, xmax, coeff, inst)
 
@@ -673,6 +731,8 @@ class Stream2D(FitsSet, StreamCommon):
 
         """
         from pyird.utils.datset import DatSet
+
+        self.print_if_info_is_true("[STEP] Performing dispcor...")
 
         if master_path == None:
             master_path = self.anadir.joinpath("..", "thar").resolve() / (
@@ -716,7 +776,7 @@ class Stream2D(FitsSet, StreamCommon):
             wspec = self.write_df_spec_wav(spec_m2, reference, save_path[i])
 
             outpath = str(save_path[i]).split("/")[-1]
-            self.print_if_info_is_true("dispcor: output spectrum= %s" % (outpath))
+            print("Created 1D spectrum: %s" % (outpath))
             # plot
             show_wavcal_spectrum(
                 wspec, title="Extracted spectrum: %s" % (outpath), alpha=0.5
@@ -742,6 +802,8 @@ class Stream2D(FitsSet, StreamCommon):
 
         """
         from pyird.spec.normalize import SpectrumNormalizer
+
+        self.print_if_info_is_true("[STEP] Performing normalize1D...")
 
         if skipLFC is not None:
             warn_msg = "The 'skipLFC' parameter is deprecated and will be removed in the next release. Please use 'readout_noise_mode' instead."
@@ -780,7 +842,7 @@ class Stream2D(FitsSet, StreamCommon):
             LFC_path = [None] * len(self.fitsid)
         if readout_noise_mode not in ["default", "real"]:
             warnings.warn(
-                f"Warning: '{readout_noise_mode}' is not a recognized mode. Using 'default' instead.",
+                f"'{readout_noise_mode}' is not a recognized mode. Using 'default' instead.",
                 UserWarning,
             )
             # Set a default behavior or handle the unexpected input accordingly
@@ -804,9 +866,13 @@ class Stream2D(FitsSet, StreamCommon):
             df_interp_save = df_interp[["wav", "nflux", "sn_ratio", "uncertainty"]]
             df_continuum_save.to_csv(nwsave_path[i], **self.tocsvargs)
             df_interp_save.to_csv(ncwsave_path[i], **self.tocsvargs)
-            if self.info and ~self.imcomb:
+            if not self.imcomb:
                 print(
-                    "normalize1D: output normalized 1D spectrum= nw%d_%s.dat"
+                    "Created normalized 1D spectrum: nw%d_%s.dat"
+                    % (self.fitsid[i], self.trace.mmf)
+                )
+                print(
+                    "Created normalized & order-combined 1D spectrum: ncw%d_%s.dat"
                     % (self.fitsid[i], self.trace.mmf)
                 )
             # plot
@@ -825,6 +891,8 @@ class Stream2D(FitsSet, StreamCommon):
 
 
 class Stream1D(DatSet):
+    """Class for post-processing 1D spectra.
+    """
     def __init__(
         self, streamid, rawdir, anadir, fitsid=None, prefix="", extension="", inst="IRD"
     ):

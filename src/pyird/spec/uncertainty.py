@@ -4,7 +4,63 @@ import pandas as pd
 __all__ = ["FluxUncertainty"]
 
 class FluxUncertainty():
-    """Calculating Uncertainty Class"""
+    """Compute flux uncertainties and S/N for IRD spectra.
+
+    Algorithmm overview:
+        Computes per-pixel S/N and flux uncertainties using a Poisson + read-noise
+        model, with automatic band-dependent gain selection and optional read-noise
+        estimation from a comb (LFC) file.
+
+        Noise model (units):
+        - Input flux is in ADU; gains are in e-/ADU; readout noise is in e-.
+        - Variance (in ADU^2) is modeled as::
+
+            var_total = flux / gain + readout_noise**2
+
+        - Temporary (pre-normalization) uncertainty is::
+
+            tmp_uncertainty = sqrt(var_total)
+
+        - Signal-to-noise ratio (dimensionless) is::
+
+            sn_ratio = (gain * flux) / sqrt(gain * flux + (gain * readout_noise)**2)
+
+        Gain selection:
+        - If any wavelength in a chunk exceeds ``wav_boundary_yj_and_h``, use ``gain_h``,
+        otherwise use ``gain_y``.
+
+        Readout-noise estimation:
+        - If a comb file is provided, restrict to ``comb_readout_noise_wav = [low, high]``
+        and estimate noise from the selected flux samples using either MAD
+        (scaled by 1.4826) or standard deviation; otherwise fall back to
+        ``default_readout_noise``.
+
+    Attributes:
+        wav_boundary_yj_and_h : int
+            Boundary wavelength between the Y/J and H bands (in the same units as input data).
+        gain_y : float
+            Gain of the IRD Y/J-band detector (e-/ADU).
+        gain_h : float
+            Gain of the IRD H-band detector (e-/ADU).
+        combfile : str | None
+            Path to the LFC (mmf1) file used to estimate the readout noise, if provided.
+        comb_readout_noise_wav : tuple[int, int]
+            Wavelength window ``[low, high]`` used to compute the readout noise from the comb.
+        method : {"mad", "std"}
+            Method to estimate the readout noise from the comb data: Median Absolute Deviation
+            (scaled) or standard deviation.
+        default_readout_noise : float
+            Default readout noise in electrons (IRD detectors: ~12 e- for a 10 min exposure).
+        scale_normalized_mad : float
+            Scaling factor (1.4826) to convert MAD to an estimate of the standard deviation.
+        readout_noise : float
+            Effective readout noise used in calculations. Determined during initialization.
+        gain : float
+            The detector gain actually used for calculations (either ``gain_y`` or ``gain_h``).
+            **Note:** This attribute is set lazily by :meth:`determine_gain` (called inside
+            :meth:`calc_uncertainty`), so it may not exist until those methods are invoked.
+    """
+
     def __init__(self, 
                 wav_boundary_yj_and_h = 1420, 
                 gain_y = 2.99, 
@@ -19,7 +75,7 @@ class FluxUncertainty():
             wav_boundary_yj_and_h: boundary of wavelength between Y/J and H band
             gain_y: gain of IRD Y/J band detector
             gain_h: gain of IRD H band detector
-            combfile: file of LFC data (mmf1)
+            combfile: file of LFC data (mmf1), if None, use default readout noise
             comb_readout_noise_wav: wavelength range [low, upp] used for calculation of readout noise
             calc_method_readout_noise: method for calculating readout noise. 'mad' is for Median Absolute Deviation, 'std' is for Standard Deviation
 
@@ -42,7 +98,7 @@ class FluxUncertainty():
         """determine the gain to use based on wavelength
 
         Args:
-            df_continuum: DataFrame that contains wavelength data
+            df_continuum: DataFrame that contains wavelength data in 'wav' column
 
         Returns:
             gain of the corresponding band
@@ -82,10 +138,13 @@ class FluxUncertainty():
         """calculation of uncertainty
 
         Args:
-            df_continuum: DataFrame that contains flux, continuum, and tmp_uncertainty
+            df_continuum: Dataframe that contains at least the columns ``"wav"``, ``"flux"``,
+            and ``"continuum"``. If ``"sn_ratio"`` or ``"tmp_uncertainty"`` exist,
+            they will be overwritten.
 
         Returns:
-            add df to columns of sn_ratio and uncertainty
+            The temporary (pre-normalization) uncertainty is stored in the column
+            ``"tmp_uncertainty"`` as an intermediate product.
         """
         self.determine_gain(df_continuum)
         
@@ -98,6 +157,12 @@ class FluxUncertainty():
 
     def calc_uncertainty_overlap_region(self, df_head, df_tail):
         """calculate the signal-to-noise ratio and temporary uncertainty of each data point.
+
+        For wavelengths in the head order (``df_head``), returns S/N and temporary
+        uncertainty by referencing the tail order (``df_tail``) in the overlapping
+        range. If an exact wavelength match is found in ``df_tail``, reuse its
+        ``sn_ratio``; otherwise, interpolate between the nearest two tail samples
+        and propagate uncertainty using linear weights.
         
         Notes:
             the wavelength range of df_tail should contain the one of df_head.
@@ -106,7 +171,9 @@ class FluxUncertainty():
 
         Args:
             df_head: the spectrum of the latter order in the overlap region.
+            Must contain ``"wav"`` and ``"flux"``; if available, ``"sn_ratio"`` is used.
             df_tail: the spectrum of the former order in the overlap region.
+            Must contain ``"wav"``, ``"flux"``, and ``"sn_ratio"``.
 
         Returns:
             sn_ratio: signal-to-noise ratio of each data point
@@ -139,6 +206,12 @@ class FluxUncertainty():
     def split_tail_by_wavhead(self, wav_tail, wav_head_i, flux_tail):
         """split wavelength and flux in tail by wavlength in head
 
+        Finds two adjacent tail wavelengths bracketing a head wavelength and returns
+        their fluxes along with linear interpolation weights:
+
+        - ``left_scale = (right_wav - wav_head) / (right_wav - left_wav)``
+        - ``right_scale = 1 - left_scale``
+
         Args:
             wav_tail: wavelengths in tail (overlapping region of the former order)
             wav_head_i: wavelength in head (overlapping region of the latter order)
@@ -157,7 +230,7 @@ class FluxUncertainty():
         return left_flux, right_flux, left_scale, right_scale
 
     def calculate_tmp_uncertainty(self, left_flux, right_flux, left_scale, right_scale):
-        """calculate temporal uncertainty
+        """calculate temporal uncertainty for interpolated points
 
         Args:
             left_flux: flux at a point to the left (shorter wavelength) of the point after interpolation

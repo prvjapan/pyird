@@ -68,6 +68,7 @@ class TraceAperture(object):
                 self.choose_even_aperture()
             else:
                 raise ValueError("fiber should be mmf1 or mmf2")
+        print(f"Processing {self.mmf} fiber.")
 
     def mmf2(self):
         warn_msg = "Deprecated Use `choose_aperture(fiber='mmf2')` instead"

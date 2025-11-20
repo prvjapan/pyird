@@ -1,11 +1,50 @@
 import numpy as np
 from numpy.polynomial import legendre
 import pandas as pd
+import warnings
     
 __all__ = ["ContinuumFit"]
 
 class ContinuumFit():
-    """Continuum Fitting Class"""
+    """Continuum Fitting Class
+    
+    Algorithm overview:
+        This class fits a smooth continuum per spectral order using
+        iterative sigma-clipped polynomial regression.
+
+        For each order:
+        1. Mask NaNs, zero flux pixels, and edge regions defined by
+        ``continuum_nonzero_ind``.
+        2. Fit either a centered Vandermonde polynomial or a Legendre
+        polynomial of degree ``order`` to the current inliers.
+        3. Compute residuals ``r = y - model`` and robust scatter
+        ``sigma = sqrt(median(r**2))``.
+        4. Keep samples within ``[-low*sigma, +high*sigma]`` and iterate
+        until the inlier count stops changing or ``maxiter_continuumfit``
+        is reached.
+
+        Across the full detector:
+        - Begin with ``base_order_fit``.
+        - If any non-ignored order exceeds a residual RMS threshold
+        (1.5%), increment the polynomial degree and refit from the start
+        (up to ``max_order_fit``).
+        - Interpolate the final continuum back to all pixels.
+
+        This yields a robust, smooth continuum while suppressing strong
+        absorption features and noise-driven outliers.
+
+    Attributes:
+        continuum_nonzero_ind : tuple of int
+            Pixel indices to mask at both ends of each order.
+        base_order_fit : int
+            Starting polynomial order for fitting.
+        max_order_fit : int
+            Maximum allowed polynomial order to avoid overfitting.
+        nsigma_continuumfit : tuple of float
+            (low, high) sigma limits for clipping.
+        maxiter_continuumfit : int
+            Maximum number of sigma-clip iterations applied.
+    """
 
     def __init__(self, 
                 continuum_nonzero_ind = [10, 60], 
@@ -17,7 +56,7 @@ class ContinuumFit():
         """initialization of ContinuumFit
 
         Args: 
-            continuum_nonezero_ind: pixels to mask at both ends of the order
+            continuum_nonzero_ind: pixels to mask at both ends of the order
             base_order_fit: the polynomial order to fit continuum
             max_order_fit: maximum number of the polynomial order for iterate fitting
             nsigma_continuumfit: sigma clipping threshold: tuple (low, high) or list
@@ -29,10 +68,10 @@ class ContinuumFit():
         self.base_order_fit = base_order_fit 
         self.max_order_fit = max_order_fit
         self.nsigma_continuumfit = nsigma_continuumfit 
-        self.maxiter_continumfit = maxiter_continuumfit
+        self.maxiter_continuumfit = maxiter_continuumfit
 
     def fit_continuum(self, x, y, order=6, fitfunc='legendre'):
-        """Fit the continuum using sigma clipping
+        """Fit the continuum with iterative sigma clipping
 
         Args:
             x: the wavelengths
@@ -47,7 +86,7 @@ class ContinuumFit():
         if fitfunc==None:
             A = np.vander(x - np.nanmean(x), order+1)
         m = np.ones(len(x), dtype=bool)
-        for i in range(self.maxiter_continumfit):
+        for i in range(self.maxiter_continuumfit):
             if fitfunc==None:
                 w = np.linalg.solve(np.dot(A[m].T, A[m]), np.dot(A[m].T, y[m]))
                 mu = np.dot(A, w)
@@ -64,7 +103,7 @@ class ContinuumFit():
         return mu, m
 
     def continuum_rsd(self, rsd, npix=2048, ignore_orders=None):
-        """fit continuum for rsd
+        """fit continuum for a raw spectrum detector (RSD) matrix.
 
         Args:
             rsd: raw spectrum detector matrix
@@ -102,19 +141,24 @@ class ContinuumFit():
                 df_continuum.loc[order,pixels] = continuum_ord_interp
                 order += 1
 
-        if order_fit_itr==self.max_order_fit:
-            print(f'WARNING: order_fit reaches the maximum value of {self.max_order_fit}.')
+        if order_fit_itr == self.max_order_fit:
+            warnings.warn(
+                f"Continuum fitting reached the maximum polynomial order ({self.max_order_fit}).\n"
+                "          Please check the fitted continuum — it may indicate overfitting.",
+                UserWarning
+            )
         else:
-            print(f'continuum is fitted with order_fit = {order_fit_itr}.')
+            print(f"Continuum successfully fitted with polynomial order = {order_fit_itr}.")
+
 
         return df_continuum
 
     def continuum_oneord(self, wdata, flat, order):
-        """fit continuum for one order
+        """fit continuum for a single echelle order.
 
         Args:
-            wdata: the wavelength calibrated target spectrum
-            flat: the wavelength calibrated FLAT
+            wdata: the wavelength calibrated target spectrum (columns: ``"wav"``/``"order"``/``"flux"``)
+            flat: the wavelength calibrated FLAT (columns: ``"wav"``/``"order"``/``"flux"``)
             order: order number to fit
 
         Returns:
