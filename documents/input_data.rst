@@ -36,7 +36,7 @@ Please also refer to :doc:`./userguide/terms` for the naming conventions of obse
     - Main observation frames
 
 .. note:: 
-    Supported instruments in PyIRD v1.1.0:
+    Supported instruments in the latest version of PyIRD:
 
         - ✅ IRD  
         - ✅ REACH  

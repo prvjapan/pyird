@@ -27,7 +27,7 @@ authors:
     affiliation: 6
 
 affiliations:
- - name: Institute of Space and Astronoutical Science, Japan Aerospace Exploration Agency, 3-1-1 Yoshinodai, Chuo-ku, Sagamihara, Kanagawa, 252-5210, Japan
+ - name: Institute of Space and Astronautical Science, Japan Aerospace Exploration Agency, 3-1-1 Yoshinodai, Chuo-ku, Sagamihara, Kanagawa, 252-5210, Japan
    index: 1
  - name: Department of Astronomy, Graduate School of Science, The University of Tokyo, 7-3-1 Hongo, Bunkyo-ku, Tokyo 113-0033, Japan
    index: 2
@@ -70,10 +70,10 @@ However, the official IRAF community distribution[^iraf_community] and the Space
 In recent years, several open-source, Python-based pipelines for the reduction of near-infrared echelle spectrographs have been developed.
 Some pipelines utilize `PyRAF`, a Python interface to IRAF, such as `WARP` for the WINERED spectrograph [@Hamano2024], while others, including `PLP` for IGRINS [@Sim2014] and `PypeIt` [@pypeit:joss_pub], do not rely on PyRAF or IRAF-based components.
 While these pipelines provide either general frameworks or instrument-specific solutions, `PyIRD` is designed to offer a simple pipeline optimized for IRD and REACH data reduction.
-Furthermore, recent advances combining adaptive optics with these instruments have enabled high-resolution spectroscopic observations of faint companions orbiting bright main-sequence stars.
+Furthermore, recent advances combining adaptive optics with these instruments have enabled high-dispersion spectroscopic observations of faint companions orbiting bright main-sequence stars.
 To support such observations, `PyIRD` implements improved detector noise reduction to extract high-quality spectra from these faint targets.
 
-Together, these developments underscore the need for actively maintained, scalable, and flexible software for high-resolution spectroscopic data reduction.
+Together, these developments underscore the need for actively maintained, scalable, and flexible software for high-dispersion spectroscopic data reduction.
 `PyIRD` addresses this need by providing a modern, Python-based pipeline and has already been utilized in several studies [@kasagi2025; @kawashima2025; @kawahara2025; @tomoyoshi2024]. 
 
 
