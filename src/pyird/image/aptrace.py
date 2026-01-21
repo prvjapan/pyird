@@ -20,7 +20,7 @@ def cross_section(dat, nrow, num_aperture):
     """
     onerow = dat[nrow]
     # search peaks
-    heights = np.arange(50, 0, -5) * np.median(onerow)
+    heights = np.arange(50, 0, -5) * np.abs(np.median(onerow))
     i = 0
     diffstd = 100
     peakind = []
@@ -59,10 +59,14 @@ def set_aperture(dat, search_start_row, num_aperture, ign_ord=[], plot=True):
     if len(ign_ord) >= 30:
        raise ValueError("length of ign_ord should be < 30.")
 
-    # Search peaks in the cross section at search_row
-    # search_row is selected so that the number of peaks and num_aperture match
-    search_row_min = 500
-    search_row_max = 1550
+    # Search peaks in the cross section at cutrow
+    # cutrow is selected so that the number of peaks and nap match
+    npix = dat.shape[0]
+    cutrow_min = int(500 * npix/2048)
+    cutrow_max = int(1550 * npix/2048)
+    if (cutrow < cutrow_min) or (cutrow_max < cutrow):
+        raise ValueError('Error: please set the value of "cutrow" between %d and %d.' % (cutrow_min, cutrow_max))
+    
     peakind_cut = []
     search_row_lim = True
     prange = False
@@ -96,7 +100,7 @@ def set_aperture(dat, search_start_row, num_aperture, ign_ord=[], plot=True):
     return peakind_cut, search_row
 
 
-def trace_pix(dat, search_row, peakind, npix=2048):
+def trace_pix(dat, cutrow, peakind, npix=2048, trace_lim=[0, 1]):
     """trace apertures
 
     Args:
@@ -104,6 +108,7 @@ def trace_pix(dat, search_row, peakind, npix=2048):
         search_row: row number used to set aperture
         peakind: aperture (peak position) in the cross section at search_row
         npix: number of pixels
+        trace_lim: limit of the difference between pixels in the traced aperture
 
     Returns:
         traced pixel data
@@ -134,7 +139,7 @@ def trace_pix(dat, search_row, peakind, npix=2048):
         df_tmp = pd.DataFrame([data], columns=["row", "column"])
         traceind2d = pd.concat([traceind2d, df_tmp], ignore_index=True)
     ind = peakind
-    for nrow in range(search_row - 1, 0, -1):
+    for nrow in range(cutrow - 1, -1, -1):
         ind_new = set_newind(dat, nrow, ind)
         if ind_new == -1:
             continue
@@ -148,7 +153,7 @@ def trace_pix(dat, search_row, peakind, npix=2048):
     traceind2d = traceind2d.sort_values("row", ignore_index=True)
     row = traceind2d.row.values
     column = traceind2d.column.values
-    diff = np.diff(column, prepend=column[0] - 2)
+    diff = np.diff(column, prepend=column[0] - 1)
     if peakind < 40:
         useind = (
             ((0 <= diff) & (diff <= 1))
@@ -162,7 +167,7 @@ def trace_pix(dat, search_row, peakind, npix=2048):
             & ~((column > 2020) & (row > search_row))
         )
     else:
-        useind = ((0 <= diff) & (diff <= 1)) & (row < 2000)
+        useind = ((trace_lim[0] <= diff) & (diff <= trace_lim[1])) & (row < 2000)
     x_ord = row[useind]
     y_ord = column[useind]
 
@@ -260,15 +265,15 @@ def aptrace(dat, search_start_row, num_aperture, ign_ord=[], plot=True):
     peakind_cut, row = set_aperture(dat, search_start_row, num_aperture, ign_ord=ign_ord, plot=plot)
 
     # Trace each peak
+    npix = dat.shape[0]
     x, y, y0 = [], [], []
     for peakind in tqdm(peakind_cut):
-        x_ord, y_ord, y0_ord = trace_pix(dat, row, peakind)
+        x_ord, y_ord, y0_ord = trace_pix(dat, row, peakind, npix=npix)
         x.append(list(x_ord))
         y.append(list(y_ord))
         y0.append(y0_ord)
     if plot == True:
-        plot_tracelines(x, y)
-
+        plot_tracelines(x, y, npix=npix)
     # Fit each aperture
     coeff = []
     xmin, xmax = [], []

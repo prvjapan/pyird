@@ -71,7 +71,7 @@ def plot_crosssection(pixels,flux,peakind,dat,cutrow):
     axs[0].legend()
     axs[0].set(title="Apertures are detected!",xlabel="pixels",ylabel="counts")
 
-    axs[1].imshow(dat,origin="lower",vmin=0,vmax=np.median(dat)*3)
+    axs[1].imshow(dat,origin="lower",vmin=0,vmax=np.abs(np.median(dat))*3)
     axs[1].axhline(y=cutrow, color='r', linestyle='--', label="cutrow")
     axs[1].plot(pixels[peakind], np.ones(len(peakind))*cutrow, 'x', color='tab:orange')
 

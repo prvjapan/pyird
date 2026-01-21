@@ -161,9 +161,10 @@ def median_XY_profile(calim0, rm_nct=True, margin_npixel=4):
         model_image = channel_cube_to_image(model_channel_cube)
 
     ## stripe model
+    npix = calim0.shape[0]
     corrected_im_tmp = calim0 - model_image
     stripe = np.nanmedian(corrected_im_tmp, axis=0) ## column direction
-    stripe = np.array([stripe]*2048)
+    stripe = np.array([stripe]*npix)
     model_image += stripe
 
     return model_image

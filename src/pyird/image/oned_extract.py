@@ -27,10 +27,10 @@ def flatten(
         xmin: xmin
         xmax: xmax
         coeff: coefficients
-        inst: instrument (IRD or REACH)
+        inst: instrument (IRD or REACH or IRCS)
         onepix: extract the spectrum pixel by pixel in an aperture
         npix: number of pixels
-        width: list of aperture widths ([width_start,width_end])
+        width: list of aperture widths to extract spectrum ([width_start,width_end])
         force_rotate: forces rotating the detector, when the number of the apertures (nap) is not the standard value (i.e. 21 or 51)
         
     Returns:
@@ -45,6 +45,9 @@ def flatten(
         elif inst == "REACH":
             width_str = 2
             width_end = 3
+        elif inst == "IRCS":
+            width_str = 4
+            width_end = 4
     else:
         width_str = width[0]
         width_end = width[1]
@@ -120,7 +123,7 @@ def sum_weighted_apertures(im, df_flatn, y0, xmin, xmax, coeff, width, inst):
         xmin: xmin
         xmax: xmax
         coeff: coefficients
-        inst: instrument (IRD or REACH)
+        inst: instrument (IRD or REACH or IRCS)
         onepix: extract the spectrum pixel by pixel in an aperture
         npix: number of pixels
         width: list of aperture widths ([width_start,width_end])
