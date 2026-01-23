@@ -64,9 +64,9 @@ def set_aperture(dat, search_start_row, num_aperture, ign_ord=[], plot=True):
     npix = dat.shape[0]
     search_row_min = int(500 * npix/2048)
     search_row_max = int(1550 * npix/2048)
-    if (search_row < search_row_min) or (search_row_max < search_row):
-        raise ValueError('Error: please set the value of "search_row" between %d and %d.' % (search_row_min, search_row_max))
-    
+    if (search_start_row < search_row_min) or (search_row_max < search_start_row):
+        raise ValueError('Error: please set the value of "search_start_row" between %d and %d.' % (search_row_min, search_row_max))
+
     peakind_cut = []
     search_row_lim = True
     prange = False
