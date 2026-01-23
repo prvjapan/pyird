@@ -1,0 +1,62 @@
+cff-version: "1.2.0"
+authors:
+- family-names: Kasagi
+  given-names: Yui
+  orcid: "https://orcid.org/0000-0002-8607-358X"
+- family-names: Kawahara
+  given-names: Hajime
+  orcid: "https://orcid.org/0000-0003-3309-9134"
+- family-names: Gu
+  given-names: Ziying
+- family-names: Hirano
+  given-names: Teruyuki
+  orcid: "https://orcid.org/0000-0003-3618-7535"
+- family-names: Kotani
+  given-names: Takayuki
+  orcid: "https://orcid.org/0000-0001-6181-3142"
+- family-names: Kuzuhara
+  given-names: Masayuki
+  orcid: "https://orcid.org/0000-0002-4677-9182"
+- family-names: Masuda
+  given-names: Kento
+  orcid: "https://orcid.org/0000-0003-1298-9699"
+doi: 10.5281/zenodo.18264940
+message: If you use this software, please cite our article in the
+  Journal of Open Source Software.
+preferred-citation:
+  authors:
+  - family-names: Kasagi
+    given-names: Yui
+    orcid: "https://orcid.org/0000-0002-8607-358X"
+  - family-names: Kawahara
+    given-names: Hajime
+    orcid: "https://orcid.org/0000-0003-3309-9134"
+  - family-names: Gu
+    given-names: Ziying
+  - family-names: Hirano
+    given-names: Teruyuki
+    orcid: "https://orcid.org/0000-0003-3618-7535"
+  - family-names: Kotani
+    given-names: Takayuki
+    orcid: "https://orcid.org/0000-0001-6181-3142"
+  - family-names: Kuzuhara
+    given-names: Masayuki
+    orcid: "https://orcid.org/0000-0002-4677-9182"
+  - family-names: Masuda
+    given-names: Kento
+    orcid: "https://orcid.org/0000-0003-1298-9699"
+  date-published: 2026-01-17
+  doi: 10.21105/joss.09126
+  issn: 2475-9066
+  issue: 117
+  journal: Journal of Open Source Software
+  publisher:
+    name: Open Journals
+  start: 9126
+  title: "PyIRD: A Python-Based Data Reduction Pipeline for Subaru/IRD
+    and REACH"
+  type: article
+  url: "https://joss.theoj.org/papers/10.21105/joss.09126"
+  volume: 11
+title: "PyIRD: A Python-Based Data Reduction Pipeline for Subaru/IRD and
+  REACH"

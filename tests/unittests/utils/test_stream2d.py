@@ -132,26 +132,30 @@ def test_fitsid_increment_value_error_for_double_increment():
     with pytest.raises(ValueError):
         stream.fitsid_increment()
 
-def setup_stream2d_band(band):
+def setup_stream2d_band(fitsid, band):
     basedir = pathlib.Path(__file__).parent.parent.parent.parent
     datadir = basedir / 'data/dark/'
     anadir = basedir / 'data/dark/'
-    s2d = Stream2D('targets', datadir, anadir, fitsid = [41018], band=band, not_ignore_warning=False)
+    s2d = Stream2D('targets', datadir, anadir, fitsid = fitsid, band=band, not_ignore_warning=False)
     return s2d
 
 
 def test_fitsid_sets_band_at_stream2d_h():
-    stream = setup_stream2d_band("h")
+    stream = setup_stream2d_band([41018], "h")
     assert stream.fitsid[0] == 41019
     assert stream.band == "h"
 
 def test_fitsid_sets_band_at_stream2d_y():
-    stream = setup_stream2d_band("y")
+    stream = setup_stream2d_band([41018], "y")
     assert stream.fitsid[0] == 41018
     assert stream.band == "y"
 
+def test_fitsid_sets_band_at_stream2d_y_error():
+    with pytest.raises(ValueError):
+        stream = setup_stream2d_band([41019], "y")
+
 def test_fitsid_sets_band_at_stream2d_h_increment_error():
-    stream = setup_stream2d_band("h")
+    stream = setup_stream2d_band([41018], "h")
     with pytest.raises(ValueError):
         stream.fitsid_increment()
 

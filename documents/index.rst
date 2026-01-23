@@ -12,26 +12,29 @@ PyIRD
 `PyIRD` is a Python-based pipeline for reducing spectroscopic data obtained with `IRD <https://ird.mtk.nao.ac.jp/IRDpub/index_tmp.html>`_ and `REACH <https://secondearths.sakura.ne.jp/reach/>`_ on the Subaru Telescope. 
 It is designed to process raw images into one-dimensional spectra in a semi-automatic manner. 
 
+.. toctree:: 
+   :maxdepth: 2
+   :caption: Introduction:
+
+   getting_started.rst
+   input_data.rst
+
 .. toctree::
    :maxdepth: 2
    :caption: Tutorial:
 
    tutorials/IRD_stream.rst
-   tutorials/aptrace_flat_star.rst
    tutorials/plot_spec.rst
-   tutorials/other_settings.rst
-
-Data Access
-"""""""""""""""
-
-The raw data used in the tutorial (IRD_stream.py) can be downloaded from the `Zenodo repository <https://zenodo.org/records/14614004>`_.
-The total file size after extraction is approximately 7 GB.
+   tutorials/other_outputs.rst
 
 .. toctree::
    :maxdepth: 2
    :caption: Userguide:
 
-   userguide.rst
+   userguide/backgrounds.rst
+   userguide/aptrace_flat_star.rst
+   userguide/other_settings.rst
+   developers.rst
 
 
 .. toctree::
@@ -40,26 +43,13 @@ The total file size after extraction is approximately 7 GB.
 
    pyird/pyird.rst
 
-Install
----------------------
 
-.. code-block:: 
-
-   pip install pyird
-
-or
-
-.. code-block:: 
-
-   git clone https://github.com/prvjapan/pyird.git
-   cd pyird
-   pip install .
 
 
 License & Attribution
 ---------------------
 
-Copyright 2021-2024, 
+Copyright 2021-2025, 
 Contributors:
 
 - `Yui Kasagi <https://yuikasagi.com>`_ (maintainer), 

@@ -1,12 +1,12 @@
 Useful Options
 ==============
 
-- :ref:`1`
-- :ref:`2`
-- :ref:`3`
-- :ref:`4`
+- :ref:`handle-fitsid`
+- :ref:`read-hotpixmask`
+- :ref:`output-format`
+- :ref:`reach-reduction`
 
-.. _1:
+.. _handle-fitsid:
 
 Increment/Decrement FITS IDs
 ----------------------------
@@ -63,7 +63,7 @@ Automatic Increment for H-band Data
     fitsid incremented:  [41511]
 
 
-.. _2:
+.. _read-hotpixmask:
 
 Read Hotpixel Mask
 ------------------
@@ -85,7 +85,7 @@ date is unavailable.
         path=importlib.resources.files('pyird').joinpath('data/hotpix_mask_y_202210_180s.fits')
     hotpix_mask=read_hotpix(path)
 
-.. _3:
+.. _output-format:
 
 Change Output Format
 --------------------
@@ -113,7 +113,7 @@ you can modify these settings as needed!
     modified:  {'header': False, 'index': True, 'sep': ','}
 
 
-.. _4:
+.. _reach-reduction:
 
 REACH Data Reduction
 --------------------

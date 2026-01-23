@@ -8,7 +8,23 @@ from astropy.stats import sigma_clip
 __all__ = ["SpectrumNormalizer"]
 
 class SpectrumNormalizer(ContinuumFit, FluxUncertainty):
-    """Spectrum Normalization Class"""
+    """Normalize 1D spectra and propagate uncertainties.
+
+    This class (1) derives a blaze/continuum from FLAT or a provided blaze file,
+    (2) normalizes target spectra order-by-order and combines them across overlaps,
+    and (3) computes per-pixel S/N and normalized uncertainties.
+
+    Attributes:
+        interp_nonzero_ind : tuple[int, int]
+            Number of pixels to trim at the start and end of each order where the flux is zero.
+        nsigma_sigmaclip : tuple[float, float]
+            Sigma-clipping thresholds (lower, upper).
+        maxiter_sigmaclip : int
+            Maximum number of iterations for sigma clipping.
+
+        (Inherited from :class:`FluxUncertainty`)
+            See that class for attributes related to gain selection and readout-noise estimation.
+    """
 
     def __init__(self, 
                 combfile = None,
@@ -19,9 +35,20 @@ class SpectrumNormalizer(ContinuumFit, FluxUncertainty):
         """initialize SpectrumNormalizer
 
         Args:
-            interp_nonzero_ind: pixels to cut the zero flux region at both ends of the order
-            nsigma_sigmaclip: sigma clipping threshold: tuple (low, high) or list
-            maxiter_sigmaclip: the maximum number of iteration for sigma clipping
+            combfile : str or None, optional
+                Path to the LFC (mmf1) file used to estimate the readout noise.
+                Passed to :class:`FluxUncertainty`. If ``None``, a default noise is used.
+            interp_nonzero_ind : tuple[int, int], optional
+                Number of pixels to remove at the beginning and end of each order where
+                the flux is zero.
+            nsigma_sigmaclip : tuple[float, float], optional
+                Sigma-clipping thresholds ``(lower, upper)`` used when scaling the blaze.
+            maxiter_sigmaclip : int, optional
+                Maximum number of iterations for sigma clipping.
+
+        Notes:
+            This constructor initializes both parent classes and immediately determines
+            the readout noise via :meth:`FluxUncertainty.determine_readout_noise`.
 
         """
         ContinuumFit.__init__(self)
@@ -35,8 +62,8 @@ class SpectrumNormalizer(ContinuumFit, FluxUncertainty):
         """determine the scaling factor of the blaze function
 
         Args:
-            wdata: the wavelength calibrated target spectrum
-            flat: the wavelength calibrated FLAT
+            wdata: the wavelength calibrated target spectrum  (columns: ``"wav"``/``"order"``/``"flux"``).
+            flat: the wavelength calibrated FLAT with the same column schema as ``wdata``.
             standard_order: Once an order number is set, the blaze functions are standardized based on that order
 
         Returns:
@@ -63,6 +90,9 @@ class SpectrumNormalizer(ContinuumFit, FluxUncertainty):
             sigma_upper: sigma clipping threshold (upper)
             maxiter_sigmaclip: the maximum number of iterations for sigma clipping
 
+        Returns:
+            absolute sum of the residuals after sigma clipping
+
         """
         res = flux - continuum * scale
         res_clipped = sigma_clip(res, sigma_lower=sigma_lower, sigma_upper=sigma_upper, maxiters=maxiter_sigmaclip)
@@ -78,7 +108,13 @@ class SpectrumNormalizer(ContinuumFit, FluxUncertainty):
             blaze: True when self.apext_flatfield() is used. if False, blaze function will be created from 1D FLAT
 
         Returns:
-            pandas.DataFrame of 1D normalized spectrum
+            two pandas.DataFrames of 1D normalized spectrum
+            - ``df_continuum``: per-order dataframe containing columns such as
+              ``"wav"``, ``"order"``, ``"flux"``, ``"continuum"``, ``"nflux"``,
+              ``"sn_ratio"``, ``"tmp_uncertainty"``.
+            - ``df_interp``: final 1D combined dataframe (columns: ``"wav"``, ``"flux"``,
+              ``"continuum"``, ``"sn_ratio"``, ``"tmp_uncertainty"``, later augmented
+              by :meth:`divide_by_continuum` with ``"nflux"`` and ``"uncertainty"``).
         """
 
         read_args = {'header': None, 'sep': r'\s+', 'names':['wav','order','flux']}
@@ -97,11 +133,12 @@ class SpectrumNormalizer(ContinuumFit, FluxUncertainty):
         """divide target flux by the blaze function
 
         Args:
-            wdata: the wavelength calibrated 1D target spectrum
-            blaze: blaze function
+            wdata: the wavelength calibrated 1D target spectrum (``"wav"``, ``"order"``, ``"flux"``).
+            blaze: blaze function (``"wav"``, ``"order"``, ``"flux"``).
 
         Returns:
-            normalized spectrum of each order
+            Per-order dataframe including columns ``"wav"``, ``"order"``, ``"flux"``,
+            ``"continuum"``, ``"nflux"``, ``"sn_ratio"``, ``"tmp_uncertainty"``.
         """
         blaze = blaze.assign(blaze_continuum=0)
         blaze = blaze.rename(columns={'flux':'continuum'})
@@ -122,6 +159,9 @@ class SpectrumNormalizer(ContinuumFit, FluxUncertainty):
 
         Return:
             the blaze function created by scaling FLAT by a constant
+            Columns include
+            ``"wav"``, ``"order"``, ``"flux"``, ``"flat"``, ``"continuum"``, ``"nflux"``,
+            and uncertainty-related fields.
         """
         scale = self.determine_scale_continuum(wdata, flat, standard_order)
 
@@ -143,11 +183,16 @@ class SpectrumNormalizer(ContinuumFit, FluxUncertainty):
     def normalize(self, df_continuum):
         """normalize flux after combining all orders
 
+        Trims zero-flux edges, concatenates non-overlap and overlap regions
+        in order, computes combined S/N, then divides by continuum.
+
         Args:
             df_continuum: pandas.DataFrame that contain the blaze function
 
         Returns:
-            pandas.DataFrame of 1D normalized spectrum
+            pandas.DataFrame of 1D normalized spectrum with columns
+            ``"wav"``, ``"flux"``, ``"continuum"``, ``"sn_ratio"``, ``"tmp_uncertainty"``,
+            augmented later by :meth:`divide_by_continuum`.
         """
 
         orders = df_continuum['order'].unique()
@@ -290,13 +335,18 @@ class SpectrumNormalizer(ContinuumFit, FluxUncertainty):
         return df_interp
 
     def divide_by_continuum(self, df_interp):
-        """normalizing by deviding by the continuum
+        """Finalize normalization by dividing through the continuum.
+
+        Adds normalized flux and uncertainty columns, skipping zero-continuum
+        samples to avoid division by zero.
 
         Args:
-            df_interp: pandas.DataFrame that contains flux, continuum, and tmp_uncertainty
+            df_interp: pandas.DataFrame that must contain ``"flux"``, ``"continuum"``, and ``"tmp_uncertainty"``.
 
         Returns:
-            add the normalized flux and the corresponding uncertainty to the DataFrame.
+            The input dataframe with added columns:
+            - ``"nflux"``: normalized flux,
+            - ``"uncertainty"``: normalized uncertainty (temporary uncertainty / continuum).
         """
         zeroind = df_interp['continuum']==0
         df_interp = df_interp.assign(nflux=np.nan,uncertainty=np.nan)
