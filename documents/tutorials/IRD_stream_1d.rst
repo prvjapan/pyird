@@ -37,7 +37,7 @@ LFC dataset (comb_data.tar.gz) can be downloaded from the `Zenodo repository <ht
     comb_master = irdstream.Stream2D("comb_master",
                                 datadir_comb,
                                 anadir,
-                                fitsid=list(range(mmfmmf_id[0], mmfmmf_id[-1]+1)),
+                                fitsid=list(range(comb_id[0], comb_id[-1]+1)),
                                 rawtag=rawtag,
                                 band=band)
     comb_master.trace = trace_mmf
