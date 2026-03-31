@@ -35,6 +35,10 @@ Please also refer to :doc:`./userguide/terms` for the naming conventions of obse
     - Frame IDs in the sample data: IRDA00041510.fits, IRDA00041511.fits  
     - Main observation frames
 
+- Comb
+    - Frame IDs in the sample data: IRD[B/A]D00014733.fits, IRD[B/A]D00014832.fits
+    - **Required** for wavelength recalibration with the LFC
+
 .. note:: 
     Supported instruments in the latest version of PyIRD:
 
