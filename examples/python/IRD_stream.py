@@ -6,7 +6,7 @@ from pyird.image.hotpix import identify_hotpix_sigclip
 #--------SETTINGS--------#
 basedir = pathlib.Path('~/pyird/data/20210317/').expanduser()
 
-band = 'y' #'h' or 'y'
+band = 'h' #'h' or 'y'
 mmf = 'mmf2' #'mmf1' (comb fiber) or 'mmf2' (star fiber)
 readout_noise_mode = "default" #'real' or 'default'
 
@@ -106,33 +106,44 @@ target.dispcor(master_path=thar.anadir, extin='_flnhp')#_hp
 
 if mmf=='mmf2':
     # blaze function
-    flat_star.apext_flatfield(df_flatn, hotpix_mask=hotpix_mask)
+    flat_star.apext_flatfield(df_flatn, hotpix_mask=hotpix_mask, median_filter=True)
     flat_star.dispcor(master_path=thar.anadir)
 
     # combine & normalize
     target.normalize1D(master_path=flat_star.anadir, readout_noise_mode=readout_noise_mode)
 elif mmf=='mmf1':
     # blaze function
-    flat_comb.apext_flatfield(df_flatn, hotpix_mask=hotpix_mask)
+    flat_comb.apext_flatfield(df_flatn, hotpix_mask=hotpix_mask, median_filter=True)
     flat_comb.dispcor(master_path=thar.anadir)
 
     # combine & normalize
     target.normalize1D(master_path=flat_comb.anadir, readout_noise_mode=readout_noise_mode)
 
-"""
-#--------FOR RV MEASUREMENTS--------#
-### mmfmmf (test) ###
-datadir = basedir/'mmfmmf/'
-anadir = basedir/'reduc_rv/'
-mmfmmf=irdstream.Stream2D("mmfmmf",datadir,anadir,fitsid=list(range(14734,14832)),rawtag=rawtag)
-mmfmmf.trace = trace_mmf
-mmfmmf.clean_pattern(trace_mask=trace_mask,extin='', extout='_cp', hotpix_mask=hotpix_mask)
-mmfmmf.imcomb = True
-mmfmmf.flatten()
-mmfmmf.dispcor(master_path=thar.anadir)
-mmfmmf.normalize1D(master_path=flat.anadir)
 
-### hotpix (test) ###
+#--------FOR WAVELENGTH RE-CALIBRATION--------#
+datadir_comb = basedir/'comb/'
+comb_id = [14733, 14832]
+
+comb_master = irdstream.Stream2D("comb_master",
+                            datadir_comb,
+                            anadir,
+                            fitsid=list(range(comb_id[0], comb_id[-1]+1)),
+                            rawtag=rawtag,
+                            band=band)
+comb_master.trace = trace_mmf
+comb_master.clean_pattern(trace_mask=trace_mask,
+                     extin='', 
+                     extout='_cp', 
+                     hotpix_mask=hotpix_mask)
+comb_master.imcomb = True
+comb_master.apext_flatfield(df_flatn, hotpix_mask=hotpix_mask)
+comb_master.dispcor(master_path=thar.anadir, blaze=False)
+comb_master.normalize1D(master_path=flat_comb.anadir, 
+                   readout_noise_mode=readout_noise_mode,
+                   outputs = ["w"]
+                   )
+
+"""### hotpix (test) ###
 from pyird.image.hotpix import hotpix_fits_to_dat
 dark.trace = trace_mmf
 dark.imcomb = True

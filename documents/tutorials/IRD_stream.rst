@@ -609,10 +609,10 @@ Step 2-4: Creating the Blaze Function
 
     # blaze function
     if mmf=='mmf2':
-        flat_star.apext_flatfield(df_flatn, hotpix_mask=hotpix_mask)
+        flat_star.apext_flatfield(df_flatn, hotpix_mask=hotpix_mask, median_filter=True)
         flat_star.dispcor(master_path=thar.anadir)
     elif mmf=='mmf1':
-        flat_comb.apext_flatfield(df_flatn, hotpix_mask=hotpix_mask)
+        flat_comb.apext_flatfield(df_flatn, hotpix_mask=hotpix_mask, median_filter=True)
         flat_comb.dispcor(master_path=thar.anadir)
 
 

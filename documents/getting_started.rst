@@ -49,7 +49,7 @@ Before running the tutorial, make sure that the sample data
 Sample Data
 -------------
 
-The raw data used in the tutorial (IRD_stream.py) can be downloaded from the `Zenodo repository <https://zenodo.org/records/14614004>`_.
+The raw data used in the tutorial (IRD_stream.py) can be downloaded from the `Zenodo repository <https://doi.org/10.5281/zenodo.14614003>`_.
 The total file size after extraction is approximately 7 GB.
 
 Input Data Overview

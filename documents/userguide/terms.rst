@@ -62,6 +62,17 @@ Names of Calibration Dataset
     - In the pipeline, by utilizing this feature, all the apertures are identified in the FLAT-COMB, and then selected the ones to be used.
     - The advantage of this method is that there is no need to change frame IDs when switching fiber to analyze.
 
+.. image:: ../figures/flat_h_zoomed.png
+          :width: 50%  
+
 - ``ThAr-ThAr``: Calibration image with ThAr light inject to both fibers.
 
-- ``COMB-COMB``: Calibration image with LFC light inject to both fibers.
+- ``COMB-MASTER`` (``MMF-MMF``): Calibration image with LFC light inject to both fibers.
+
+.. image:: ../figures/comb-master_h_zoomed.png
+          :width: 25%  
+
+.. note:: 
+    Sample data provided for testing the pipeline include the ``ThAr-ThAr`` and ``COMB-MASTER`` frames (file names starting with IRD[B/A]D000), but they usually cannot be obtained via STARS archive.
+    They specifically used for the precise radial velocity measurement with the LFC, and thus not necessarily required for general data reduction.
+    You can use the ``ThAr_COMB``, ``ThAr_STAR``, ``COMB_COMB``, and ``COMB_STAR`` for calibration if you reduce only a single fiber.
