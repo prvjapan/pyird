@@ -314,7 +314,10 @@ def _reject_outliers_by_group(
         last_median = median
         last_mad = mad
 
-        mask = np.abs(residual - median) < rej_lev1 * mad
+        if mad == 0:
+            mask = np.isclose(residual, median)
+        else:
+            mask = np.abs(residual - median) < rej_lev1 * mad
         used_mask[sl] = mask
 
     # Reject outliers in the last incomplete group using the median and MAD from the last complete group
@@ -327,7 +330,10 @@ def _reject_outliers_by_group(
         start = ngroup * group_size
         for idx in range(start, data_fit):
             residual_i = lambda_model[idx] - lambda_fit[idx]
-            used_mask[idx] = abs(residual_i - last_median) < rej_lev1 * last_mad
+            if last_mad == 0:
+                used_mask[idx] = np.isclose(residual_i, last_median)
+            else:
+                used_mask[idx] = abs(residual_i - last_median) < rej_lev1 * last_mad
 
     pused = pfit[used_mask]
     lambda_used = lambda_fit[used_mask]
