@@ -167,6 +167,48 @@ class StreamCommon:
         if self.info:
             print(msg)
 
+    def init_band_IRD(self, band=None, rawtag="IRDA000"):
+        """initialize band for IRD/REACH data
+        
+        Args:
+            rawtag: prefix of file name, such as "IRDA000", "IRDAD000", or "IRDBD000
+            band: band of the data, "y" or "h", requires fitsid
+        """
+        if rawtag == "IRDBD000":
+            if band is not None and band != "y":
+                raise ValueError("band must be 'y' for IRDBD000")
+            self.band = "y"
+
+        elif rawtag == "IRDAD000":
+            if band is not None and band != "h":
+                raise ValueError("band must be 'y' for IRDAD000")
+            self.band = "h"
+
+        elif rawtag == "IRDA000":
+            if self.fitsid is None:
+                if band is not None:
+                    raise ValueError("band option requires fitsid")
+            else:
+                first = int(self.fitsid[0]) # fitsid of the first file
+                if band is None:
+                    self.band = "y" if (first % 2 == 0) else "h"
+                else:
+                    if band not in ("y", "h"):
+                        raise AttributeError("band must be 'y' or 'h'")
+                    self.band = band
+                    expected_parity = 0 if self.band == "y" else 1
+                    if (first % 2) != expected_parity:
+                        if self.band == "y" and (first % 2 == 1):
+                            raise ValueError(
+                                "For rawtag='IRDA000', band='y' corresponds to fitsid with EVEN numbers.\n"
+                                f"You set band={self.band} and fitsid starting with {first} (ODD number).\n"
+                                "- To analyze h band: set band='h'.\n"
+                                "- To analyze y band: specify fitsid ±1 accordingly.\n"
+                                "- Does your filename start with IRDAD or IRDBD? Then set rawtag='IRDAD' or 'IRDBD'."
+                            )
+                        if self.band == "h" and (first % 2 == 0):
+                            self.fitsid_increment()
+
 
 class Stream2D(FitsSet, StreamCommon):
     """Class for processing 2D spectral images and reducing them to 1D spectra.
@@ -213,7 +255,7 @@ class Stream2D(FitsSet, StreamCommon):
         self.band = None
 
         if inst in ["IRD", "REACH"]:
-            self.init_band_IRD(rawtag, band)
+            self.init_band_IRD(band=band, rawtag=rawtag)
         elif inst == "IRCS":
             # Not the band name — "h" is assumed as the detector configuration for IRCS data in PyIRD.
             # This naming convention may change in the future.
@@ -224,48 +266,6 @@ class Stream2D(FitsSet, StreamCommon):
             print("No fitsid yet.")
         else:
             print("Processing fitsid:", self.fitsid)
-
-    def init_band_IRD(self, rawtag, band):
-        """initialize band for IRD/REACH data
-        
-        Args:
-            rawtag: prefix of file name, such as "IRDA000", "IRDAD000", or "IRDBD000
-            band: band of the data, "y" or "h", requires fitsid
-        """
-        if rawtag == "IRDBD000":
-            if band is not None and band != "y":
-                raise ValueError("band must be 'y' for IRDBD000")
-            self.band = "y"
-
-        elif rawtag == "IRDAD000":
-            if band is not None and band != "h":
-                raise ValueError("band must be 'y' for IRDAD000")
-            self.band = "h"
-
-        elif rawtag == "IRDA000":
-            if self.fitsid is None:
-                if band is not None:
-                    raise ValueError("band option requires fitsid")
-            else:
-                first = int(self.fitsid[0]) # fitsid of the first file
-                if band is None:
-                    self.band = "y" if (first % 2 == 0) else "h"
-                else:
-                    if band not in ("y", "h"):
-                        raise AttributeError("band must be 'y' or 'h'")
-                    self.band = band
-                    expected_parity = 0 if self.band == "y" else 1
-                    if (first % 2) != expected_parity:
-                        if self.band == "y" and (first % 2 == 1):
-                            raise ValueError(
-                                "For rawtag='IRDA000', band='y' corresponds to fitsid with EVEN numbers.\n"
-                                f"You set band={self.band} and fitsid starting with {first} (ODD number).\n"
-                                "- To analyze h band: set band='h'.\n"
-                                "- To analyze y band: specify fitsid ±1 accordingly.\n"
-                                "- Does your filename start with IRDAD or IRDBD? Then set rawtag='IRDAD' or 'IRDBD'."
-                            )
-                        if self.band == "h" and (first % 2 == 0):
-                            self.fitsid_increment()
 
     def detector_handling(self, img, mode="load"):
         """apply rotation and/or inverse to image
@@ -562,7 +562,7 @@ class Stream2D(FitsSet, StreamCommon):
         return df_flatn
 
     def apext_flatfield(
-        self, df_flatn, extout="_fln", extin=None, hotpix_mask=None, width=None
+        self, df_flatn, extout="_fln", extin=None, hotpix_mask=None, width=None, median_filter=False
     ):
         """aperture extraction and flat fielding (c.f., hdsis_ecf.cl)
 
@@ -613,7 +613,7 @@ class Stream2D(FitsSet, StreamCommon):
                 rsd = apply_hotpixel_mask(
                     hotpix_mask, rsd, y0, xmin, xmax, coeff, save_path=save_path
                 )
-            if self.imcomb:
+            if self.imcomb and median_filter:
                 rsd = rsd_order_medfilt(rsd)
             # save as fits file without applying rotation/inverse
             write_fits_data_header(self.anadir / extout_noexist[i], header, rsd)
@@ -761,10 +761,10 @@ class Stream2D(FitsSet, StreamCommon):
                     / ("n%s_%s_%s.fits" % (self.streamid, self.band, self.trace.mmf))
                 ]
                 datset.fitsid = ["blaze"]
-            else:  ## need for fringe removal?
+            else:  ## need for fringe removal? ## need "n" for mmfmmf?
                 inputs = [
                     self.anadir
-                    / ("%s_%s_%s.fits" % (self.streamid, self.band, self.trace.mmf))
+                    / ("n%s_%s_%s.fits" % (self.streamid, self.band, self.trace.mmf))
                 ]
                 datset.fitsid = [self.streamid]
         else:
@@ -791,6 +791,7 @@ class Stream2D(FitsSet, StreamCommon):
         master_path=None,
         readout_noise_mode="default",
         skipLFC=None,
+        outputs=["w", "nw", "ncw"],
         **kwargs_normalize,
     ):
         """combine orders and normalize spectrum
@@ -860,44 +861,50 @@ class Stream2D(FitsSet, StreamCommon):
         for i in range(len(wfile)):
             spectrum_normalizer = SpectrumNormalizer(combfile=LFC_path[i])
             update_attr(spectrum_normalizer, **kwargs_normalize)
-            df_continuum, df_interp = spectrum_normalizer.combine_normalize(
-                wfile[i], flatfile, blaze=(flatid == "blaze")
-            )
-            df_continuum_save = df_continuum[
-                ["wav", "order", "nflux", "sn_ratio", "uncertainty"]
-            ]
-            df_interp_save = df_interp[["wav", "nflux", "sn_ratio", "uncertainty"]]
-            df_continuum_save.to_csv(nwsave_path[i], **self.tocsvargs)
-            df_interp_save.to_csv(ncwsave_path[i], **self.tocsvargs)
-            if not self.imcomb:
-                print(
-                    "Created normalized 1D spectrum: nw%d_%s.dat"
-                    % (self.fitsid[i], self.trace.mmf)
+            if "nw" in outputs or "ncw" in outputs:
+                df_continuum, df_interp = spectrum_normalizer.combine_normalize(
+                    wfile[i], flatfile, blaze=(flatid == "blaze")
                 )
-                print(
-                    "Created normalized & order-combined 1D spectrum: ncw%d_%s.dat"
-                    % (self.fitsid[i], self.trace.mmf)
-                )
+            if "nw" in outputs:
+                df_continuum_save = df_continuum[
+                    ["wav", "order", "nflux", "sn_ratio", "uncertainty"]
+                ]
+                df_continuum_save.to_csv(nwsave_path[i], **self.tocsvargs)
+                if not self.imcomb:
+                    print(
+                        "Created normalized 1D spectrum: nw%d_%s.dat"
+                        % (self.fitsid[i], self.trace.mmf)
+                    )
+            if "ncw" in outputs:
+                df_interp_save = df_interp[["wav", "nflux", "sn_ratio", "uncertainty"]]
+                df_interp_save.to_csv(ncwsave_path[i], **self.tocsvargs)
+                if not self.imcomb:
+                    print(
+                        "Created normalized & order-combined 1D spectrum: ncw%d_%s.dat"
+                        % (self.fitsid[i], self.trace.mmf)
+                    )
             # plot
-            show_wavcal_spectrum(
-                df_continuum_save,
-                title="Normalized spectrum: nw%d_%s.dat"
-                % (self.fitsid[i], self.trace.mmf),
-                alpha=0.5,
-            )
-            show_wavcal_spectrum(
-                df_interp_save,
-                title="Normalized & Order combined spectrum: ncw%d_%s.dat"
-                % (self.fitsid[i], self.trace.mmf),
-                alpha=0.5,
-            )
+            if "nw" in outputs:
+                show_wavcal_spectrum(
+                    df_continuum_save,
+                    title="Normalized spectrum: nw%d_%s.dat"
+                    % (self.fitsid[i], self.trace.mmf),
+                    alpha=0.5,
+                )
+            if "ncw" in outputs:
+                show_wavcal_spectrum(
+                    df_interp_save,
+                    title="Normalized & Order combined spectrum: ncw%d_%s.dat"
+                    % (self.fitsid[i], self.trace.mmf),
+                    alpha=0.5,
+                )
 
 
-class Stream1D(DatSet):
+class Stream1D(DatSet, StreamCommon):
     """Class for post-processing 1D spectra.
     """
     def __init__(
-        self, streamid, rawdir, anadir, fitsid=None, prefix="", extension="", inst="IRD"
+        self, streamid, rawdir, anadir, fitsid=None, prefix="", extension="", inst="IRD", band=None
     ):
         """initialization
         Args:
@@ -910,23 +917,48 @@ class Stream1D(DatSet):
         DatSet.__init__(self, rawdir, prefix=prefix, extension=extension)
         StreamCommon.__init__(self, streamid, rawdir, anadir, inst)
 
+        self.fitsid = fitsid
+
+        if prefix == "w":
+            names = ["wav", "order", "flux"]
+        elif prefix == "nw":
+            names = ["wav", "order", "flux", "sn_ratio", "uncertainty"]
+
         self.readargs = {
             "header": None,
             "sep": "\s+",
-            "names": ["wav", "order", "flux", "sn_ratio", "uncertainty"],
+            "names": names,
         }
 
         self.tocsvargs = {"header": False, "index": False, "sep": " "}
 
-        if fitsid is not None:
-            print("fitsid:", fitsid)
-            self.fitsid = fitsid
-            if fitsid[0] % 2 == 0:
-                self.band = "y"
-            else:
-                self.band = "h"
-        else:
+        if inst in ["IRD", "REACH"]:
+            self.init_band_IRD(band=band)
+        elif inst == "IRCS":
+            # Not the band name — "h" is assumed as the detector configuration for IRCS data in PyIRD.
+            # This naming convention may change in the future.
+            self.band = "h"
+        print(f"Processing {self.band} band")
+
+        if self.fitsid is None:
             print("No fitsid yet.")
+        else:
+            print("Processing fitsid:", self.fitsid)
+
+    def check_wavelength_range(self, df_ref, df_target):
+        """check if the wavelength range of target spectrum covers that of reference spectrum
+
+        Args:
+            df_ref: dataframe of reference spectrum with 'wav' column
+            df_target: dataframe of target spectrum with 'wav' column
+        """
+        wav_ref_min, wav_ref_max = df_ref['wav'].min(), df_ref['wav'].max()
+        wav_target_min, wav_target_max = df_target['wav'].min(), df_target['wav'].max()
+
+        if wav_target_min > wav_ref_min or wav_target_max < wav_ref_max:
+            raise ValueError(
+                f"Wavelength range of target spectrum ({wav_target_min:.2f} - {wav_target_max:.2f} nm) does not cover that of reference spectrum ({wav_ref_min:.2f} - {wav_ref_max:.2f} nm)."
+            )
 
     ############################################################################################
 
@@ -993,3 +1025,59 @@ class Stream1D(DatSet):
                 "removing fringe: output = rfnw%s_%s_%s%s.dat"
                 % (self.streamid, self.date, self.band, self.extension)
             )
+
+    def recalibrate_wavelength_with_comb(self, comb_master_path, fiber, n_poly=6):
+        from pyird.spec.wavrecal import (generate_theoretical_wavelengths_of_lfc_lines, 
+                                         fit_comb, mk_weight, update_wavelength)
+        
+        self.print_if_info_is_true("[STEP] Recalibrating wavelength with LFC...")
+        
+        if fiber not in ['mmf1', 'mmf2']:
+            raise ValueError("fiber must be 'mmf1' or 'mmf2'")
+        elif self.extension[-1] != fiber[-1]:
+            raise ValueError(f"fiber of target spectrum ({self.extension}) does not match the comb-master fiber ({fiber})")
+        
+        # load comb-master spectrum
+        readargs_tmp = self.readargs.copy()
+        readargs_tmp["names"] = ["wav", "order", "flux"]
+        df_obs = pd.read_csv(comb_master_path, **readargs_tmp)
+        if self.band == "h":
+            df_obs["order"] += 51
+
+        # theoretical wavelengths of LFC lines
+        lambda_th = generate_theoretical_wavelengths_of_lfc_lines()
+
+        # fit comb
+        df_comblines = fit_comb(df_obs, lambda_th)
+        
+        # make weight for wavelength update
+        df_linelist = mk_weight(df_comblines)
+
+        # update wavelength of comb-master spectrum
+        df_recalib = update_wavelength(df_obs, df_linelist, n_poly=n_poly)
+        df_recalib.rename(columns={"lambda_model": "wav"}, inplace=True)
+        df_recalib["order"] -= 51 if self.band == "h" else 0
+
+        # apply new wavelength solution to the target spectrum
+        if self.prefix == "w":
+            prefix_new = "pw"
+        elif self.prefix == "nw":
+            prefix_new = "pfw"
+
+        for i, path in enumerate(tqdm.tqdm(self.path(string=True, check=True))):
+            data = pd.read_csv(path, **self.readargs)
+
+            self.check_wavelength_range(df_recalib, data)
+
+            data['wav'] = df_recalib['wav'].values
+            save_path = self.anadir / ("%s%s%s.dat" 
+                                       % (prefix_new, self.fitsid[i], self.extension))
+            data_save = data[["wav", "order", "flux"]]
+            data_save.to_csv(save_path, **self.tocsvargs)
+            if self.info:
+                print(
+                    "recalibrating wavelength with comb: output = %s%s%s.dat"
+                    % (prefix_new, self.fitsid[i], self.extension)
+                )
+
+        return df_recalib
