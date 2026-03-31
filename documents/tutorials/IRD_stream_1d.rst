@@ -25,6 +25,8 @@ Required data:
   1. Target spectra with an initial wavelength solution(created by IRD_stream.py) 
   2. LFC spectra with wavelength information, generated using the same procedure as the target spectra (as followings)
 
+LFC dataset (comb_data.tar.gz) can be downloaded from the `Zenodo repository <https://doi.org/10.5281/zenodo.14614003>`_
+
 .. code:: ipython3
 
     # Add the following code at the end of IRD_stream.py to generate the LFC spectra:
