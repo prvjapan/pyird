@@ -67,12 +67,12 @@ Names of Calibration Dataset
 
 - ``ThAr-ThAr``: Calibration image with ThAr light inject to both fibers.
 
-- ``COMB-COMB``: Calibration image with LFC light inject to both fibers.
+- ``COMB-MASTER`` (``MMF-MMF``): Calibration image with LFC light inject to both fibers.
 
-.. image:: ../figures/comb-comb_h_zoomed.png
+.. image:: ../figures/comb-master_h_zoomed.png
           :width: 25%  
 
 .. note:: 
-    Sample data provided for testing the pipeline include the ``ThAr-ThAr`` and ``COMB-COMB`` frames (file names starting with IRD[B/A]D000), but they usually cannot be obtained via STARS archive.
+    Sample data provided for testing the pipeline include the ``ThAr-ThAr`` and ``COMB-MASTER`` frames (file names starting with IRD[B/A]D000), but they usually cannot be obtained via STARS archive.
     They specifically used for the precise radial velocity measurement with the LFC, and thus not necessarily required for general data reduction.
     You can use the ``ThAr_COMB``, ``ThAr_STAR``, ``COMB_COMB``, and ``COMB_STAR`` for calibration if you reduce only a single fiber.
