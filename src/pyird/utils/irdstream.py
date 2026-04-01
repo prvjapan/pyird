@@ -791,7 +791,7 @@ class Stream2D(FitsSet, StreamCommon):
         master_path=None,
         readout_noise_mode="default",
         skipLFC=None,
-        outputs=["w", "nw", "ncw"],
+        outputs=["nw", "ncw"],
         **kwargs_normalize,
     ):
         """combine orders and normalize spectrum
@@ -920,14 +920,14 @@ class Stream1D(DatSet, StreamCommon):
         self.fitsid = fitsid
 
         if prefix == "w":
-            names = ["wav", "order", "flux"]
+            self.colnames = ["wav", "order", "flux"]
         elif prefix == "nw":
-            names = ["wav", "order", "flux", "sn_ratio", "uncertainty"]
+            self.colnames = ["wav", "order", "flux", "sn_ratio", "uncertainty"]
 
         self.readargs = {
             "header": None,
             "sep": "\s+",
-            "names": names,
+            "names": self.colnames,
         }
 
         self.tocsvargs = {"header": False, "index": False, "sep": " "}
@@ -962,36 +962,106 @@ class Stream1D(DatSet, StreamCommon):
 
     ############################################################################################
 
-    def specmedian(self, method="mean"):
+    def spec_combine(self, method="mean", wav_snr_at=1500., wav_snr_width=1.):
         """take spectrum mean or median.
+        Args:
+            method: method for combining spectra, "mean" or "median"
+            wav_snr_at: wavelength at which the SNR is calculated for
+            wav_snr_width: width around 'wav_snr_at' for calculating SNR
 
         Return:
-           dataframe including median spectrum
+           dataframe including mean/median spectrum
         """
-        specall, suffixes = [], []
+        self.print_if_info_is_true(f"Combining spectra using method: {method}")
+
+        if self.prefix not in ["w", "nw"]:
+            self.dir = self.anadir
+
         for i, path in enumerate(tqdm.tqdm(self.path(string=True, check=True))):
             data = pd.read_csv(path, **self.readargs)
-            suffix = "flux_%d" % (i)
-            suffixes.append(suffix)
-            data = data.rename(
-                columns={
-                    "flux": "flux_%d" % (i),
-                    "sn_ratio": "sn_ratio_%d" % (i),
-                    "uncertainty": "uncertainty_%d" % (i),
-                }
-            )
+            data.rename(columns={"flux": f"flux_{i}", "uncertainty": f"uncertainty_{i}", "sn_ratio": f"sn_ratio_{i}"}, inplace=True)
             if i == 0:
                 df_merge = data
             else:
                 df_merge = pd.merge(df_merge, data, on=["wav", "order"])
+
         if method == "median":
-            df_merge["flux_median"] = df_merge[suffixes].median(axis=1)
+            df_merge[f"flux_{method}"] = df_merge.filter(like="flux").median(axis=1)
         elif method == "mean":
-            df_merge["flux_median"] = df_merge[suffixes].mean(axis=1)
+            df_merge[f"flux_{method}"] = df_merge.filter(like="flux").mean(axis=1)
             df_merge["flux_err"] = np.sqrt(
                 np.nansum(df_merge.filter(like="uncertainty") ** 2, axis=1)
             ) / len(df_merge.filter(like="uncertainty").columns)
+
+        df_merge = df_merge[["wav", "order", f"flux_{method}"] + (["flux_err"] if method == "mean" else [])]
+
+        # calculate SNR at specified wavelength
+        if df_merge["wav"].min() <= wav_snr_at <= df_merge["wav"].max():
+            wav_snr_min= wav_snr_at - wav_snr_width
+            wav_snr_max = wav_snr_at + wav_snr_width
+            _orders = df_merge["order"].unique()
+            mask_snr = [df_merge.loc[df_merge["order"]==ord_tmp, "wav"].between(wav_snr_min, wav_snr_max) for ord_tmp in _orders]
+            len_between = [mask_snr_tmp.sum() for mask_snr_tmp in mask_snr]
+            ind_snr = np.argmax(len_between)
+            df_merge_snr = df_merge[df_merge["order"]==_orders[ind_snr]][mask_snr[ind_snr]]
+
+            if method == "mean":
+                signal = df_merge_snr["flux_mean"].values
+                noise = df_merge_snr["flux_err"].values
+                snr_at = np.nanmean(signal / noise)
+
+            print(f"SNR around {wav_snr_at} nm (order {_orders[ind_snr]}): {snr_at:.2f}")
+        
         return df_merge
+    
+    def spec_concat_yjh(self, **kwargs):
+        """Concatenate Y/J and H band spectra into a single spectrum.
+
+        Kwargs:
+            df_y: DataFrame of Y/J band spectrum with columns ['wav', 'order', 'flux', ...]
+            df_h: DataFrame of H band spectrum with columns ['wav', 'order', 'flux', ...]
+            save_name: filename for the concatenated spectrum (e.g., 'wG196-3B_yjh.dat')
+        """
+
+        self.print_if_info_is_true("Concatenating Y/J and H band spectra...")
+
+        if self.prefix not in ["w", "nw"]:
+            self.dir = self.anadir
+
+        try:
+            df_y = kwargs["df_y"]
+            df_h = kwargs["df_h"]
+            if df_h["order"].min() < 51:
+                df_h["order"] += 51
+            
+            df_concat = pd.concat([df_y, df_h], ignore_index=True)
+
+            save_path = self.anadir / kwargs["save_name"]
+            df_concat.to_csv(save_path, **self.tocsvargs)
+
+        except:
+            for i, path in enumerate(tqdm.tqdm(self.path(string=True, check=True))):
+                if self.band == "y":
+                    fitsid_y = self.fitsid[i]
+                    path_y = path
+                    path_h = path.replace(f"{fitsid_y}", f"{self.fitsid[i] + 1}")
+                    if not os.path.exists(path_h):
+                        raise FileNotFoundError(f"not found: {path_h}")
+                elif self.band == "h":
+                    fitsid_y = self.fitsid[i] - 1
+                    path_h = path
+                    path_y = path.replace(f"{self.fitsid[i]}", f"{fitsid_y}")
+                    if not os.path.exists(path_y):
+                        raise FileNotFoundError(f"not found: {path_y}")
+
+                df_y = pd.read_csv(path_y, **self.readargs)
+                df_h = pd.read_csv(path_h, **self.readargs)
+                if df_h["order"].max() < 51:
+                    df_h["order"] += 51
+                df_concat = pd.concat([df_y, df_h], ignore_index=True)
+
+                save_path = self.anadir / f"{self.prefix}{fitsid_y}{self.extension}_yjh.dat"
+                df_concat.to_csv(save_path, **self.tocsvargs)
 
     def remove_fringe(self):
         """removing periodic noise (fringe) in REACH spectrum"""
@@ -1025,6 +1095,35 @@ class Stream1D(DatSet, StreamCommon):
                 "removing fringe: output = rfnw%s_%s_%s%s.dat"
                 % (self.streamid, self.date, self.band, self.extension)
             )
+
+    def mask_airglow(self, wav_airglow=None, plot=False):
+        """Masking airglow lines in the spectrum
+
+        Args:
+            wav_airglow: list of airglow wavelengths to be masked. If None, the default list from Oliva et al. (2015) will be used.
+            plot: if True, plot the spectrum with masked airglow lines highlighted
+        """
+        from pyird.cleaning.remove_airglow import load_oliva15, wav_around_airglow, df_mask_airglow
+
+        self.print_if_info_is_true("[STEP] Masking airglow lines...")
+
+        wav_airglow = load_oliva15() if wav_airglow is None else wav_airglow
+
+        if self.prefix not in ["w", "nw"]:
+            self.dir = self.anadir
+
+        for i, path in enumerate(tqdm.tqdm(self.path(string=True, check=True))):
+            df_obs = pd.read_csv(path, **self.readargs)
+            ind_mask = wav_around_airglow(df_obs["wav"], wav_airglow)
+            df_masked = df_mask_airglow(df_obs, ind_mask, plot=plot)
+
+            save_path = self.anadir / f"{self.prefix}{self.fitsid[i]}{self.extension}_ohmasked.dat"
+            df_masked.to_csv(save_path, **self.tocsvargs)
+            if self.info:
+                print(
+                    f"masking airglow: output = {save_path.name}"
+                )
+        self.extension += "_ohmasked"
 
     def recalibrate_wavelength_with_comb(self, comb_master_path, fiber, n_poly=6):
         from pyird.spec.wavrecal import (generate_theoretical_wavelengths_of_lfc_lines, 
@@ -1072,12 +1171,14 @@ class Stream1D(DatSet, StreamCommon):
             data['wav'] = df_recalib['wav'].values
             save_path = self.anadir / ("%s%s%s.dat" 
                                        % (prefix_new, self.fitsid[i], self.extension))
-            data_save = data[["wav", "order", "flux"]]
+            data_save = data[self.colnames]
             data_save.to_csv(save_path, **self.tocsvargs)
             if self.info:
                 print(
                     "recalibrating wavelength with comb: output = %s%s%s.dat"
                     % (prefix_new, self.fitsid[i], self.extension)
                 )
+
+        self.prefix = prefix_new
 
         return df_recalib

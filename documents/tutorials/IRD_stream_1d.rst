@@ -48,11 +48,6 @@ LFC dataset (comb_data.tar.gz) can be downloaded from the `Zenodo repository <ht
     comb_master.imcomb = True
     comb_master.apext_flatfield(df_flatn, hotpix_mask=hotpix_mask)
     comb_master.dispcor(master_path=thar.anadir, blaze=False)
-    comb_master.normalize1D(master_path=flat_comb.anadir, 
-                       readout_noise_mode=readout_noise_mode,
-                       outputs = ["w"]
-                       )
-
 
 After running the script, confirm that a new file (e.g.,
 ``wcomb_master_h_m2.dat``) has been created in the specified analysis
