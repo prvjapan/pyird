@@ -48,15 +48,15 @@ def sample_stream1d(tmp_path):
     return stream, flux_values, uncertainty_values, wav_values
 
 
-def test_specmedian_mean_computes_average_and_error(sample_stream1d):
+def test_spec_combine_computes_average_and_error(sample_stream1d):
     stream, flux_values, uncertainty_values, _ = sample_stream1d
 
-    result = stream.specmedian(method="mean")
+    result = stream.spec_combine(method="mean")
 
     expected_flux = flux_values.mean(axis=0)
     expected_err = np.sqrt((uncertainty_values**2).sum(axis=0)) / uncertainty_values.shape[0]
 
-    assert result["flux_median"].to_numpy() == pytest.approx(expected_flux)
+    assert result["flux_mean"].to_numpy() == pytest.approx(expected_flux)
     assert result["flux_err"].to_numpy() == pytest.approx(expected_err)
 
 
