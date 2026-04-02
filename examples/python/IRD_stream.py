@@ -138,10 +138,6 @@ comb_master.clean_pattern(trace_mask=trace_mask,
 comb_master.imcomb = True
 comb_master.apext_flatfield(df_flatn, hotpix_mask=hotpix_mask)
 comb_master.dispcor(master_path=thar.anadir, blaze=False)
-comb_master.normalize1D(master_path=flat_comb.anadir, 
-                   readout_noise_mode=readout_noise_mode,
-                   outputs = ["w"]
-                   )
 
 """### hotpix (test) ###
 from pyird.image.hotpix import hotpix_fits_to_dat

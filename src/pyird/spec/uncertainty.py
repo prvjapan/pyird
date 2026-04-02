@@ -126,10 +126,10 @@ class FluxUncertainty():
                 readout_noise = self.scale_normalized_mad * np.median(np.abs(comb_tmp['flux'].values - np.median(comb_tmp['flux'].values)))
             elif self.method=='std':
                 readout_noise = np.std(comb_tmp['flux'].values)
-            print('Readout Noise is :', readout_noise)
+            print('Readout Noise [ADU] is :', readout_noise)
         else:
-            readout_noise = self.default_readout_noise
-            print('Using default readout Noise :', readout_noise)
+            readout_noise = self.default_readout_noise / self.gain_y # convert to ADU
+            print('Using default readout Noise [ADU]:', readout_noise)
             print('readout noise of IRD detectors: ~12e- (10min exposure)')
 
         self.readout_noise = readout_noise
