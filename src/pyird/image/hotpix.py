@@ -98,16 +98,24 @@ def identify_hotpix_sigclip(im,sigma=4,maxiters=5,frac=0.005):
 
     return hotpix_mask
 
-def apply_hotpixel_mask(hotpix_mask, rsd, y0, xmin, xmax, coeff, save_path=None):
-    """ correct hotpixel.
+def apply_hotpixel_orderedge_mask(
+        hotpix_mask, 
+        rsd, 
+        y0, xmin, xmax, coeff, 
+        hotpix_mode="nan", 
+        save_path=None
+        ):
+    """ mask hotpixel and/or order edge. 
 
     Args:
-        hotpix_mask: mask made from dark
+        hotpix_mask: mask made from dark. if None, only apply order edge mask.
         rsd: extracted spectrum to be masked
         y0, xmin, xmax, coeff: trace infomation
+        hotpix_mode: raplace bad pixels by np.nan if hotpix_mode="nan", while replace them based on spline interpolation if hotpix_mode="interp". 
+        save_path: path to save hotpixel mask
 
     Returns:
-        masked and interpolated spectrum
+        masked and/or interpolated spectrum
 
     """
     from scipy.interpolate import InterpolatedUnivariateSpline as IUS
@@ -115,37 +123,42 @@ def apply_hotpixel_mask(hotpix_mask, rsd, y0, xmin, xmax, coeff, save_path=None)
     from pyird.image.trace_function import trace_legendre
     from pyird.spec.rsdmat import multiorder_to_rsd
 
-    try:
-        hdu = pyf.open(save_path)[0]
-        hotpix1D = hdu.data
-    except:
-        mask = hotpix_mask.astype(int)
-        rawspec, pixcoord, _, _, _, _ = flatten(mask, trace_legendre, y0, xmin, xmax, coeff)
-        hotpix1D = multiorder_to_rsd(rawspec, pixcoord)
-        hdux = pyf.PrimaryHDU(hotpix1D)
-        hdulist = pyf.HDUList([hdux])
-        if save_path is not None:
-            hdulist.writeto(save_path, overwrite=True)
+    if hotpix_mask is not None:
+        try:
+            hdu = pyf.open(save_path)[0]
+            hotpix1D = hdu.data
+        except:
+            mask = hotpix_mask.astype(int)
+            rawspec, pixcoord, _, _, _, _ = flatten(mask, trace_legendre, y0, xmin, xmax, coeff)
+            hotpix1D = multiorder_to_rsd(rawspec, pixcoord)
+            hdux = pyf.PrimaryHDU(hotpix1D)
+            hdulist = pyf.HDUList([hdux])
+            if save_path is not None:
+                hdulist.writeto(save_path, overwrite=True)
+        mask_ind = hotpix1D>0
 
     flux = rsd
     pixels = np.array([np.arange(0,flux.shape[0],1)]*flux.shape[1]).T
-    mask_ind = hotpix1D>0
     flux_new = []
     for j in range(flux.shape[1]):
-        mask_ord = mask_ind[:,j]
         mask_edge = np.ones(len(flux[:,j]),dtype=bool)
         mask_edge[xmin[j]:xmax[j]+1] = False
         mask_nan = np.isnan(flux[:,j])
-        pix_masked = pixels[:,j][~(mask_ord | mask_edge | mask_nan)]
-        flux_masked = flux[:,j][~(mask_ord | mask_edge | mask_nan)]
-
-        ### raplace bad pixels based on spline interpolation ###
-        spline_func = IUS(pix_masked, flux_masked, check_finite=True)
-
-        interp_flux = spline_func(pixels[:,j])
         flux_tmp = flux[:,j].copy()
-        flux_tmp[mask_ord | mask_nan] = interp_flux[mask_ord | mask_nan]
-        flux_tmp[mask_edge] = np.nan
+        if hotpix_mask is not None:
+            mask_ord = mask_ind[:,j]
+            pix_masked = pixels[:,j][~(mask_ord | mask_edge | mask_nan)]
+            flux_masked = flux[:,j][~(mask_ord | mask_edge | mask_nan)]
+
+            ### raplace bad pixels based on spline interpolation ###
+            spline_func = IUS(pix_masked, flux_masked, check_finite=True)
+
+            interp_flux = spline_func(pixels[:,j])
+            if hotpix_mode=="interp":
+                flux_tmp[mask_ord | mask_nan] = interp_flux[mask_ord | mask_nan]
+            elif hotpix_mode=="nan":
+                flux_tmp[mask_ord | mask_nan] = np.nan
+        flux_tmp[mask_edge] = 0 #np.nan
         flux_new.append(flux_tmp)
     flux_new = np.array(flux_new).T
     return flux_new
