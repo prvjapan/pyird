@@ -79,6 +79,8 @@ analyze. The sample data can be downloaded from the
 
     band = 'h' #'h' or 'y'
     mmf = 'mmf2' #'mmf1' (comb fiber) or 'mmf2' (star fiber)
+    mask_hotpix = True
+    hotpix_mode = 'nan' # 'nan' or 'interp'
     readout_noise_mode = 'default'
 
 .. note::
@@ -231,6 +233,7 @@ Step 1-2: Removing hotpixels
 - If you are interested in comparing different hotpixel mask
   identification methods, see issue
   `#121 <https://github.com/prvjapan/pyird/issues/121>`_.
+- See also :doc:`../userguide/hotpix_handling`
 
 .. code:: ipython3
 
@@ -247,6 +250,13 @@ Step 1-2: Removing hotpixels
     median_image = dark.immedian()
     im_subbias = bias_subtract_image(median_image)
     hotpix_mask = identify_hotpix_sigclip(im_subbias)
+
+    if mask_hotpix:
+        kwargs_hotpix = {"hotpix_mask": hotpix_mask, "hotpix_mode": hotpix_mode}
+        extin_dispcor = '_flnhp'
+    else:
+        kwargs_hotpix = {"hotpix_mask": None, "hotpix_mode": None}
+        extin_dispcor = '_fln'
 
 
 .. parsed-literal::
@@ -380,7 +390,7 @@ Step 1-4: Creating a Normalized Flat
         flat_star.imcomb = True # median combine
     
         # Extract 1D spectrum
-        flat_star.flatten(hotpix_mask=hotpix_mask)
+        flat_star.flatten(**kwargs_hotpix)
     
         # Flat spectrum normalized in each pixel within an aperture
         df_flatn = flat_star.apnormalize()
@@ -393,7 +403,7 @@ Step 1-4: Creating a Normalized Flat
         flat_comb.imcomb = True # median combine
     
         # Extract 1D spectrum
-        flat_comb.flatten(hotpix_mask=hotpix_mask)
+        flat_comb.flatten(**kwargs_hotpix)
     
         # Flat spectrum normalized in each pixel within an aperture
         df_flatn = flat_comb.apnormalize()
@@ -519,7 +529,7 @@ Step 2-2: Aperture Extraction & Flat Fielding
 
 .. code:: ipython3
 
-    target.apext_flatfield(df_flatn, hotpix_mask=hotpix_mask)
+    target.apext_flatfield(df_flatn, **kwargs_hotpix)
 
 
 .. parsed-literal::
@@ -582,7 +592,7 @@ Step 2-3: Assigning Wavelength to the Extracted Spectrum
 
 .. code:: ipython3
 
-    target.dispcor(master_path=thar.anadir, extin='_flnhp')
+    target.dispcor(master_path=thar.anadir, extin=extin_dispcor)
 
 
 .. parsed-literal::
@@ -609,10 +619,10 @@ Step 2-4: Creating the Blaze Function
 
     # blaze function
     if mmf=='mmf2':
-        flat_star.apext_flatfield(df_flatn, hotpix_mask=hotpix_mask, median_filter=True)
+        flat_star.apext_flatfield(df_flatn, **kwargs_hotpix)
         flat_star.dispcor(master_path=thar.anadir)
     elif mmf=='mmf1':
-        flat_comb.apext_flatfield(df_flatn, hotpix_mask=hotpix_mask, median_filter=True)
+        flat_comb.apext_flatfield(df_flatn, **kwargs_hotpix)
         flat_comb.dispcor(master_path=thar.anadir)
 
 

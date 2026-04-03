@@ -5,7 +5,7 @@ from pyird.utils.datset import DatSet
 from pyird.image.trace_function import trace_legendre
 from pyird.image.oned_extract import flatten
 from pyird.spec.rsdmat import multiorder_to_rsd
-from pyird.image.hotpix import apply_hotpixel_mask
+from pyird.image.hotpix import apply_hotpixel_orderedge_mask
 from pyird.utils.class_handler import update_attr
 from pyird.utils.fitsutils import load_fits_data_header, write_fits_data_header
 from pyird.plot.showspec import show_wavcal_spectrum
@@ -381,7 +381,6 @@ class Stream2D(FitsSet, StreamCommon):
             data_order = [wav, order, spec_m2[:, i]]
             df_order = pd.DataFrame(data_order, index=["wav", "order", "flux"]).T
             wspec = pd.concat([wspec, df_order])
-        wspec = wspec.fillna(0)
         wspec.to_csv(save_path, **self.tocsvargs)
         return wspec
 
@@ -441,7 +440,7 @@ class Stream2D(FitsSet, StreamCommon):
         extout="_fl",
         extin=None,
         hotpix_mask=None,
-        width=None,
+        hotpix_mode="nan",
         check=False,
         master_path=None,
     ):
@@ -451,7 +450,7 @@ class Stream2D(FitsSet, StreamCommon):
             extout: output extension
             extin: input extension
             hotpix_mask: hotpix masked spectrum ('extout' to be automatically '_hp')
-            width: list of aperture widths ([width_start,width_end])
+            hotpix_mode: how to replace the values at hot pixels ("nan" or "interp")
             check: if True, return the extracted spectrum
             master_path: if this set the path to wavelength reference file with check=True, return wavelength allocated spectrum
 
@@ -490,11 +489,11 @@ class Stream2D(FitsSet, StreamCommon):
                 im, trace_legendre, y0, xmin, xmax, coeff, inst=self.inst, width=width
             )
             rsd = multiorder_to_rsd(rawspec, pixcoord)
-            if not hotpix_mask is None:
-                save_path = self.anadir / ("hotpix_%s_%s.fits" % (self.band, mmf))
-                rsd = apply_hotpixel_mask(
-                    hotpix_mask, rsd, y0, xmin, xmax, coeff, save_path=save_path
-                )
+
+            save_path = self.anadir / ("hotpix_%s_%s.fits" % (self.band, mmf))
+            rsd = apply_hotpixel_orderedge_mask(
+                hotpix_mask, rsd, y0, xmin, xmax, coeff, hotpix_mode=hotpix_mode, save_path=save_path
+            )
             if not check:
                 write_fits_data_header(self.anadir / extout_noexist[i], header, rsd)
             else:
@@ -513,8 +512,45 @@ class Stream2D(FitsSet, StreamCommon):
         self.fitsdir = self.anadir
         self.extension = extout
 
+    def flatten_im(
+        self,
+        image,
+        trace_path=None,
+        output_path=None,
+    ):
+        """
+        flatten for a single image. simple version of flatten.
+
+        Args:
+            image: input 2d array
+            trace_path: trace file to be used in flatten
+            output_path: output file name
+
+        """
+
+        self.print_if_info_is_true("[STEP] Performing flatten of input image...")
+
+        y0, xmin, xmax, coeff, mmf, width = self.extract_trace_info(trace_path)
+
+        im = self.detector_handling(image, mode="load")
+        rawspec, pixcoord, rotim, tl, iys_plot, iye_plot = flatten(
+            im, trace_legendre, y0, xmin, xmax, coeff, inst=self.inst, width=width
+        )
+        rsd = multiorder_to_rsd(rawspec, pixcoord)
+
+        if output_path is None:
+            output_path = f"flatten_im_{self.band}_{mmf}.fits"
+        write_fits_data_header(self.anadir / output_path, None, rsd)
+
+        self.print_if_info_is_true("Created " + str(output_path))
+
     def apnormalize(
-        self, rsd=None, hotpix_mask=None, ignore_orders=None, **kwargs_continuum
+        self, 
+        rsd=None, 
+        hotpix_mask=None,
+        hotpix_mode="nan", 
+        ignore_orders=None, 
+        **kwargs_continuum
     ):
         """normalize 2D apertures by 1D functions
 
@@ -531,11 +567,10 @@ class Stream2D(FitsSet, StreamCommon):
             flatfile = self.anadir / ("%s_%s_%s.fits" % (self.streamid, self.band, mmf))
             rsd, _ = load_fits_data_header(flatfile)
 
-        if not hotpix_mask is None:
-            save_path = self.anadir / ("hotpix_%s_%s.fits" % (self.band, mmf))
-            rsd = apply_hotpixel_mask(
-                hotpix_mask, rsd, y0, xmin, xmax, coeff, save_path=save_path
-            )
+        save_path = self.anadir / ("hotpix_%s_%s.fits" % (self.band, mmf))
+        rsd = apply_hotpixel_orderedge_mask(
+            hotpix_mask, rsd, y0, xmin, xmax, coeff, hotpix_mode=hotpix_mode, save_path=save_path
+        )
 
         continuum_fit = ContinuumFit()
         update_attr(continuum_fit, **kwargs_continuum)
@@ -562,7 +597,13 @@ class Stream2D(FitsSet, StreamCommon):
         return df_flatn
 
     def apext_flatfield(
-        self, df_flatn, extout="_fln", extin=None, hotpix_mask=None, width=None, median_filter=False
+        self, 
+        df_flatn, 
+        extout="_fln", 
+        extin=None, 
+        hotpix_mask=None, 
+        hotpix_mode="nan",
+        median_filter=True
     ):
         """aperture extraction and flat fielding (c.f., hdsis_ecf.cl)
 
@@ -571,7 +612,8 @@ class Stream2D(FitsSet, StreamCommon):
             extout: extension of output files
             extin: extension of input files
             hotpix_mask: hotpix masked spectrum ('extout' to be automatically '_flnhp')
-            width: list of aperture widths ([width_start,width_end])
+            hotpix_mode: how to replace the values at hot pixels ("nan" or "interp")
+            median_filter: whether to apply a median filter to the extracted spectrum 
         """
         from pyird.spec.rsdmat import rsd_order_medfilt
         from pyird.image.oned_extract import sum_weighted_apertures
@@ -608,11 +650,11 @@ class Stream2D(FitsSet, StreamCommon):
                 im, df_flatn, y0, xmin, xmax, coeff, width, self.inst
             )
             rsd = df_sum_wap.values.T.astype(float)
-            if not hotpix_mask is None:
-                save_path = self.anadir / ("hotpix_%s_%s.fits" % (self.band, mmf))
-                rsd = apply_hotpixel_mask(
-                    hotpix_mask, rsd, y0, xmin, xmax, coeff, save_path=save_path
-                )
+
+            save_path = self.anadir / ("hotpix_%s_%s.fits" % (self.band, mmf))
+            rsd = apply_hotpixel_orderedge_mask(
+                hotpix_mask, rsd, y0, xmin, xmax, coeff, hotpix_mode=hotpix_mode, save_path=save_path
+            )
             if self.imcomb and median_filter:
                 rsd = rsd_order_medfilt(rsd)
             # save as fits file without applying rotation/inverse
@@ -784,6 +826,47 @@ class Stream2D(FitsSet, StreamCommon):
             show_wavcal_spectrum(
                 wspec, title="Extracted spectrum: %s" % (outpath), alpha=0.5
             )
+
+    def dispcor_im(self, input_path, master_path=None, output_path=None):
+        """
+        dispcor for a single image. simple version of dispcor.
+
+        Args:
+            input_path: path to the input file
+            master_path: path to the directory containing the master ThAr file
+            output_path: path to the output file
+
+        """
+        from pyird.utils.datset import DatSet
+
+        self.print_if_info_is_true("[STEP] Performing dispcor of input image...")
+
+        if master_path == None:
+            master_path = self.anadir.joinpath("..", "thar").resolve() / (
+                "thar_%s_%s.fits" % (self.band, self.trace.mmf)
+            )
+        elif not str(master_path).endswith(".fits"):
+            master_path = master_path / (
+                "thar_%s_%s.fits" % (self.band, self.trace.mmf)
+            )
+        self.print_if_info_is_true("Allocate wavelengths based on the ThAr file: " + str(master_path))
+
+        reference, _ = load_fits_data_header(master_path)
+
+        if not os.path.exists(input_path):
+            input_path = self.anadir / input_path
+        spec_m2, _ = load_fits_data_header(input_path)
+
+        if output_path is None:
+            output_path = f"dispcor_im_{self.band}_{self.trace.mmf}.dat"
+        save_path = self.anadir / output_path
+        wspec = self.write_df_spec_wav(spec_m2, reference, save_path)
+
+        print("Created 1D spectrum: %s" % (output_path))
+        # plot
+        show_wavcal_spectrum(
+            wspec, title="Extracted spectrum: %s" % (output_path), alpha=0.5
+        )
 
     def normalize1D(
         self,

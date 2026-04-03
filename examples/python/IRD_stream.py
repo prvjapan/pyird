@@ -8,7 +8,9 @@ basedir = pathlib.Path('~/pyird/data/20210317/').expanduser()
 
 band = 'h' #'h' or 'y'
 mmf = 'mmf2' #'mmf1' (comb fiber) or 'mmf2' (star fiber)
-readout_noise_mode = "default" #'real' or 'default'
+mask_hotpix = True
+hotpix_mode = 'nan' # 'nan' or 'interp'
+readout_noise_mode = 'default' #'real' or 'default'
 
 datadir_flat = basedir/'flat/'
 datadir_dark = basedir/'dark/'
@@ -43,13 +45,19 @@ trace_mmf.choose_aperture(fiber=mmf)
 # See pyird/io/read_hotpix.py for reading fixed mask (Optional)
 ## DARK
 dark = irdstream.Stream2D('dark', 
-                          datadir_dark, 
-                          anadir, 
-                          fitsid=list(range(dark_id[0], dark_id[-1], 2)), 
-                          band=band) # Multiple file is ok
+                        datadir_dark, 
+                        anadir, 
+                        fitsid=list(range(dark_id[0], dark_id[-1], 2)), 
+                        band=band) # Multiple file is ok
 median_image = dark.immedian()
 im_subbias = bias_subtract_image(median_image)
 hotpix_mask = identify_hotpix_sigclip(im_subbias)
+if mask_hotpix:
+    kwargs_hotpix = {"hotpix_mask": hotpix_mask, "hotpix_mode": hotpix_mode}
+    extin_dispcor = '_flnhp'
+else:
+    kwargs_hotpix = {"hotpix_mask": None, "hotpix_mode": None}
+    extin_dispcor = '_fln'
 
 ## THAR (ThAr-ThAr)
 if band=='h':
@@ -80,13 +88,13 @@ if mmf=='mmf2':
     flat_star.trace = trace_mmf
     flat_star.clean_pattern(trace_mask=trace_mask, extin='', extout='_cp', hotpix_mask=hotpix_mask)
     flat_star.imcomb = True # median combine
-    flat_star.flatten(hotpix_mask=hotpix_mask)
+    flat_star.flatten(**kwargs_hotpix)
     df_flatn = flat_star.apnormalize()
 elif mmf=='mmf1':
     flat_comb.trace = trace_mmf
     flat_comb.clean_pattern(trace_mask=trace_mask, extin='', extout='_cp', hotpix_mask=hotpix_mask)
     flat_comb.imcomb = True # median combine
-    flat_comb.flatten(hotpix_mask=hotpix_mask)
+    flat_comb.flatten(**kwargs_hotpix)
     df_flatn = flat_comb.apnormalize()
 
 #--------FOR TARGET--------#
@@ -100,20 +108,20 @@ target.trace = trace_mmf
 # clean pattern
 target.clean_pattern(trace_mask=trace_mask, extin='', extout='_cp', hotpix_mask=hotpix_mask)
 # flatten
-target.apext_flatfield(df_flatn, hotpix_mask=hotpix_mask)
+target.apext_flatfield(df_flatn, **kwargs_hotpix)
 # assign reference spectra & resample
-target.dispcor(master_path=thar.anadir, extin='_flnhp')#_hp
+target.dispcor(master_path=thar.anadir, extin=extin_dispcor)
 
 if mmf=='mmf2':
     # blaze function
-    flat_star.apext_flatfield(df_flatn, hotpix_mask=hotpix_mask, median_filter=True)
+    flat_star.apext_flatfield(df_flatn, **kwargs_hotpix)
     flat_star.dispcor(master_path=thar.anadir)
 
     # combine & normalize
     target.normalize1D(master_path=flat_star.anadir, readout_noise_mode=readout_noise_mode)
 elif mmf=='mmf1':
     # blaze function
-    flat_comb.apext_flatfield(df_flatn, hotpix_mask=hotpix_mask, median_filter=True)
+    flat_comb.apext_flatfield(df_flatn, **kwargs_hotpix)
     flat_comb.dispcor(master_path=thar.anadir)
 
     # combine & normalize
@@ -136,7 +144,7 @@ comb_master.clean_pattern(trace_mask=trace_mask,
                      extout='_cp', 
                      hotpix_mask=hotpix_mask)
 comb_master.imcomb = True
-comb_master.apext_flatfield(df_flatn, hotpix_mask=hotpix_mask)
+comb_master.apext_flatfield(df_flatn, **kwargs_hotpix, median_filter=False)
 comb_master.dispcor(master_path=thar.anadir, blaze=False)
 
 """### hotpix (test) ###
