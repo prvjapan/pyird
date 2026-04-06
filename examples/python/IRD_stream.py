@@ -146,13 +146,3 @@ comb_master.clean_pattern(trace_mask=trace_mask,
 comb_master.imcomb = True
 comb_master.apext_flatfield(df_flatn, **kwargs_hotpix, median_filter=False)
 comb_master.dispcor(master_path=thar.anadir, blaze=False)
-
-"""### hotpix (test) ###
-from pyird.image.hotpix import hotpix_fits_to_dat
-dark.trace = trace_mmf
-dark.imcomb = True
-dark.flatten(hotpix_mask=hotpix_mask)
-file = dark.anadir/('%s_%s_%s.fits'%(dark.streamid,dark.band,dark.trace.mmf))
-save_path = dark.anadir/('%s_%s_%s.dat'%(dark.streamid,dark.band,dark.trace.mmf))
-hotpix_fits_to_dat(file,save_path)
-"""

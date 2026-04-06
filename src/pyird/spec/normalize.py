@@ -201,6 +201,11 @@ class SpectrumNormalizer(ContinuumFit, FluxUncertainty):
         for order in orders:
             df_former, df_latter = self.define_former_and_latter(df_continuum, order, max(orders))
 
+            if (order == orders[0]) and (df_former['wav'].min() > df_latter['wav'].min()):
+                df_interp = pd.concat([df_interp, df_latter[df_interp.columns]])
+                print(f"skip order {order} due to the small range of overlap region.")
+                continue
+
             if order == max(orders):
                 df_interp = self.concat_nonoverlap_region_last_order(df_former, df_interp)
                 continue

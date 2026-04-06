@@ -123,9 +123,9 @@ class FluxUncertainty():
             comb = pd.read_csv(combfile, **read_args) 
             comb_tmp = comb[(comb['wav'] > comb_beginning) & (comb['wav'] < comb_ending)]
             if self.method=='mad':
-                readout_noise = self.scale_normalized_mad * np.median(np.abs(comb_tmp['flux'].values - np.median(comb_tmp['flux'].values)))
+                readout_noise = self.scale_normalized_mad * np.nanmedian(np.abs(comb_tmp['flux'].values - np.nanmedian(comb_tmp['flux'].values)))
             elif self.method=='std':
-                readout_noise = np.std(comb_tmp['flux'].values)
+                readout_noise = np.nanstd(comb_tmp['flux'].values)
             print('Readout Noise [ADU] is :', readout_noise)
         else:
             readout_noise = self.default_readout_noise / self.gain_y # convert to ADU
