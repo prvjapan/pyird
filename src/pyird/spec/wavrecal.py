@@ -109,7 +109,7 @@ def fit_comb(df_obs, lambda_th):
     # fit Gaussian to each comb line in each order
     grouped = {ord_: g.sort_values('wav') for ord_, g in df_obs.groupby('order')}
     results = []
-    for ord in orders:
+    for ord in tqdm.tqdm(orders):
         results_ord = _fit_comb_oneord(grouped, lambda_th, ord)
         results.extend(results_ord)
 
