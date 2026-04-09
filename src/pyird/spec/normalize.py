@@ -111,10 +111,10 @@ class SpectrumNormalizer(ContinuumFit, FluxUncertainty):
             two pandas.DataFrames of 1D normalized spectrum
             - ``df_continuum``: per-order dataframe containing columns such as
               ``"wav"``, ``"order"``, ``"flux"``, ``"continuum"``, ``"nflux"``,
-              ``"sn_ratio"``, ``"tmp_uncertainty"``.
+              ``"sn_ratio"``, ``"uncertainty"``.
             - ``df_interp``: final 1D combined dataframe (columns: ``"wav"``, ``"flux"``,
-              ``"continuum"``, ``"sn_ratio"``, ``"tmp_uncertainty"``, later augmented
-              by :meth:`divide_by_continuum` with ``"nflux"`` and ``"uncertainty"``).
+              ``"continuum"``, ``"sn_ratio"``, ``"uncertainty"``, later augmented
+              by :meth:`divide_by_continuum` with ``"nflux"`` and ``"normalized_uncertainty"``).
         """
 
         read_args = {'header': None, 'sep': r'\s+', 'names':['wav','order','flux']}
@@ -138,7 +138,7 @@ class SpectrumNormalizer(ContinuumFit, FluxUncertainty):
 
         Returns:
             Per-order dataframe including columns ``"wav"``, ``"order"``, ``"flux"``,
-            ``"continuum"``, ``"nflux"``, ``"sn_ratio"``, ``"tmp_uncertainty"``.
+            ``"continuum"``, ``"nflux"``, ``"sn_ratio"``, ``"uncertainty"``.
         """
         blaze = blaze.assign(blaze_continuum=0)
         blaze = blaze.rename(columns={'flux':'continuum'})
@@ -191,13 +191,13 @@ class SpectrumNormalizer(ContinuumFit, FluxUncertainty):
 
         Returns:
             pandas.DataFrame of 1D normalized spectrum with columns
-            ``"wav"``, ``"flux"``, ``"continuum"``, ``"sn_ratio"``, ``"tmp_uncertainty"``,
+            ``"wav"``, ``"flux"``, ``"continuum"``, ``"sn_ratio"``, ``"uncertainty"``,
             augmented later by :meth:`divide_by_continuum`.
         """
 
         orders = df_continuum['order'].unique()
 
-        df_interp = pd.DataFrame([],columns=['wav','flux','continuum','sn_ratio','tmp_uncertainty'])
+        df_interp = pd.DataFrame([],columns=['wav','flux','continuum','sn_ratio','uncertainty'])
         for order in orders:
             df_former, df_latter = self.define_former_and_latter(df_continuum, order, max(orders))
 
@@ -331,7 +331,7 @@ class SpectrumNormalizer(ContinuumFit, FluxUncertainty):
         flux_sum = df_head['flux'].values + flux_tail_interp
         continuum_sum = df_head['continuum'].values + continuum_tail_interp
 
-        uncertainty_ratio_square_sum = np.sqrt(df_head['tmp_uncertainty'].values**2 + tmp_uncertainty**2)
+        uncertainty_ratio_square_sum = np.sqrt(df_head['uncertainty'].values**2 + tmp_uncertainty**2)
         sn_ratio_sum = flux_sum / uncertainty_ratio_square_sum
 
         data = np.array([df_head['wav'].values, flux_sum, continuum_sum, sn_ratio_sum, uncertainty_ratio_square_sum]).T
@@ -346,17 +346,17 @@ class SpectrumNormalizer(ContinuumFit, FluxUncertainty):
         samples to avoid division by zero.
 
         Args:
-            df_interp: pandas.DataFrame that must contain ``"flux"``, ``"continuum"``, and ``"tmp_uncertainty"``.
+            df_interp: pandas.DataFrame that must contain ``"flux"``, ``"continuum"``, and ``"uncertainty"``.
 
         Returns:
             The input dataframe with added columns:
             - ``"nflux"``: normalized flux,
-            - ``"uncertainty"``: normalized uncertainty (temporary uncertainty / continuum).
+            - ``"normalized uncertainty"``: normalized uncertainty (uncertainty / continuum).
         """
         zeroind = df_interp['continuum']==0
         df_interp = df_interp.assign(nflux=np.nan,uncertainty=np.nan)
         df_interp.loc[~zeroind,'nflux'] = df_interp['flux'][~zeroind]/df_interp['continuum'][~zeroind]
-        df_interp.loc[~zeroind,'uncertainty'] = df_interp['tmp_uncertainty'][~zeroind]/df_interp['continuum'][~zeroind]
+        df_interp.loc[~zeroind,'normalized_uncertainty'] = df_interp['uncertainty'][~zeroind]/df_interp['continuum'][~zeroind]
         return df_interp
     
 if __name__ == '__main__':

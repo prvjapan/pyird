@@ -702,6 +702,8 @@ Step 2-5: Normalizing the Spectra
     - Order-combined (**ncw**): ``$1: Wavelength [nm]``, ``$2: Counts``,
       ``$3: S/N``, ``$4: Uncertainties``
 
+  - If the ``outputs`` option is set to ``["w", "nw", "ncw"]``, the pre-normalized spectrum (**w...\_m?.dat**) is overwritten to include S/N and uncertainty columns, in addition to "nw" and "ncw" spectra.
+
 - For the order-combined spectra: There are overlapping wavelengths at
   the edges of orders, so we “normalize” by summing up the flux in these
   regions to improve the signal-to-noise ratio.

@@ -249,7 +249,7 @@ class Stream2D(FitsSet, StreamCommon):
         self.inverse = inverse or (inst == "IRCS")
         self.detector_artifact = detector_artifact
 
-        self.tocsvargs = {"header": False, "index": False, "sep": " "}
+        self.tocsvargs = {"header": False, "index": False, "sep": " ", "na_rep": "NaN"}
 
         self.fitsid = fitsid
         self.band = None
@@ -944,13 +944,22 @@ class Stream2D(FitsSet, StreamCommon):
         for i in range(len(wfile)):
             spectrum_normalizer = SpectrumNormalizer(combfile=LFC_path[i])
             update_attr(spectrum_normalizer, **kwargs_normalize)
-            if "nw" in outputs or "ncw" in outputs:
-                df_continuum, df_interp = spectrum_normalizer.combine_normalize(
-                    wfile[i], flatfile, blaze=(flatid == "blaze")
-                )
+            df_continuum, df_interp = spectrum_normalizer.combine_normalize(
+                wfile[i], flatfile, blaze=(flatid == "blaze")
+            )
+            if "w" in outputs:
+                df_continuum_save = df_continuum[
+                    ["wav", "order", "flux", "sn_ratio", "uncertainty"]
+                ]
+                df_continuum_save.to_csv(wfile[i], **self.tocsvargs)
+                if not self.imcomb:
+                    print(
+                        "Added errors to 1D spectrum: w%d_%s.dat"
+                        % (self.fitsid[i], self.trace.mmf)
+                    )
             if "nw" in outputs:
                 df_continuum_save = df_continuum[
-                    ["wav", "order", "nflux", "sn_ratio", "uncertainty"]
+                    ["wav", "order", "nflux", "sn_ratio", "normalized_uncertainty"]
                 ]
                 df_continuum_save.to_csv(nwsave_path[i], **self.tocsvargs)
                 if not self.imcomb:
@@ -959,7 +968,7 @@ class Stream2D(FitsSet, StreamCommon):
                         % (self.fitsid[i], self.trace.mmf)
                     )
             if "ncw" in outputs:
-                df_interp_save = df_interp[["wav", "nflux", "sn_ratio", "uncertainty"]]
+                df_interp_save = df_interp[["wav", "nflux", "sn_ratio", "normalized_uncertainty"]]
                 df_interp_save.to_csv(ncwsave_path[i], **self.tocsvargs)
                 if not self.imcomb:
                     print(
@@ -987,7 +996,16 @@ class Stream1D(DatSet, StreamCommon):
     """Class for post-processing 1D spectra.
     """
     def __init__(
-        self, streamid, rawdir, anadir, fitsid=None, prefix="", extension="", inst="IRD", band=None
+        self, 
+        streamid, 
+        rawdir, 
+        anadir, 
+        fitsid=None, 
+        prefix="", 
+        extension="", 
+        inst="IRD", 
+        band=None, 
+        colnames=None
     ):
         """initialization
         Args:
@@ -1002,18 +1020,18 @@ class Stream1D(DatSet, StreamCommon):
 
         self.fitsid = fitsid
 
-        if prefix == "w":
-            self.colnames = ["wav", "order", "flux"]
-        elif prefix == "nw":
+        if colnames is None:
             self.colnames = ["wav", "order", "flux", "sn_ratio", "uncertainty"]
+        else:
+            self.colnames = colnames
 
         self.readargs = {
             "header": None,
-            "sep": "\s+",
-            "names": self.colnames,
+            "sep": r"\s+",
+            "names": self.colnames
         }
 
-        self.tocsvargs = {"header": False, "index": False, "sep": " "}
+        self.tocsvargs = {"header": False, "index": False, "sep": " ", "na_rep": "NaN",}
 
         if inst in ["IRD", "REACH"]:
             self.init_band_IRD(band=band)
@@ -1069,9 +1087,9 @@ class Stream1D(DatSet, StreamCommon):
                 df_merge = pd.merge(df_merge, data, on=["wav", "order"])
 
         if method == "median":
-            df_merge[f"flux_{method}"] = df_merge.filter(like="flux").median(axis=1)
+            df_merge[f"flux_{method}"] = np.nanmedian(df_merge.filter(like="flux"), axis=1)
         elif method == "mean":
-            df_merge[f"flux_{method}"] = df_merge.filter(like="flux").mean(axis=1)
+            df_merge[f"flux_{method}"] = np.nanmean(df_merge.filter(like="flux"), axis=1)
             df_merge["flux_err"] = np.sqrt(
                 np.nansum(df_merge.filter(like="uncertainty") ** 2, axis=1)
             ) / len(df_merge.filter(like="uncertainty").columns)
