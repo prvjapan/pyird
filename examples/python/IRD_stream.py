@@ -118,14 +118,14 @@ if mmf=='mmf2':
     flat_star.dispcor(master_path=thar.anadir)
 
     # combine & normalize
-    target.normalize1D(master_path=flat_star.anadir, readout_noise_mode=readout_noise_mode)
+    target.normalize1D(master_path=flat_star.anadir, readout_noise_mode=readout_noise_mode, outputs=["w", "nw", "ncw"])
 elif mmf=='mmf1':
     # blaze function
     flat_comb.apext_flatfield(df_flatn, **kwargs_hotpix)
     flat_comb.dispcor(master_path=thar.anadir)
 
     # combine & normalize
-    target.normalize1D(master_path=flat_comb.anadir, readout_noise_mode=readout_noise_mode)
+    target.normalize1D(master_path=flat_comb.anadir, readout_noise_mode=readout_noise_mode, outputs=["w", "nw", "ncw"])
 
 
 #--------FOR WAVELENGTH RE-CALIBRATION--------#

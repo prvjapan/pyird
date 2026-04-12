@@ -139,19 +139,19 @@ class FluxUncertainty():
 
         Args:
             df_continuum: Dataframe that contains at least the columns ``"wav"``, ``"flux"``,
-            and ``"continuum"``. If ``"sn_ratio"`` or ``"tmp_uncertainty"`` exist,
+            and ``"continuum"``. If ``"sn_ratio"`` or ``"uncertainty"`` exist,
             they will be overwritten.
 
         Returns:
             The temporary (pre-normalization) uncertainty is stored in the column
-            ``"tmp_uncertainty"`` as an intermediate product.
+            ``"uncertainty"`` as an intermediate product.
         """
         self.determine_gain(df_continuum)
         
         df_continuum['sn_ratio'] = (self.gain*df_continuum['flux']) \
                                     /np.sqrt(self.gain*df_continuum['flux'] + (self.gain*self.readout_noise)**2)
-        df_continuum['tmp_uncertainty'] = np.sqrt(df_continuum['flux']/self.gain + self.readout_noise**2)
-        df_continuum['uncertainty'] = df_continuum['tmp_uncertainty']/df_continuum['continuum']
+        df_continuum['uncertainty'] = np.sqrt(df_continuum['flux']/self.gain + self.readout_noise**2)
+        df_continuum['normalized_uncertainty'] = df_continuum['uncertainty']/df_continuum['continuum']
         return df_continuum
 
 
