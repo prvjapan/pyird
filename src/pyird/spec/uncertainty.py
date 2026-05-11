@@ -201,7 +201,11 @@ class FluxUncertainty():
                 sn_ratio[i] = np.nan
 
                 left_flux, right_flux, left_scale, right_scale = self.split_tail_by_wavhead(wav_tail, wav_head[i], flux_tail)
-                tmp_uncertainty[i] = self.calculate_tmp_uncertainty(left_flux, right_flux, left_scale, right_scale)
+                tmp_uncertainty_i = self.calculate_tmp_uncertainty(left_flux, right_flux, left_scale, right_scale)
+                if np.isnan(tmp_uncertainty_i):
+                    tmp_uncertainty[i] = tmp_uncertainty_i
+                else:
+                    tmp_uncertainty[i] = tmp_uncertainty_i[0]
 
         return sn_ratio, tmp_uncertainty
 

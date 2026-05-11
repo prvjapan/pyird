@@ -19,7 +19,8 @@ def identify_hotpix(im, threshold=10.0):
     """
     from sep import Background, extract, mask_ellipse
     try:
-        bkg = Background(im.byteswap().newbyteorder())
+        im = im.astype(im.dtype.newbyteorder('='))
+        bkg = Background(im)
     except:
         bkg = Background(im)
 
