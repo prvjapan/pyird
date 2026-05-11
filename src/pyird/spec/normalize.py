@@ -293,7 +293,10 @@ class SpectrumNormalizer(ContinuumFit, FluxUncertainty):
         else:
             add_ind = (wav_former > df_interp['wav'].values[-1]) & (wav_former < wav_head_tip)
         
-        df_interp = pd.concat([df_interp, df_former[add_ind][df_interp.columns]])
+        tmp = df_former[add_ind][df_interp.columns]
+        tmp = tmp.dropna(axis=1, how='all')
+        if not tmp.empty:
+            df_interp = pd.concat([df_interp, tmp], ignore_index=True)
         return df_interp
 
     def concat_overlap_region(self, df_former, df_latter, df_interp):
@@ -346,17 +349,36 @@ class SpectrumNormalizer(ContinuumFit, FluxUncertainty):
         samples to avoid division by zero.
 
         Args:
-            df_interp: pandas.DataFrame that must contain ``"flux"``, ``"continuum"``, and ``"uncertainty"``.
+            df_interp: pandas.DataFrame that must contain ``"flux"``,
+                ``"continuum"``, and ``"uncertainty"``.
 
         Returns:
-            The input dataframe with added columns:
+            pandas.DataFrame with added columns:
             - ``"nflux"``: normalized flux,
-            - ``"normalized uncertainty"``: normalized uncertainty (uncertainty / continuum).
+            - ``"normalized_uncertainty"``: uncertainty / continuum.
         """
-        zeroind = df_interp['continuum']==0
-        df_interp = df_interp.assign(nflux=np.nan,uncertainty=np.nan)
-        df_interp.loc[~zeroind,'nflux'] = df_interp['flux'][~zeroind]/df_interp['continuum'][~zeroind]
-        df_interp.loc[~zeroind,'normalized_uncertainty'] = df_interp['uncertainty'][~zeroind]/df_interp['continuum'][~zeroind]
+        df_interp = df_interp.copy()
+
+        # Avoid object dtype caused by concat with empty/all-NA entries.
+        for col in ["flux", "continuum", "uncertainty"]:
+            df_interp[col] = pd.to_numeric(df_interp[col], errors="coerce")
+
+        df_interp["nflux"] = np.nan
+        df_interp["normalized_uncertainty"] = np.nan
+
+        valid = (
+            df_interp["continuum"].notna()
+            & (df_interp["continuum"] != 0)
+        )
+
+        df_interp.loc[valid, "nflux"] = (
+            df_interp.loc[valid, "flux"] / df_interp.loc[valid, "continuum"]
+        )
+
+        df_interp.loc[valid, "normalized_uncertainty"] = (
+            df_interp.loc[valid, "uncertainty"] / df_interp.loc[valid, "continuum"]
+        )
+
         return df_interp
     
 if __name__ == '__main__':
