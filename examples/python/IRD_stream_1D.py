@@ -8,12 +8,14 @@ band = 'h' #'h' or 'y'
 mmf = 'mmf2' #'mmf1' (comb fiber) or 'mmf2' (star fiber)
 
 rawdir = basedir/'reduc/'
-anadir_1d = basedir/'reduc_1d/'
+anadir_1d = basedir/'reduc/'
 
 # last 5 digits of FITS file numbers: [start, end file number]
-target_id = [41510, 41511] # target image
+target_id = [74676, 74687] # target image
 target_prefix = "nw"
 target_name = "G196-3B"
+
+combine_flg = False
 #-------------------------#
 
 target_1d = irdstream.Stream1D(streamid=target_name, 
@@ -29,17 +31,17 @@ target_1d = irdstream.Stream1D(streamid=target_name,
 comb_master_path = rawdir / f"wcomb_master_{band}_m{mmf[-1]}.dat"
 df_recalib = target_1d.recalibrate_wavelength_with_comb(comb_master_path, fiber=mmf, n_poly=6)
 
-# savedir_recalib = anadir_1d/f"pcomb_master_{band}_m{mmf[-1]}.dat"
-# df_recalib.to_csv(savedir_recalib, **target_1d.tocsvargs)
-
 # airglow mask
-target_1d.mask_airglow()
+if mmf == "mmf2":
+    target_1d.mask_airglow()
 
 # combine spectra
-df_merge = target_1d.spec_combine(method="mean")
+if combine_flg:
+    df_merge = target_1d.spec_combine(method="mean")
 
-savedir_merge = anadir_1d/f"{target_1d.prefix}{target_name}_{band}{target_1d.extension}.dat"
-df_merge.to_csv(savedir_merge, **target_1d.tocsvargs)
+    savedir_merge = anadir_1d/f"{target_1d.prefix}{target_name}_{band}{target_1d.extension}.dat"
+    df_merge.to_csv(savedir_merge, **target_1d.tocsvargs)
 
 # concatenate spectra (YJ + H)
-target_1d.spec_concat_yjh()
+if band == "h":
+    target_1d.spec_concat_yjh()
