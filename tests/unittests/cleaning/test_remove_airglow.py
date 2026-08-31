@@ -37,16 +37,24 @@ def test_df_mask_airglow(test_data):
     # Test the df_mask_airglow function
     df_obs = test_data
     wav_airglow = [1502, 1505]
-    ind_mask = wav_around_airglow(df_obs['wav'], wav_airglow, mask_width=0.035)
-    
+    ind_mask = wav_around_airglow(df_obs["wav"], wav_airglow, mask_width=0.035)
+
     # Mask the airglow
     df_masked = df_mask_airglow(df_obs, ind_mask, plot=False)
-    
-    # Check if the number of rows in df_masked is reduced after masking
-    assert len(df_masked) == len(df_obs) - len(ind_mask)
-    
-    # Ensure that the masked indices are removed
-    assert not any(df_masked['wav'].isin(df_obs['wav'][ind_mask]))  # Should not contain masked wavelengths
+
+    # Check that the number of rows is preserved after masking
+    assert len(df_masked) == len(df_obs)
+
+    # Check that the wavelength values are preserved
+    pd.testing.assert_series_equal(df_masked["wav"], df_obs["wav"])
+
+    # Check that the flux values at the masked indices are NaN
+    assert df_masked.loc[ind_mask, "flux"].isna().all()
+
+    # Check that the flux values at unmasked indices are unchanged
+    ind_unmasked = df_obs.index.difference(ind_mask)
+    pd.testing.assert_series_equal(df_masked.loc[ind_unmasked, "flux"],
+                                   df_obs.loc[ind_unmasked, "flux"])
 
 @pytest.mark.parametrize("wav_airglow, expected_mask_count", [
     ([1502], 1),  # Test with a single airglow feature

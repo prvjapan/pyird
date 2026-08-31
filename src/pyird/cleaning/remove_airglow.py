@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from importlib import resources
 import matplotlib.pyplot as plt
 
@@ -47,7 +48,10 @@ def df_mask_airglow(df_obs, ind_mask, plot=False):
     Returns:
         masked DataFrame
     """
-    df_masked = df_obs.drop(ind_mask)
+    df_masked = df_obs.copy()
+    cols_mask = [col for col in df_obs.columns if col not in ["wav", "order"]]
+    df_masked.loc[ind_mask, cols_mask] = np.nan
+
     if plot:
         fig, ax = plt.subplots()
         ax.plot(df_obs["wav"], df_obs["flux"], "k", lw=1, label="obs")
