@@ -8,10 +8,10 @@ band = 'h' #'h' or 'y'
 mmf = 'mmf2' #'mmf1' (comb fiber) or 'mmf2' (star fiber)
 
 rawdir = basedir/'reduc/'
-anadir_1d = basedir/'reduc/'
+anadir_1d = basedir/'reduc_1d/'
 
 # last 5 digits of FITS file numbers: [start, end file number]
-target_id = [74676, 74687] # target image
+target_id = [41510, 41511] # target image
 target_prefix = "nw"
 target_name = "G196-3B"
 
