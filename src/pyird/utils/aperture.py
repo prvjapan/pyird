@@ -145,3 +145,18 @@ class TraceAperture(object):
             self.mmf = "m2"
         else:
             raise ValueError("fiber should be mmf1 or mmf2")
+
+    def write_iraf(self, stream, background="default", rot180=False):
+        """Write this aperture trace in IRAF APEXTRACT database format.
+
+        The output is written below ``stream.anadir/database``. See
+        ``pyird.io.iraf_trace.write_trace_file`` for details.
+        """
+        from pyird.io.iraf_trace import write_trace_file
+
+        return write_trace_file(
+            self,
+            stream,
+            background=background,
+            rot180=rot180,
+        )
