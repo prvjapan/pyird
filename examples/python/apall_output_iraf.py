@@ -26,7 +26,6 @@ if band=='h':
     trace_mmf=flat_comb.aptrace(search_start_row=1300, num_aperture=42) 
 elif band=='y':
     trace_mmf=flat_comb.aptrace(search_start_row=1000, num_aperture=102) 
-trace_mask = trace_mmf.mask()
 trace_mmf.choose_aperture(fiber=mmf)
 
 # IRAF-like output
