@@ -146,7 +146,7 @@ class TraceAperture(object):
         else:
             raise ValueError("fiber should be mmf1 or mmf2")
 
-    def write_iraf(self, stream, background="default", rot180=False):
+    def write_iraf(self, stream, background="none", rot180=False):
         """Write this aperture trace in IRAF APEXTRACT database format.
 
         The output is written below ``stream.anadir/database``. See

@@ -116,7 +116,7 @@ def read_trace_file_one(filename, finalize=True, y0=None, interp_function=None, 
     return y0, interp_function, xmin, xmax, coeff
 
 
-def write_trace_file(trace, stream, background="default", rot180=False):
+def write_trace_file(trace, stream, background="none", rot180=False):
     """Write a trace to an IRAF APEXTRACT database file.
 
     Parameters
