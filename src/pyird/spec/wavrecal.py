@@ -33,7 +33,7 @@ def generate_theoretical_wavelengths_of_lfc_lines(f0=193544.90717, frep=12.5, n_
     """
     c_value = const.c.value #m/s
     
-    n = np.arange(nline + 1)
+    n = np.arange(nline)
     fn = f0 - (n - n_shift) * frep
     
     lambda_th = c_value / fn

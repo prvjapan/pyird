@@ -7,21 +7,22 @@ from pyird.spec import wavrecal
 
 
 def test_generate_theoretical_wavelengths_produces_expected_sequence():
-    lam_low = 1000.0
-    dnu = 1.0
+    f0 = 193544.0
+    frep = 1.0
     nline = 3
 
+    n_shift=9762
+
     wavelengths = wavrecal.generate_theoretical_wavelengths_of_lfc_lines(
-        lam_low=lam_low,
-        dnu_comb=dnu,
+        f0=f0,
+        frep=frep,
         nline=nline,
     )
 
-    assert len(wavelengths) == nline + 1
+    assert len(wavelengths) == nline
 
     c_value = c.value
-    nu0 = c_value / lam_low
-    expected = [c_value / (nu0 - i * dnu) for i in range(nline + 1)]
+    expected = [c_value / (f0 - (i - n_shift) * frep) for i in range(nline)]
     assert wavelengths == pytest.approx(expected)
 
 
