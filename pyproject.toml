@@ -1,3 +1,9 @@
 [build-system]
 requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+markers = [
+    "online: requires access to an external network service",
+    "simbad: requires access to the live SIMBAD service",
+]
