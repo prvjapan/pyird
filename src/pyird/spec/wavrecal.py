@@ -5,30 +5,38 @@ import astropy.constants as const
 from scipy.optimize import curve_fit
 import tqdm
 
-def generate_theoretical_wavelengths_of_lfc_lines(lam_low=950.003, dnu_comb=12.5, nline=12000):
+def generate_theoretical_wavelengths_of_lfc_lines(f0=193544.90717, frep=12.5, n_shift=9762, nline=12000):
     """Generate theoretical wavelengths of LFC lines.
+
+    Notes
+    -----
+    The original comb frequencies are defined as f_n = f0 + n * frep.
+    The index is shifted and reversed so that n >= 0 within the
+    IRD wavelength range, with wavelengths ordered from short to long.
 
     Args
     ----------
-    lam_low : float
-        Wavelength of the lowest comb line in nm.
-    dnu_comb : float
-        Frequency spacing of the comb lines in GHz.
+    f0 : float
+        Reference frequency of the laser frequency comb in GHz.
+    frep : float
+        Frequency spacing between adjacent comb lines in GHz.
+    n_shift : int
+        Comb line index corresponding to the reference frequency f0.
     nline : int
         Number of comb lines to generate.
 
     Returns
     -------
     list of float
-        Theoretical wavelengths of the comb lines in nm.
+        Theoretical wavelengths of the comb lines in nm,
+        ordered from shorter to longer wavelengths.
     """
     c_value = const.c.value #m/s
     
-    nu0 = c_value / lam_low
-    n = np.arange(nline + 1)
-    nu = nu0 - n * dnu_comb
+    n = np.arange(nline)
+    fn = f0 - (n - n_shift) * frep
     
-    lambda_th = c_value / nu
+    lambda_th = c_value / fn
     return lambda_th.tolist()
 
 def _gaussian_with_offset(x, y0, x0, amp, sigma):
