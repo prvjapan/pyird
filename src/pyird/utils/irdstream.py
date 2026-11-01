@@ -463,9 +463,10 @@ class Stream2D(FitsSet, StreamCommon):
         if extin is None:
             extin = self.extension
 
-        extout = extout + "_" + mmf
-        if not hotpix_mask is None:
-            extout = "_hp_" + mmf
+        if hotpix_mask is None:
+            extout = extout + "_" + mmf
+        else:
+            extout = extout + "hp_" + mmf
 
         if self.imcomb:
             out_path = self.anadir / ("%s_%s_%s.fits" % (self.streamid, self.band, mmf))
@@ -588,7 +589,8 @@ class Stream2D(FitsSet, StreamCommon):
             coeff,
             inst=self.inst,
             onepix=True,
-        )  # ,width=[3,5])
+            width=self.trace.width,
+        ) 
         apertures = [int(i.split("ec")[-1]) for i in df_onepix.keys()]
         df_flatn = {}
         for i in apertures:
