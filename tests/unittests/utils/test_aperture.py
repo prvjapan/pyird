@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 from pyird.image.trace_function import trace_legendre
 from pyird.utils.aperture import TraceAperture
@@ -68,6 +69,67 @@ def test_width_rejects_invalid_values(width):
             mask_shape=(10, 10),
             width=width,
         )
+
+
+def test_mask_oneord_selects_requested_order(trace_aperture, monkeypatch):
+    mask = np.array(
+        [
+            [True, True, False, True, True, False, True],
+            [True, True, False, True, True, False, True],
+        ]
+    )
+    monkeypatch.setattr(trace_aperture, "mask", lambda: mask)
+
+    expected = np.array(
+        [
+            [False, False, False, True, True, False, False],
+            [False, False, False, True, True, False, False],
+        ]
+    )
+
+    np.testing.assert_array_equal(trace_aperture.mask_oneord(order=2), expected)
+
+
+def test_mask_oneord_supports_another_axis(trace_aperture, monkeypatch):
+    mask = np.array(
+        [
+            [True, True],
+            [True, True],
+            [False, False],
+            [True, True],
+            [True, True],
+        ]
+    )
+    monkeypatch.setattr(trace_aperture, "mask", lambda: mask)
+
+    expected = np.array(
+        [
+            [False, False],
+            [False, False],
+            [False, False],
+            [True, True],
+            [True, True],
+        ]
+    )
+
+    np.testing.assert_array_equal(
+        trace_aperture.mask_oneord(order=2, axis=0), expected
+    )
+
+
+def test_mask_oneord_does_not_wrap_at_axis_edges(trace_aperture, monkeypatch):
+    mask = np.array([[True, False, False, True]])
+    monkeypatch.setattr(trace_aperture, "mask", lambda: mask)
+
+    np.testing.assert_array_equal(
+        trace_aperture.mask_oneord(order=1),
+        np.array([[True, False, False, False]]),
+    )
+    np.testing.assert_array_equal(
+        trace_aperture.mask_oneord(order=2),
+        np.array([[False, False, False, True]]),
+    )
+    assert not trace_aperture.mask_oneord(order=3).any()
 
 def test_choose_aperture_updates_variables(trace_aperture):
     original_y0 = trace_aperture.y0.copy()
