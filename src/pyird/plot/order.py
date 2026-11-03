@@ -96,3 +96,40 @@ def plot_tracelines(x, y, npix=2048):
     ax.set(xlim=(0,npix-1),ylim=(0,npix-1))
     ax.set(title="Traced Apertures on a Detector",xlabel="pixels",ylabel="pixels")
     plt.show()
+
+def plot_mean_profile_within_aperture(im_oneord, im_oneord_wide, width_str, width_end, n_expand, order_plot):
+    """show the mean profile of flux within an aperture and its surrounding region.
+
+    Args:
+        im_oneord: 2D array of flux within an aperture
+        im_oneord_wide: 2D array of flux within an aperture and its surrounding region
+        width_str: starting width of the aperture
+        width_end: ending width of the aperture
+        n_expand: number of pixels expanded from the aperture
+        order_plot: order number to be plotted
+
+    """
+    x_oneord = np.arange(-width_str, width_end)
+    x_wide = np.arange(-(width_str + n_expand), width_end + n_expand)
+
+    mean_profile_oneord = im_oneord.mean(axis=0)
+    mean_profile_wide = im_oneord_wide.mean(axis=0)
+
+    fig, ax = plt.subplots()
+    ax.plot(x_wide, mean_profile_wide, ".-", color="gray")
+    ax.plot(x_oneord, mean_profile_oneord, ".-", color="tab:blue")
+
+    ax.fill_betweenx(y=[1.1*np.min(mean_profile_wide), 1.5*np.max(mean_profile_wide)], x1=-width_str, x2=width_end-1, alpha=0.2, color="tab:blue", label="Aperture region")
+
+    if x_wide[np.argmax(im_oneord_wide.mean(axis=0))] not in x_oneord[1:-1]:
+        warning_msg = "Warning: Peak position is outside or on the edge of the aperture.\nCheck aperture trace alignment."
+        print(warning_msg)
+        ax.text(0.05, 0.55, warning_msg, color="red", transform=ax.transAxes, verticalalignment='top')
+
+    ax.legend()
+    ax.set(title=f"Mean spatial profile within an aperture (order={order_plot})",
+           xlabel="Offset from aperture center [pix]",
+           ylabel="Counts")
+    ax.set(xlim=[-(width_str + n_expand), width_end + n_expand-1], 
+           ylim=[1.1*np.min(mean_profile_wide), 1.5*np.max(mean_profile_wide)])
+    plt.show()

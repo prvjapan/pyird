@@ -33,6 +33,42 @@ def test_invalid_fiber_type(trace_aperture):
     with pytest.raises(ValueError):
         trace_aperture.choose_aperture("invalid_fiber")
 
+
+def test_width_uses_instrument_default_and_can_be_updated():
+    aperture = TraceAperture(
+        trace_function=None,
+        y0=[],
+        xmin=[],
+        xmax=[],
+        coeff=[],
+        inst="IRD",
+        mask_shape=(10, 10),
+        width=None,
+    )
+
+    assert aperture.width == (2, 4)
+
+    aperture.width = [3, 5]
+    assert aperture.width == (3, 5)
+
+    aperture.width = None
+    assert aperture.width == (2, 4)
+
+
+@pytest.mark.parametrize("width", [(1,), (1, 2, 3), (-1, 2), (1.5, 2)])
+def test_width_rejects_invalid_values(width):
+    with pytest.raises(ValueError, match="two non-negative integers"):
+        TraceAperture(
+            trace_function=None,
+            y0=[],
+            xmin=[],
+            xmax=[],
+            coeff=[],
+            inst="IRD",
+            mask_shape=(10, 10),
+            width=width,
+        )
+
 def test_choose_aperture_updates_variables(trace_aperture):
     original_y0 = trace_aperture.y0.copy()
     original_xmin = trace_aperture.xmin.copy()

@@ -1,6 +1,7 @@
 import tqdm
 import numpy as np
 import pandas as pd
+from pyird.image.aperture_width import resolve_aperture_width
 from pyird.image.trace_function import trace_legendre
 
 
@@ -38,19 +39,7 @@ def flatten(
         if onepix is True, return pandas DataFrame of spectra in each pixel
     """
 
-    if width is None:
-        if inst == "IRD":
-            width_str = 2
-            width_end = 4
-        elif inst == "REACH":
-            width_str = 2
-            width_end = 3
-        elif inst == "IRCS":
-            width_str = 4
-            width_end = 4
-    else:
-        width_str = width[0]
-        width_end = width[1]
+    width_str, width_end = resolve_aperture_width(inst, width)
 
     if len(y0) <= 21 or force_rotate:  # h band or forces rotation
         rotim = np.copy(im[::-1, ::-1])

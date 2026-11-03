@@ -1,6 +1,8 @@
 import numpy as np
 import tqdm
 
+from pyird.image.aperture_width import resolve_aperture_width
+
 
 def trace_from_iraf_trace_file(pathlist, mask_shape=None):
     """make mask from the iraf trace file.
@@ -58,19 +60,7 @@ def trace(trace_func, y0, xmin, xmax, coeff, mask_shape=None, inst='IRD', width=
     tl = trace_func(x, y0, xmin, xmax, coeff)
 #    mask = np.zeros_like(im, dtype=bool)
     mask = np.zeros(mask_shape, dtype=bool)
-    if width is None:
-        if inst=='IRD':
-            width_str = 2
-            width_end = 4
-        elif inst=='REACH':
-            width_str = 2
-            width_end = 3
-        elif inst=='IRCS':
-            width_str = 4
-            width_end = 4
-    else:
-        width_str = width[0]
-        width_end = width[1]
+    width_str, width_end = resolve_aperture_width(inst, width)
     nx, ny = mask_shape
     for i in tqdm.tqdm(range(len(y0))):
         tl_tmp = np.array(tl[i], dtype=int)
