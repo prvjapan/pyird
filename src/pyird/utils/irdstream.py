@@ -444,7 +444,7 @@ class Stream2D(FitsSet, StreamCommon):
             ord_check: order to be checked (default: the middle order)
             n_expand: number of pixels to expand the trace mask for visualization (default: 2)
         """
-        from pyird.plot.order import plot_mean_profile_within_aperture
+        from pyird.plot.order import plot_median_profile_within_aperture
 
         def expand_true_block(arr, n_before=2, n_after=2, axis=-1):
             arr = np.asarray(arr, dtype=bool)
@@ -501,7 +501,7 @@ class Stream2D(FitsSet, StreamCommon):
         im_oneord = im[trace_mask].reshape(-1, n)
         im_oneord_wide = im[wide_mask].reshape(-1, n + 2*n_expand)
 
-        plot_mean_profile_within_aperture(im_oneord, im_oneord_wide, 
+        plot_median_profile_within_aperture(im_oneord, im_oneord_wide, 
                                           width_str, width_end, n_expand, ord_check)
 
     def flatten(
