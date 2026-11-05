@@ -1,6 +1,8 @@
 """Class for aperture"""
 
 from pyird.image.mask import trace
+from pyird.image.aperture_width import resolve_aperture_width
+import numpy as np
 import warnings
 
 __all__ = ["TraceAperture"]
@@ -9,7 +11,9 @@ __all__ = ["TraceAperture"]
 class TraceAperture(object):
     """aperture instance for trace class"""
 
-    def __init__(self, trace_function, y0, xmin, xmax, coeff, inst, mask_shape):
+    def __init__(
+        self, trace_function, y0, xmin, xmax, coeff, inst, mask_shape, width=None
+    ):
         """initialization
 
         Args:
@@ -20,6 +24,7 @@ class TraceAperture(object):
             coeff:  polinomial coeff
             inst: instrument (IRD or REACH or IRCS)
             mask_shape: shape of mask
+            width: aperture widths ([width_start, width_end])
 
         """
         self.trace_function = trace_function
@@ -35,8 +40,16 @@ class TraceAperture(object):
         else:
             raise ValueError('Error: please set "inst" to either "IRD", "REACH", or "IRCS"')
         self.info = False
-        self.width = None
+        self.width = width
         self.mask_shape = mask_shape
+
+    @property
+    def width(self):
+        return self._width
+
+    @width.setter
+    def width(self, width):
+        self._width = resolve_aperture_width(self.inst, width)
 
     def mask(self):
         """mask image
@@ -57,7 +70,29 @@ class TraceAperture(object):
             width=self.width,
             mask_shape=self.mask_shape,
         )
-    
+
+    def mask_oneord(self, order=None, axis=-1):
+        """mask image for a specific order
+
+        Args:
+            order: order number (1,2,...)
+            axis: axis along which to identify orders (default: -1)
+        """
+        mask_all = self.mask()
+
+        prev = np.roll(mask_all, 1, axis=axis)
+        idx = [slice(None)] * mask_all.ndim
+        idx[axis] = 0
+        prev[tuple(idx)] = False
+
+        starts = mask_all & ~prev
+
+        # culculate the block id for each True pixel
+        block_id = np.cumsum(starts, axis=axis)
+
+        # set the mask for the specified order
+        return mask_all & (block_id == order)
+
     def choose_aperture(self, fiber):
         """choose apertures of mmf1 (comb fiber) or mmf2 (star fiber)
 

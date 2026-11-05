@@ -96,3 +96,42 @@ def plot_tracelines(x, y, npix=2048):
     ax.set(xlim=(0,npix-1),ylim=(0,npix-1))
     ax.set(title="Traced Apertures on a Detector",xlabel="pixels",ylabel="pixels")
     plt.show()
+
+def plot_median_profile_within_aperture(im_oneord, im_oneord_wide, width_str, width_end, n_expand, order_plot):
+    """show the median profile of flux within an aperture and its surrounding region.
+
+    Args:
+        im_oneord: 2D array of flux within an aperture
+        im_oneord_wide: 2D array of flux within an aperture and its surrounding region
+        width_str: starting width of the aperture
+        width_end: ending width of the aperture
+        n_expand: number of pixels expanded from the aperture
+        order_plot: order number to be plotted
+
+    """
+    x_oneord = np.arange(-width_str, width_end)
+    x_wide = np.arange(-(width_str + n_expand), width_end + n_expand)
+
+    median_profile_oneord = np.median(im_oneord, axis=0)
+    median_profile_wide = np.median(im_oneord_wide, axis=0)
+    ymin_plot = np.min(median_profile_wide)
+    ymax_plot = np.max(median_profile_wide)+np.ptp(median_profile_wide)/10
+
+    fig, ax = plt.subplots()
+    ax.plot(x_wide, median_profile_wide, ".-", color="gray")
+    ax.plot(x_oneord, median_profile_oneord, ".-", color="tab:blue")
+
+    ax.fill_betweenx(y=[ymin_plot, ymax_plot], x1=-width_str, x2=width_end-1, alpha=0.2, color="tab:blue", label="Aperture region")
+
+    if x_wide[np.argmax(median_profile_wide)] not in x_oneord[1:-1]:
+        warning_msg = "Warning: Peak position is outside or on the edge of the aperture.\nCheck aperture trace alignment."
+        print(warning_msg)
+        ax.text(0.05, 0.55, warning_msg, color="red", transform=ax.transAxes, verticalalignment='top')
+
+    ax.legend()
+    ax.set(title=f"Median spatial profile within an aperture (order={order_plot})",
+           xlabel="Offset from aperture center [pix]",
+           ylabel="Counts")
+    ax.set(xlim=[-(width_str + n_expand), width_end + n_expand-1], 
+           ylim=[ymin_plot, ymax_plot])
+    plt.show()

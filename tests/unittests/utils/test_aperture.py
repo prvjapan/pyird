@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 from pyird.image.trace_function import trace_legendre
 from pyird.utils.aperture import TraceAperture
@@ -32,6 +33,103 @@ def trace_aperture():
 def test_invalid_fiber_type(trace_aperture):
     with pytest.raises(ValueError):
         trace_aperture.choose_aperture("invalid_fiber")
+
+
+def test_width_uses_instrument_default_and_can_be_updated():
+    aperture = TraceAperture(
+        trace_function=None,
+        y0=[],
+        xmin=[],
+        xmax=[],
+        coeff=[],
+        inst="IRD",
+        mask_shape=(10, 10),
+        width=None,
+    )
+
+    assert aperture.width == (2, 4)
+
+    aperture.width = [3, 5]
+    assert aperture.width == (3, 5)
+
+    aperture.width = None
+    assert aperture.width == (2, 4)
+
+
+@pytest.mark.parametrize("width", [(1,), (1, 2, 3), (-1, 2), (1.5, 2)])
+def test_width_rejects_invalid_values(width):
+    with pytest.raises(ValueError, match="two non-negative integers"):
+        TraceAperture(
+            trace_function=None,
+            y0=[],
+            xmin=[],
+            xmax=[],
+            coeff=[],
+            inst="IRD",
+            mask_shape=(10, 10),
+            width=width,
+        )
+
+
+def test_mask_oneord_selects_requested_order(trace_aperture, monkeypatch):
+    mask = np.array(
+        [
+            [True, True, False, True, True, False, True],
+            [True, True, False, True, True, False, True],
+        ]
+    )
+    monkeypatch.setattr(trace_aperture, "mask", lambda: mask)
+
+    expected = np.array(
+        [
+            [False, False, False, True, True, False, False],
+            [False, False, False, True, True, False, False],
+        ]
+    )
+
+    np.testing.assert_array_equal(trace_aperture.mask_oneord(order=2), expected)
+
+
+def test_mask_oneord_supports_another_axis(trace_aperture, monkeypatch):
+    mask = np.array(
+        [
+            [True, True],
+            [True, True],
+            [False, False],
+            [True, True],
+            [True, True],
+        ]
+    )
+    monkeypatch.setattr(trace_aperture, "mask", lambda: mask)
+
+    expected = np.array(
+        [
+            [False, False],
+            [False, False],
+            [False, False],
+            [True, True],
+            [True, True],
+        ]
+    )
+
+    np.testing.assert_array_equal(
+        trace_aperture.mask_oneord(order=2, axis=0), expected
+    )
+
+
+def test_mask_oneord_does_not_wrap_at_axis_edges(trace_aperture, monkeypatch):
+    mask = np.array([[True, False, False, True]])
+    monkeypatch.setattr(trace_aperture, "mask", lambda: mask)
+
+    np.testing.assert_array_equal(
+        trace_aperture.mask_oneord(order=1),
+        np.array([[True, False, False, False]]),
+    )
+    np.testing.assert_array_equal(
+        trace_aperture.mask_oneord(order=2),
+        np.array([[False, False, False, True]]),
+    )
+    assert not trace_aperture.mask_oneord(order=3).any()
 
 def test_choose_aperture_updates_variables(trace_aperture):
     original_y0 = trace_aperture.y0.copy()

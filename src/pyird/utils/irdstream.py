@@ -352,17 +352,18 @@ class Stream2D(FitsSet, StreamCommon):
         from pyird.io.iraf_trace import read_trace_file
 
         if trace_path is None:
-            y0, xmin, xmax, coeff = (
+            trace_function, y0, xmin, xmax, coeff = (
+                self.trace.trace_function,
                 self.trace.y0,
                 self.trace.xmin,
                 self.trace.xmax,
                 self.trace.coeff,
             )
         else:
-            y0, interp_function, xmin, xmax, coeff = read_trace_file(trace_path)
+            y0, trace_function, xmin, xmax, coeff = read_trace_file(trace_path)
         mmf = self.trace.mmf
         width = self.trace.width
-        return y0, xmin, xmax, coeff, mmf, width
+        return trace_function, y0, xmin, xmax, coeff, mmf, width
 
     def write_df_spec_wav(self, spec_m2, reference, save_path):
         """
@@ -434,6 +435,75 @@ class Stream2D(FitsSet, StreamCommon):
         self.fitsdir = self.anadir
         self.extension = extout
 
+    def check_aperture_position(self, extin=None, im_ind=0, ord_check=None, n_expand=2):
+        """Check the aperture position on the image.
+
+        Args:
+            extin: input extension
+            im_ind: index of the image to be checked (default: 0)
+            ord_check: order to be checked (default: the middle order)
+            n_expand: number of pixels to expand the trace mask for visualization (default: 2)
+        """
+        from pyird.plot.order import plot_median_profile_within_aperture
+
+        def expand_true_block(arr, n_before=2, n_after=2, axis=-1):
+            arr = np.asarray(arr, dtype=bool)
+            result = arr.copy()
+
+            for i in range(1, n_before + 1):
+                shifted = np.roll(arr, -i, axis=axis)
+
+                # avoid wrap-around from the end to the beginning
+                idx = [slice(None)] * arr.ndim
+                idx[axis] = slice(-i, None)
+                shifted[tuple(idx)] = False
+
+                result |= shifted
+
+            for i in range(1, n_after + 1):
+                shifted = np.roll(arr, i, axis=axis)
+
+                # avoid wrap-around from the beginning to the end
+                idx = [slice(None)] * arr.ndim
+                idx[axis] = slice(None, i)
+                shifted[tuple(idx)] = False
+
+                result |= shifted
+
+            return result
+
+        if extin is None:
+            extin = self.extension
+
+        ext = self.extpath(extin, string=False, check=False)
+
+        filen = self.rawdir / ext[im_ind].name
+        im, header = load_fits_data_header(filen)
+        im = self.detector_handling(im, mode="load")
+
+        if ord_check is None:
+            ord_check = len(self.trace.y0) // 2  # default: the middle order
+        trace_mask = self.trace.mask_oneord(order=ord_check)
+
+        width = self.trace.width
+        if self.band == "y":
+            trace_mask = trace_mask.reshape(1, int(trace_mask.size))
+            trace_mask = trace_mask[0][::-1].reshape(
+                im.shape[0], im.shape[1]
+            )  # rotate mask matrix 180 degree
+            width_str, width_end = width[-1], width[0]
+        elif self.band == "h":
+            width_str, width_end = width[0], width[-1]
+
+        wide_mask = expand_true_block(trace_mask, n_before=n_expand, n_after=n_expand)
+
+        n = np.sum(self.trace.width)
+        im_oneord = im[trace_mask].reshape(-1, n)
+        im_oneord_wide = im[wide_mask].reshape(-1, n + 2*n_expand)
+
+        plot_median_profile_within_aperture(im_oneord, im_oneord_wide, 
+                                          width_str, width_end, n_expand, ord_check)
+
     def flatten(
         self,
         trace_path=None,
@@ -458,7 +528,7 @@ class Stream2D(FitsSet, StreamCommon):
 
         self.print_if_info_is_true("[STEP] Performing flatten...")
 
-        y0, xmin, xmax, coeff, mmf, width = self.extract_trace_info(trace_path)
+        _, y0, xmin, xmax, coeff, mmf, width = self.extract_trace_info(trace_path)
 
         if extin is None:
             extin = self.extension
@@ -531,7 +601,7 @@ class Stream2D(FitsSet, StreamCommon):
 
         self.print_if_info_is_true("[STEP] Performing flatten of input image...")
 
-        y0, xmin, xmax, coeff, mmf, width = self.extract_trace_info(trace_path)
+        _, y0, xmin, xmax, coeff, mmf, width = self.extract_trace_info(trace_path)
 
         im = self.detector_handling(image, mode="load")
         rawspec, pixcoord, rotim, tl, iys_plot, iye_plot = flatten(
@@ -562,7 +632,7 @@ class Stream2D(FitsSet, StreamCommon):
 
         self.print_if_info_is_true("[STEP] Performing apnormalize...")
 
-        y0, xmin, xmax, coeff, mmf, width = self.extract_trace_info()
+        _, y0, xmin, xmax, coeff, mmf, width = self.extract_trace_info()
 
         if rsd is None:
             flatfile = self.anadir / ("%s_%s_%s.fits" % (self.streamid, self.band, mmf))
@@ -589,7 +659,7 @@ class Stream2D(FitsSet, StreamCommon):
             coeff,
             inst=self.inst,
             onepix=True,
-            width=self.trace.width,
+            width=width,
         ) 
         apertures = [int(i.split("ec")[-1]) for i in df_onepix.keys()]
         df_flatn = {}
@@ -622,7 +692,7 @@ class Stream2D(FitsSet, StreamCommon):
 
         self.print_if_info_is_true("[STEP] Performing apext_flatfield...")
 
-        y0, xmin, xmax, coeff, mmf, width = self.extract_trace_info()
+        _, y0, xmin, xmax, coeff, mmf, width = self.extract_trace_info()
 
         if extin is None:
             extin = self.extension
@@ -693,7 +763,7 @@ class Stream2D(FitsSet, StreamCommon):
 
         median_image = self.immedian()
 
-        y0, xmin, xmax, coeff, mmf, width = self.extract_trace_info(trace_path)
+        _, y0, xmin, xmax, coeff, mmf, width = self.extract_trace_info(trace_path)
 
         master_path = self.anadir / ("thar_%s_%s.fits" % (self.band, mmf))
         if not os.path.exists(master_path):

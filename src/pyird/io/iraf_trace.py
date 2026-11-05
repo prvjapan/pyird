@@ -6,6 +6,8 @@ from pathlib import Path
 
 import numpy as np
 
+from pyird.image.aperture_width import resolve_aperture_width
+
 __all__ = ["read_trace_file", "read_trace_file_one", "write_trace_file"]
 
 
@@ -151,19 +153,7 @@ def write_trace_file(trace, stream, background="none", rot180=False):
             "y0, xmin, xmax, and coeff must have the same number of apertures."
         )
 
-    if trace.width is None:
-        default_widths = {"IRD": (2, 4), "REACH": (2, 3)}
-        try:
-            width_str, width_end = default_widths[trace.inst]
-        except KeyError as exc:
-            raise ValueError(
-                "No default aperture width is defined for "
-                f"inst='{trace.inst}'. Please set trace.width."
-            ) from exc
-    else:
-        if len(trace.width) != 2:
-            raise ValueError("TraceAperture.width must be [width_str, width_end].")
-        width_str, width_end = trace.width
+    width_str, width_end = resolve_aperture_width(trace.inst, trace.width)
 
     if rot180:
         aperture_low, aperture_high = -float(width_end), float(width_str)
