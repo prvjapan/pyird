@@ -119,9 +119,9 @@ def plot_median_profile_within_aperture(im_oneord, im_oneord_wide, width_str, wi
 
     fig, ax = plt.subplots()
     ax.plot(x_wide, median_profile_wide, ".-", color="gray")
-    ax.plot(x_oneord, median_profile_oneord, ".-", color="tab:blue")
+    ax.plot(x_oneord, median_profile_oneord, "o", color="tab:blue")
 
-    ax.fill_betweenx(y=[ymin_plot, ymax_plot], x1=-width_str, x2=width_end-1, alpha=0.2, color="tab:blue", label="Aperture region")
+    ax.fill_betweenx(y=[ymin_plot, ymax_plot], x1=-width_str-0.5, x2=width_end-0.5, alpha=0.2, color="tab:blue", label="Aperture region")
 
     if x_wide[np.argmax(median_profile_wide)] not in x_oneord[1:-1]:
         warning_msg = "Warning: Peak position is outside or on the edge of the aperture.\nCheck aperture trace alignment."

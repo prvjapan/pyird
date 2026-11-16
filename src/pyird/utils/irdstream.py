@@ -435,7 +435,7 @@ class Stream2D(FitsSet, StreamCommon):
         self.fitsdir = self.anadir
         self.extension = extout
 
-    def check_aperture_position(self, extin=None, im_ind=0, ord_check=None, n_expand=2):
+    def check_aperture_position(self, extin=None, im_ind=0, ord_check=None, n_expand=4):
         """Check the aperture position on the image.
 
         Args:

@@ -105,6 +105,7 @@ target = irdstream.Stream2D('targets',
                             band=band)
 target.info = True  # show detailed info
 target.trace = trace_mmf
+target.check_aperture_position()
 # clean pattern
 target.clean_pattern(trace_mask=trace_mask, extin='', extout='_cp', hotpix_mask=hotpix_mask)
 # flatten
