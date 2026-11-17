@@ -58,6 +58,7 @@ def df_mask_airglow(df_obs, ind_mask, plot=False):
         ax.plot(df_masked["wav"], df_masked["flux"], "tab:blue", lw=1, label="masked")
         ax.legend()
         #ax.set(xlim=(1500, 1580), ylim=(0,0.02))
+        ax.set(xlabel="Wavelength [nm]", ylabel="Counts")
         plt.show()
     return df_masked
 

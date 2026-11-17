@@ -3,81 +3,85 @@ from pyird.utils import irdstream
 import pathlib
 from pyird.image.bias import bias_subtract_image
 from pyird.image.hotpix import identify_hotpix_sigclip
-import astropy.io.fits as pyf
 
 #import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('tkagg')
 
 #---Same as the usual reduction process (e.g. IRD_stream) up to the middle.----#
-# path
+#--------SETTINGS--------#
 basedir = pathlib.Path('~/pyird/data/20210317/').expanduser()
 
-### FOR CALIBRATION ###
-# aperture extraction
-datadir = basedir/'flat/'
+band = 'h' #'h' or 'y'
+mmf = 'mmf2' #'mmf1' (comb fiber) or 'mmf2' (star fiber)
+
+datadir_flat = basedir/'flat/'
+datadir_dark = basedir/'dark/'
+datadir_thar = basedir/'thar'
+datadir_target = basedir/'target/'
 anadir = basedir/'reduc/'
-flat=irdstream.Stream2D("flat",datadir,anadir)
-flat.fitsid=list(range(41704,41804,2)) ##FLAT_COMB
 
-################################
-### SELECT H band or YJ band ###
-################################
-flat.band='h' #'h' or 'y'
-print(flat.band,' band')
-if flat.band=='h':
-    flat.fitsid_increment() # when you use H-band
-    trace_mmf=flat.aptrace(cutrow = 800,nap=42) #TraceAperture instance
-elif flat.band=='y':
-    trace_mmf=flat.aptrace(cutrow = 1000,nap=102) #TraceAperture instance
+# last 5 digits of FITS file numbers: [start, end file number]
+flat_comb_id = [41704, 41803]  # flat image for comb
+flat_star_id = [41804, 41903]  # flat image for star/target
+dark_id = [41504, 41505] # dark image
+thar_id = [14632, 14731] # ThAr image
+target_id = [41510, 41511] # target image
+#-------------------------#
 
-import matplotlib.pyplot as plt
-plt.imshow(trace_mmf.mask()) #apeture mask plot
-plt.show()
+#--------FOR CALIBRATION--------#
+# aperture extraction
+flat_comb=irdstream.Stream2D("flat_comb", 
+                             datadir_flat, 
+                             anadir, 
+                             fitsid=list(range(flat_comb_id[0], flat_comb_id[-1], 2)), 
+                             band=band)
+
+if band=='h':
+    trace_mmf=flat_comb.aptrace(search_start_row=1300, num_aperture=42) 
+elif band=='y':
+    trace_mmf=flat_comb.aptrace(search_start_row=1000, num_aperture=102) 
+trace_mask = trace_mmf.mask()
+trace_mmf.choose_aperture(fiber=mmf)
 
 # hotpixel mask
-datadir = basedir/'dark/'
-anadir = basedir/'reduc/'
-dark = irdstream.Stream2D('dark', datadir, anadir,fitsid=[43814])
-if flat.band=='h':
-    dark.fitsid_increment() # when you use H-band
-for data in dark.rawpath:
-    im = pyf.open(str(data))[0].data
-im_subbias = bias_subtract_image(im)
+dark = irdstream.Stream2D('dark', 
+                        datadir_dark, 
+                        anadir, 
+                        fitsid=list(range(dark_id[0], dark_id[-1], 2)), 
+                        band=band) # Multiple file is ok
+median_image = dark.immedian()
+im_subbias = bias_subtract_image(median_image)
 hotpix_mask = identify_hotpix_sigclip(im_subbias)
 
-###########################
-### SELECT mmf2 or mmf1 ###
-###########################
-trace_mmf.choose_mmf2_aperture() #mmf2 (star fiber)
-#trace_mmf.choose_mmf1_aperture() #mmf1 (comb fiber)
-
 # load ThAr raw image
-datadir = basedir/'thar'
-anadir = basedir/'reduc'
-if flat.band=='h':
+if band=='h':
     rawtag='IRDAD000'
-elif flat.band=='y':
+elif band=='y':
     rawtag='IRDBD000'
+thar=irdstream.Stream2D("thar", 
+                        datadir_thar, 
+                        anadir, 
+                        rawtag=rawtag, 
+                        fitsid=list(range(thar_id[0], thar_id[-1]+1)), 
+                        band=band) 
+thar.info = True
 
 #wavelength calibration
-thar=irdstream.Stream2D("thar",datadir,anadir,rawtag=rawtag,fitsid=list(range(14632,14732)))
 thar.trace = trace_mmf
-thar.clean_pattern(extin='', extout='_cp', hotpix_mask=hotpix_mask)
+thar.clean_pattern(trace_mask=trace_mask,extin='', extout='_cp', hotpix_mask=hotpix_mask)
 thar.calibrate_wavelength()
 
-### TARGET ###
-# Load data
-datadir = basedir/'target/'
-anadir = basedir/'reduc/'
-target = irdstream.Stream2D(
-    'targets', datadir, anadir, fitsid=[41510])
-if flat.band=='h':
-    target.fitsid_increment() # when you use H-band
+#--------FOR TARGET--------#
+target = irdstream.Stream2D('targets', 
+                            datadir_target, 
+                            anadir, 
+                            fitsid=list(range(target_id[0], target_id[-1], 2)), 
+                            band=band)
 target.info = True  # show detailed info
 target.trace = trace_mmf
 # clean pattern
-target.clean_pattern(extin='', extout='_cp', hotpix_mask=hotpix_mask)
+target.clean_pattern(trace_mask=trace_mask, extin='', extout='_cp', hotpix_mask=hotpix_mask)
 
 
 #---The following is the process of displaying the figure----------------------#
@@ -106,7 +110,7 @@ for order in orders:
     print(order)
     ## draw window
     root = tk.Tk()
-    window = image_1Dand2D(root,order=order,band=flat.band)
+    window = image_1Dand2D(root,order=order,band=flat_comb.band)
     window.show_spec_to_image(rsd,wav,mask,pixcoord,rotim,iys_plot,iye_plot,master_path=wavcal_path,hotpix_mask=hotpix_mask,**params)
 root.mainloop()
 

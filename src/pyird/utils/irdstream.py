@@ -435,7 +435,7 @@ class Stream2D(FitsSet, StreamCommon):
         self.fitsdir = self.anadir
         self.extension = extout
 
-    def check_aperture_position(self, extin=None, im_ind=0, ord_check=None, n_expand=2):
+    def check_aperture_position(self, extin=None, im_ind=0, ord_check=None, n_expand=4):
         """Check the aperture position on the image.
 
         Args:
@@ -1269,10 +1269,11 @@ class Stream1D(DatSet, StreamCommon):
                 % (self.streamid, self.date, self.band, self.extension)
             )
 
-    def mask_airglow(self, wav_airglow=None, plot=False):
+    def mask_airglow(self, mask_width=0.035, wav_airglow=None, plot=False):
         """Masking airglow lines in the spectrum
 
         Args:
+            mask_width: mask_width: masking width in nm
             wav_airglow: list of airglow wavelengths to be masked. If None, the default list from Oliva et al. (2015) will be used.
             plot: if True, plot the spectrum with masked airglow lines highlighted
         """
@@ -1287,7 +1288,7 @@ class Stream1D(DatSet, StreamCommon):
 
         for i, path in enumerate(tqdm.tqdm(self.path(string=True, check=True))):
             df_obs = pd.read_csv(path, **self.readargs)
-            ind_mask = wav_around_airglow(df_obs["wav"], wav_airglow)
+            ind_mask = wav_around_airglow(df_obs["wav"], wav_airglow, mask_width=mask_width)
             df_masked = df_mask_airglow(df_obs, ind_mask, plot=plot)
 
             save_path = self.anadir / f"{self.prefix}{self.fitsid[i]}{self.extension}_ohmasked.dat"
