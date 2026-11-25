@@ -62,6 +62,16 @@ def test_flatten_onepix(synthetic_image, trace_parameters):
     assert isinstance(df_onepix, dict), "Expected output to be a dictionary of DataFrames."
     assert len(df_onepix) == (width[1] + width[0]), "The number of aperture widths does not match."
 
+def test_flatten_sum_matches_onepix_inside_detector():
+    image = np.arange(24, dtype=float).reshape(2, 12)
+    args = (image, mock_trace_func, [5.25], [0], [1], [[0.5]])
+
+    summed, *_ = flatten(*args, width=(2, 4))
+    onepix = flatten(*args, width=(2, 4), onepix=True, npix=2)
+
+    np.testing.assert_allclose(summed, sum(onepix.values()).to_numpy(dtype=float))
+
+
 def synthetic_df_flatn(width):
     """
     Create a synthetic dictionary for df_flatn with keys of f'ec{width[i]}'.

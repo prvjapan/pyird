@@ -410,17 +410,16 @@ class Stream2D(FitsSet, StreamCommon):
             extin = self.extension
 
         extin_noexist, extout_noexist = self.check_existence(extin, extout)
+        if self.band == "y":
+            trace_mask = trace_mask.ravel()[::-1]  # Rotate the mask by 180 degrees.
+
         for i, fitsid in enumerate(tqdm.tqdm(extin_noexist)):
             filen = self.rawdir / extin_noexist[i]
             im, header = load_fits_data_header(filen)
             im = self.detector_handling(im, mode="load")
             calim = np.copy(im)  # image for calibration
-            if self.band == "y":
-                trace_mask = trace_mask.reshape(1, int(trace_mask.size))
-                trace_mask = trace_mask[0][::-1].reshape(
-                    im.shape[0], im.shape[1]
-                )  # rotate mask matrix 180 degree
-            calim[trace_mask] = np.nan
+            mask = trace_mask.reshape(im.shape) if self.band == "y" else trace_mask
+            calim[mask] = np.nan
             if hotpix_mask is not None:
                 calim[hotpix_mask] = np.nan
 

@@ -12,7 +12,8 @@ class FluxUncertainty():
         estimation from a comb (LFC) file.
 
         Noise model (units):
-        - Input flux is in ADU; gains are in e-/ADU; readout noise is in e-.
+        - Input flux is in ADU and gains are in e-/ADU. Readout noise is
+          stored in electrons and converted to ADU for the target band.
         - Variance (in ADU^2) is modeled as::
 
             var_total = flux / gain + readout_noise**2
@@ -32,8 +33,9 @@ class FluxUncertainty():
         Readout-noise estimation:
         - If a comb file is provided, restrict to ``comb_readout_noise_wav = [low, high]``
         and estimate noise from the selected flux samples using either MAD
-        (scaled by 1.4826) or standard deviation; otherwise fall back to
-        ``default_readout_noise``.
+        (scaled by 1.4826) or standard deviation. Convert the Y/J-band estimate
+        to electrons using ``gain_y``. Without a comb file, use
+        ``default_readout_noise`` in electrons.
 
     Attributes:
         wav_boundary_yj_and_h : int
@@ -54,7 +56,8 @@ class FluxUncertainty():
         scale_normalized_mad : float
             Scaling factor (1.4826) to convert MAD to an estimate of the standard deviation.
         readout_noise : float
-            Effective readout noise used in calculations. Determined during initialization.
+            Effective readout noise in ADU for the selected band. Before gain
+            selection, this value is expressed in Y/J-band ADU.
         gain : float
             The detector gain actually used for calculations (either ``gain_y`` or ``gain_h``).
             **Note:** This attribute is set lazily by :meth:`determine_gain` (called inside
@@ -110,11 +113,7 @@ class FluxUncertainty():
             self.gain = self.gain_y #for Y/J band
 
     def determine_readout_noise(self):
-        """determine the readout noise 
-
-        Returns:
-            if combfile is defined, calculated real value. if not, use default value.
-        """
+        """Store the Y/J comb estimate or default readout noise in electrons."""
         combfile = self.combfile
         comb_beginning, comb_ending = self.comb_readout_noise_wav
 
@@ -126,13 +125,20 @@ class FluxUncertainty():
                 readout_noise = self.scale_normalized_mad * np.nanmedian(np.abs(comb_tmp['flux'].values - np.nanmedian(comb_tmp['flux'].values)))
             elif self.method=='std':
                 readout_noise = np.nanstd(comb_tmp['flux'].values)
-            print('Readout Noise [ADU] is :', readout_noise)
+            self._readout_noise_electrons = readout_noise * self.gain_y
+            print('Readout noise [e-]:', self._readout_noise_electrons)
         else:
-            readout_noise = self.default_readout_noise / self.gain_y # convert to ADU
-            print('Using default readout Noise [ADU]:', readout_noise)
-            print('readout noise of IRD detectors: ~12e- (10min exposure)')
+            self._readout_noise_electrons = self.default_readout_noise
+            print('Using default readout noise [e-]:', self._readout_noise_electrons)
 
-        self.readout_noise = readout_noise
+    @property
+    def readout_noise(self):
+        """Return readout noise in ADU using the current detector gain."""
+        return self._readout_noise_electrons / getattr(self, 'gain', self.gain_y)
+
+    @readout_noise.setter
+    def readout_noise(self, noise_adu):
+        self._readout_noise_electrons = noise_adu * getattr(self, 'gain', self.gain_y)
     
     def calc_uncertainty(self, df_continuum):
         """calculation of uncertainty

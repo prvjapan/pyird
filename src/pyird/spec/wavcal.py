@@ -279,14 +279,20 @@ def first_identification(dat, channelfile, order_ref, pixel_search_area=5, kerne
         dat_order = dat[idx_order_tmp, :]
         filtered_dat = medfilt(dat_order, kernel_size=kernel_size)
         # search peaks in the current spectrum
-        ind_low = df_pixwavmap_ref['CHANNEL'][k] - pixel_search_area
-        ind_upp = df_pixwavmap_ref['CHANNEL'][k] + pixel_search_area
-        filtered_local_peak = np.nanmax(filtered_dat[ind_low:ind_upp])
-        ind_filtered_local_peak = np.where(filtered_dat == filtered_local_peak)[0]
-        if len(ind_filtered_local_peak)==0:
+        channel = df_pixwavmap_ref['CHANNEL'][k]
+        ind_low = max(0, channel - pixel_search_area)
+        ind_upp = min(dat_order.size, channel + pixel_search_area + 1)
+        if ind_low >= ind_upp:
             continue
-        local_peak = np.nanmax(dat_order[ind_filtered_local_peak])
-        ind_local_peak = np.where(dat_order == local_peak)[0][0] # pixel position of a peak
+        filtered_window = filtered_dat[ind_low:ind_upp]
+        if np.isnan(filtered_window).all():
+            continue
+        filtered_local_peak = np.nanmax(filtered_window)
+        candidates = ind_low + np.flatnonzero(filtered_window == filtered_local_peak)
+        candidate_flux = dat_order[candidates]
+        if np.isnan(candidate_flux).all():
+            continue
+        ind_local_peak = candidates[np.nanargmax(candidate_flux)]
 
         data = [order_tmp, ind_local_peak, df_pixwavmap_ref['WAVELENGTH'][k]]
         df_tmp = pd.DataFrame([data], columns=df_pixwavmap_obs.columns)
@@ -343,10 +349,16 @@ def second_identification(dat, wavlength_solution_matrix, residuals, npix, norde
             if ind_low >= ind_upp:
                 continue
             # add wavelengths of a distinct peak to the list
-            filtered_local_peak = np.nanmax(filtered_dat[ind_low:ind_upp])
+            filtered_window = filtered_dat[ind_low:ind_upp]
+            if np.isnan(filtered_window).all():
+                continue
+            filtered_local_peak = np.nanmax(filtered_window)
             if filtered_local_peak > np.nanpercentile(filtered_dat[filtered_dat>0], detect_level): 
-                ind_filtered_local_peak = np.where(filtered_dat == filtered_local_peak)[0]
-                ind_local_peak = np.where(dat_order == np.nanmax(dat_order[ind_filtered_local_peak]))[0][0]
+                candidates = ind_low + np.flatnonzero(filtered_window == filtered_local_peak)
+                candidate_flux = dat_order[candidates]
+                if np.isnan(candidate_flux).all():
+                    continue
+                ind_local_peak = candidates[np.nanargmax(candidate_flux)]
                 data = [order_tmp, ind_local_peak, wavref_tmp]
                 df_tmp = pd.DataFrame([data], columns=df_pixwavmap.columns)
                 df_pixwavmap = pd.concat([df_pixwavmap, df_tmp], ignore_index=True)
