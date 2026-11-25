@@ -69,6 +69,19 @@ def test_calc_uncertainty_overlap_region():
     np.testing.assert_array_almost_equal(expected_uncertainty, tmp_uncertainty[len_head//2], decimal=1)
 
 
+@pytest.mark.parametrize("use_comb", [False, True], ids=["default", "comb"])
+def test_readout_noise_preserves_electrons_across_bands(use_comb):
+    combfile = StringIO("960 1 -2\n970 1 2\n") if use_comb else None
+    noise = FluxUncertainty(combfile=combfile, calc_method_readout_noise="std")
+    expected_electrons = 2 * noise.gain_y if use_comb else 12
+    samples = pd.DataFrame({"wav": [1000.0], "flux": [0.0], "continuum": [1.0]})
+
+    for wavelength, gain in [(1000, noise.gain_y), (1500, noise.gain_h), (1000, noise.gain_y)]:
+        samples["wav"] = wavelength
+        result = noise.calc_uncertainty(samples)
+        assert result["uncertainty"].iloc[0] == pytest.approx(expected_electrons / gain)
+
+
 if __name__ == '__main__':
     #test_determine_readout_noise()
     #test_calc_uncertainty()

@@ -4,6 +4,9 @@ import pandas as pd
 from scipy.optimize import leastsq
 from scipy.signal import medfilt
 import importlib
+from io import StringIO
+
+from pyird.spec import wavcal
 
 from pyird.spec.wavcal import (
     pixel_df_to_wav_mat, fit_polynomial, errfunc, fit_wav_solution, calculate_residuals,
@@ -104,3 +107,32 @@ def test_first_identification():
     channelfile = (importlib.resources.files('pyird').joinpath('data/channel_H.list')) 
     df_pixwavmap_obs = first_identification(sample_spec, channelfile, order_ref=np.arange(1,22))
     assert isinstance(df_pixwavmap_obs, pd.DataFrame)
+
+
+@pytest.mark.parametrize("identify", ["first", "second"])
+@pytest.mark.parametrize("outside_filtered_peak", [5.0, 1.0])
+def test_identification_ignores_equal_peaks_outside_window(
+    monkeypatch, identify, outside_filtered_peak
+):
+    flux = np.ones(2048)
+    flux[[0, -1]] = np.nan
+    flux[100] = 10.0
+    flux[101] = 12.0
+    flux[20] = 20.0 if outside_filtered_peak == 5.0 else 12.0
+    filtered = np.ones_like(flux)
+    filtered[[100, 101]] = 5.0
+    filtered[20] = outside_filtered_peak
+    monkeypatch.setattr(wavcal, "medfilt", lambda *args, **kwargs: filtered)
+
+    if identify == "first":
+        reference = StringIO("ORDER,CHANNEL,WAVELENGTH\n1,100,1100\n")
+        result = first_identification(flux[None, :], reference, np.array([1]))
+    else:
+        wavelengths = (1000.0 + np.arange(flux.size))[:, None]
+        monkeypatch.setattr(wavcal, "read_linelist", lambda _: np.array([1100.0]))
+        result = second_identification(
+            flux[None, :], wavelengths, np.zeros(1), flux.size, 1,
+            np.array([1]), pixel_search_area=5,
+        )
+
+    assert result["CHANNEL"].tolist() == [101]
